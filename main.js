@@ -1,33 +1,19 @@
-let data = "";
+let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID;
 
-fetch("https://registro-de-ventas-eight.vercel.app/api/proxy")
-  .then(async (res) => {
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(`${res.status} ${err.error || ""}`);
-    }
-    return res.json();
-  })
-  .then((json) => {
-    data = json;
+async function fetchConfig() {
+  const res = await fetch("https://registro-de-ventas-eight.vercel.app/api/proxy");
+  const data = await res.json();
 
-    const AIRTABLE_TOKEN = data.airtableToken;
-    const BASE_ID = data.baseId_;
-    const CLIENTES_TABLE_ID = data.clientesTable_;
-    const VENTAS_TABLE_ID = data.ventasTable_;
+  AIRTABLE_TOKEN = data.airtableToken;
+  BASE_ID = data.baseId_;
+  CLIENTES_TABLE_ID = data.clientesTable_;
+  VENTAS_TABLE_ID = data.ventasTable_;
 
-    console.log("Variables desde proxy:", {
-      AIRTABLE_TOKEN,
-      BASE_ID,
-      CLIENTES_TABLE_ID,
-      VENTAS_TABLE_ID
-    });
+  console.log("Configuración cargada:", { AIRTABLE_TOKEN, BASE_ID });
+}
 
-    // Usa aquí tus variables
-  })
-  .catch((err) => console.error("Error al obtener datos:", err));
-
-let clienteSeleccionado = null;
+fetchConfig().then(()=>{
+    let clienteSeleccionado = null;
 
 // Función para buscar al presionar Enter
 function buscarClienteEnter(event) {
@@ -330,3 +316,5 @@ function mostrarLoading(show) {
 
 // Inicializar cálculo
 calcularTotal();
+
+})
