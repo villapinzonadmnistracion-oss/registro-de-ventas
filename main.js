@@ -46,12 +46,15 @@ window.formatearRUT = function(input) {
 // Validar RUT chileno
 window.validarRUT = function(rut) {
   // Limpiar formato
-  rut = rut.replace(/\./g, '').replace(/-/g, '');
+  rut = rut.replace(/\./g, '').replace(/-/g, '').trim();
   
   if (rut.length < 2) return false;
 
   let cuerpo = rut.slice(0, -1);
   let dv = rut.slice(-1).toUpperCase();
+
+  // Verificar que el cuerpo sean solo números
+  if (!/^\d+$/.test(cuerpo)) return false;
 
   // Calcular dígito verificador
   let suma = 0;
@@ -89,6 +92,8 @@ window.buscarCliente = async function() {
   // Validar formato del RUT
   if (!validarRUT(rut)) {
     mostrarAlerta("error", "❌ RUT inválido. Verifica el formato.");
+    input.focus();
+    input.select();
     return;
   }
 
