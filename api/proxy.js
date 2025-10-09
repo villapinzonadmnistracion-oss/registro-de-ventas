@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   try {
-    const apiUrl = "https://registro-de-ventas-eight.vercel.app/";
+    const apiUrl = "https://registro-de-ventas-eight.vercel.app/api/proxy";
     const token = process.env.AIRTABLE_TOKEN;
 
     console.log("URL solicitada:", apiUrl);
