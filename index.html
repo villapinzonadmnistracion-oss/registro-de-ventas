@@ -173,26 +173,6 @@
         </div>
       </div>
     </div>
-    <button onclick="prueba()">Prueba</button>
     <script src="./main.js"></script>
-    <script>
-      function prueba() {
-        async function fetchFromProxy() {
-          try {
-            const res = await fetch("https://registro-de-ventas-eight.vercel.app/api/proxy");
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              throw new Error(`${res.status} ${err.error || ""}`);
-            }
-            const data = await res.json();
-            console.log(data);
-          } catch (e) {
-            console.error("Error al obtener datos:", e);
-          }
-        }
-
-        fetchFromProxy();
-      }
-    </script>
   </body>
 </html>
