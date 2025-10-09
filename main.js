@@ -19,55 +19,94 @@ async function fetchConfig() {
   }
 }
 
-// Formatear RUT chileno automáticamente
-window.formatearRUT = function(input) {
-  let valor = input.value.replace(/[^0-9kK]/g, ''); // Solo números y K
-  
-  if (valor.length === 0) {
-    input.value = '';
-    return;
-  }
-
-  // Separar cuerpo y dígito verificador
-  let cuerpo = valor.slice(0, -1);
-  let dv = valor.slice(-1).toUpperCase();
-
-  // Formatear cuerpo con puntos
-  cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-  // Actualizar valor del input
-  if (valor.length > 1) {
-    input.value = cuerpo + '-' + dv;
-  } else {
-    input.value = valor;
-  }
+// Función para limpiar RUT (solo números y K)
+function cleanRut(rut) {
+  return rut.replace(/[^0-9kK]/g, '').toUpperCase();
 }
 
-// Validar RUT chileno
-window.validarRUT = function(rut) {
-  // Limpiar formato
-  rut = rut.replace(/\./g, '').replace(/-/g, '').trim();
+// Función para formatear RUT chileno
+function formatRut(value) {
+  // Remover todo excepto números y K
+  value = value.replace(/[^0-9kK]/g, '').toUpperCase();
   
-  if (rut.length < 2) return false;
+  // Limitar a 9 caracteres (8-9 dígitos + DV)
+  if (value.length > 9) {
+    value = value.substring(0, 9);
+  }
+  
+  if (value.length <= 1) {
+    return value;
+  }
+  
+  // Separar dígito verificador
+  const dv = value.slice(-1);
+  let rut = value.slice(0, -1);
+  
+  // Formatear con puntos
+  let formatted = '';
+  let counter = 0;
+  for (let i = rut.length - 1; i >= 0; i--) {
+    formatted = rut[i] + formatted;
+    counter++;
+    if (counter === 3 && i !== 0) {
+      formatted = '.' + formatted;
+      counter = 0;
+    }
+  }
+  
+  return formatted + '-' + dv;
+}
 
-  let cuerpo = rut.slice(0, -1);
-  let dv = rut.slice(-1).toUpperCase();
+// Formatear RUT chileno automáticamente
+window.formatearRUT = function(input) {
+  const cursorPosition = input.selectionStart;
+  const oldValue = input.value;
+  const oldLength = oldValue.length;
+  
+  // Formatear el valor
+  input.value = formatRut(input.value);
+  
+  // Ajustar posición del cursor
+  const newLength = input.value.length;
+  const diff = newLength - oldLength;
+  input.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+}
 
-  // Verificar que el cuerpo sean solo números
-  if (!/^\d+$/.test(cuerpo)) return false;
-
+// Función para validar formato de RUT chileno
+window.validarRUT = function(rut) {
+  // Limpiar RUT
+  rut = cleanRut(rut);
+  
+  // Debe tener entre 8 y 9 caracteres
+  if (rut.length < 8 || rut.length > 9) {
+    return false;
+  }
+  
+  // Separar cuerpo y dígito verificador
+  const cuerpo = rut.slice(0, -1);
+  const dv = rut.slice(-1);
+  
   // Calcular dígito verificador
   let suma = 0;
   let multiplo = 2;
-
+  
   for (let i = cuerpo.length - 1; i >= 0; i--) {
-    suma += multiplo * parseInt(cuerpo.charAt(i));
-    multiplo = multiplo < 7 ? multiplo + 1 : 2;
+    suma += parseInt(cuerpo[i]) * multiplo;
+    multiplo = multiplo === 7 ? 2 : multiplo + 1;
   }
-
-  let dvEsperado = 11 - (suma % 11);
-  let dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : String(dvEsperado);
-
+  
+  const resto = suma % 11;
+  const dvEsperado = 11 - resto;
+  let dvCalculado;
+  
+  if (dvEsperado === 11) {
+    dvCalculado = '0';
+  } else if (dvEsperado === 10) {
+    dvCalculado = 'K';
+  } else {
+    dvCalculado = dvEsperado.toString();
+  }
+  
   return dv === dvCalculado;
 }
 
@@ -89,9 +128,17 @@ window.buscarCliente = async function() {
     return;
   }
 
-  // Validar formato del RUT
+  // Limpiar y validar formato del RUT
+  const rutLimpio = cleanRut(rut);
+  
+  if (rutLimpio.length < 8) {
+    mostrarAlerta("error", "❌ RUT incompleto. Debe tener al menos 8 dígitos.");
+    input.focus();
+    return;
+  }
+
   if (!validarRUT(rut)) {
-    mostrarAlerta("error", "❌ RUT inválido. Verifica el formato.");
+    mostrarAlerta("error", "❌ RUT inválido. Verifica el dígito verificador.");
     input.focus();
     input.select();
     return;
