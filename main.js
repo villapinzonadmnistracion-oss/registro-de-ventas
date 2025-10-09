@@ -1,9 +1,25 @@
+const data =""
+async function fetchFromProxy() {
+          try {
+            const res = await fetch("https://registro-de-ventas-eight.vercel.app/api/proxy");
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(`${res.status} ${err.error || ""}`);
+            }
+            data = await res.json();
+          } catch (e) {
+            console.error("Error al obtener datos:", e);
+          }
+        }
+
+        fetchFromProxy();
+
 // Configuración de Airtable
-const AIRTABLE_TOKEN =
-  "patdPlC6a9JBF1Pns.f0473e12b798d8bca06c064eb53136db51d890261f85226c4f17d0c0b3d92252";
-const BASE_ID = "app9mioaVtaFhzILs";
-const CLIENTES_TABLE_ID = "tblfRI4vdXspaNNlD";
-const VENTAS_TABLE_ID = "tblC7aADITb6A6iYP";
+const AIRTABLE_TOKEN = data.airtableToken
+  
+const BASE_ID = data.baseId_
+const CLIENTES_TABLE_ID =data.clientesTable_
+const VENTAS_TABLE_ID =data.ventasTable_
 
 let clienteSeleccionado = null;
 
