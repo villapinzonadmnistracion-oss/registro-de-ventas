@@ -1,4 +1,4 @@
-const data =""
+let data =""
 async function fetchFromProxy() {
           try {
             const res = await fetch("https://registro-de-ventas-eight.vercel.app/api/proxy");
