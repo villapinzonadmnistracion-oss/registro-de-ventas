@@ -19,6 +19,55 @@ async function fetchConfig() {
   }
 }
 
+// Formatear RUT chileno automáticamente
+window.formatearRUT = function(input) {
+  let valor = input.value.replace(/[^0-9kK]/g, ''); // Solo números y K
+  
+  if (valor.length === 0) {
+    input.value = '';
+    return;
+  }
+
+  // Separar cuerpo y dígito verificador
+  let cuerpo = valor.slice(0, -1);
+  let dv = valor.slice(-1).toUpperCase();
+
+  // Formatear cuerpo con puntos
+  cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  // Actualizar valor del input
+  if (valor.length > 1) {
+    input.value = cuerpo + '-' + dv;
+  } else {
+    input.value = valor;
+  }
+}
+
+// Validar RUT chileno
+window.validarRUT = function(rut) {
+  // Limpiar formato
+  rut = rut.replace(/\./g, '').replace(/-/g, '');
+  
+  if (rut.length < 2) return false;
+
+  let cuerpo = rut.slice(0, -1);
+  let dv = rut.slice(-1).toUpperCase();
+
+  // Calcular dígito verificador
+  let suma = 0;
+  let multiplo = 2;
+
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += multiplo * parseInt(cuerpo.charAt(i));
+    multiplo = multiplo < 7 ? multiplo + 1 : 2;
+  }
+
+  let dvEsperado = 11 - (suma % 11);
+  let dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : String(dvEsperado);
+
+  return dv === dvCalculado;
+}
+
 // Función para buscar al presionar Enter
 window.buscarClienteEnter = function(event) {
   if (event.key === "Enter") {
@@ -26,12 +75,20 @@ window.buscarClienteEnter = function(event) {
     buscarCliente();
   }
 }
+
 // Buscar cliente por RUT
 window.buscarCliente = async function() {
-  const rut = document.getElementById("rutCliente").value.trim();
+  const input = document.getElementById("rutCliente");
+  const rut = input.value.trim();
 
   if (!rut) {
     mostrarAlerta("info", "⚠️ Por favor, ingresa un RUT");
+    return;
+  }
+
+  // Validar formato del RUT
+  if (!validarRUT(rut)) {
+    mostrarAlerta("error", "❌ RUT inválido. Verifica el formato.");
     return;
   }
 
