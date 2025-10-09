@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   try {
-    const apiUrl = "https://registro-de-ventas-eight.vercel.app/";
+    const apiUrl = "https://registro-de-ventas-eight.vercel.app/api/";
     const token = process.env.API_TOKEN;
 
     console.log("URL solicitada:", apiUrl);
