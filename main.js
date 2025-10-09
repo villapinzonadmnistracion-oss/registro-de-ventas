@@ -153,8 +153,12 @@ window.buscarCliente = async function() {
   ocultarAlertas();
 
   try {
-    const rutEncoded = encodeURIComponent(rut);
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${CLIENTES_TABLE_ID}?filterByFormula={Rut.}='${rutEncoded}'`;
+    // Buscar con múltiples formatos posibles
+    const rutLimpioEncoded = encodeURIComponent(rutLimpio);
+    const rutFormatEncoded = encodeURIComponent(rut);
+    
+    // Buscar por RUT limpio (sin formato) O con formato
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${CLIENTES_TABLE_ID}?filterByFormula=OR({Rut.}='${rutLimpioEncoded}',{Rut.}='${rutFormatEncoded}')`;
 
     const response = await fetch(url, {
       headers: {
