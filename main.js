@@ -41,7 +41,6 @@ function formatRut(value) {
   // Separar dígito verificador
   const dv = value.slice(-1);
   let rut = value.slice(0, -1);
-    let isRutValid = false;
   
   // Formatear con puntos
   let formatted = '';
