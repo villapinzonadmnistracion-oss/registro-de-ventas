@@ -1,143 +1,198 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Punto Secreto - Registro de Ventas</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>Punto Secreto</h1>
-            <p>Sistema de Registro de Ventas</p>
+      <div class="header">
+        <h1>Punto Secreto</h1>
+        <p>Sistema de Registro de Ventas</p>
+      </div>
+
+      <div class="form-section">
+        <div class="alert alert-error" id="alertError">
+          ❌ Error al registrar la venta. Por favor, intenta nuevamente.
+        </div>
+        <div class="alert alert-info" id="alertInfo"></div>
+
+        <!-- Búsqueda de Cliente -->
+        <div class="form-group">
+          <label for="rutCliente">RUT del Cliente</label>
+          <input
+            type="text"
+            id="rutCliente"
+            placeholder="Ej: 12345678"
+            onkeypress="buscarClienteEnter(event)"
+          />
+          <button
+            class="btn btn-primary"
+            onclick="buscarCliente()"
+            style="margin-top: 10px; width: 100%;"
+          >
+            🔍 Buscar Cliente
+          </button>
         </div>
 
-        <div class="form-section">
-            <div class="alert alert-error" id="alertError">
-                ❌ Error al registrar la venta. Por favor, intenta nuevamente.
-            </div>
-            <div class="alert alert-info" id="alertInfo"></div>
+        <div class="cliente-info" id="clienteInfo">
+          <h3>📋 Información del Cliente</h3>
+          <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
+          <p><strong>Teléfono:</strong> <span id="clienteTelefono"></span></p>
+          <p><strong>RUT:</strong> <span id="clienteRUT"></span></p>
+        </div>
 
-            <!-- Búsqueda de Cliente -->
-            <div class="form-group">
-                <label for="rutCliente">RUT del Cliente</label>
-                <input type="text" id="rutCliente" placeholder="Ej: 12345678" onkeypress="buscarClienteEnter(event)" />
-                <button class="btn btn-primary" onclick="buscarCliente()" style="margin-top: 10px; width: 100%;">
-                    🔍 Buscar Cliente
+        <div class="cliente-no-encontrado" id="clienteNoEncontrado">
+          <h3>⚠️ Cliente No Encontrado</h3>
+          <p>El RUT ingresado no está registrado en la base de datos.</p>
+          <p>¿Deseas registrar este nuevo cliente?</p>
+          <a
+            href="https://admnistracionpsecreto233-spec.github.io/formulario-clientes/"
+            target="_blank"
+            class="btn btn-registrar-cliente"
+          >
+            ➕ Registrar Nuevo Cliente
+          </a>
+          <p style="margin-top: 15px; font-size: 0.9em;">
+            Después de registrar, vuelve aquí y busca nuevamente el RUT.
+          </p>
+        </div>
+
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p style="margin-top: 10px;">Procesando...</p>
+        </div>
+
+        <!-- Productos -->
+        <div id="productosContainer" style="display: none;">
+          <h3 style="margin: 30px 0 15px 0;">🛍️ Productos</h3>
+          <div class="productos-section" id="productosLista">
+            <div class="producto-item">
+              <div class="form-group" style="margin: 0;">
+                <label>Producto</label>
+                <select class="producto-select">
+                  <option value="">Seleccionar...</option>
+                  <option value="Polera">Polera</option>
+                  <option value="Polerón">Polerón</option>
+                  <option value="Parka">Parka</option>
+                  <option value="Falda">Falda</option>
+                  <option value="bluza">bluza</option>
+                  <option value="Pantalón">Pantalón</option>
+                  <option value="Jean">Jean</option>
+                  <option value="Buzo">Buzo</option>
+                  <option value="Abrigo">Abrigo</option>
+                  <option value="Polar">Polar</option>
+                  <option value="Suéter">Suéter</option>
+                  <option value="Chaleco">Chaleco</option>
+                  <option value="Vestido">Vestido</option>
+                  <option value="Short">Short</option>
+                  <option value="Ropa de cama">Ropa de cama</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label>Precio ($)</label>
+                <input
+                  type="number"
+                  class="producto-precio"
+                  placeholder="0"
+                  min="0"
+                  onchange="calcularTotal()"
+                />
+              </div>
+              <div>
+                <button
+                  class="btn btn-danger"
+                  onclick="eliminarProducto(this)"
+                  style="margin-top: 24px;"
+                >
+                  🗑️
                 </button>
+              </div>
             </div>
+          </div>
+          <button
+            class="btn btn-secondary"
+            onclick="agregarProducto()"
+            style="margin-top: 10px;"
+          >
+            ➕ Agregar Producto
+          </button>
 
-            <div class="cliente-info" id="clienteInfo">
-                <h3>📋 Información del Cliente</h3>
-                <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
-                <p><strong>Teléfono:</strong> <span id="clienteTelefono"></span></p>
-                <p><strong>RUT:</strong> <span id="clienteRUT"></span></p>
+          <!-- Descuento -->
+          <div class="form-group" style="margin-top: 30px;">
+            <label for="descuento">Descuento (%)</label>
+            <input
+              type="number"
+              id="descuento"
+              placeholder="0"
+              min="0"
+              max="100"
+              value="0"
+              onchange="calcularTotal()"
+            />
+          </div>
+
+          <!-- Resumen -->
+          <div class="resumen">
+            <h3 style="margin-bottom: 15px;">💰 Resumen de Venta</h3>
+            <div class="resumen-item">
+              <span>Subtotal:</span>
+              <span id="subtotal">$0</span>
             </div>
-
-            <div class="cliente-no-encontrado" id="clienteNoEncontrado">
-                <h3>⚠️ Cliente No Encontrado</h3>
-                <p>El RUT ingresado no está registrado en la base de datos.</p>
-                <p>¿Deseas registrar este nuevo cliente?</p>
-                <a href="https://admnistracionpsecreto233-spec.github.io/formulario-clientes/" target="_blank" class="btn btn-registrar-cliente">
-                    ➕ Registrar Nuevo Cliente
-                </a>
-                <p style="margin-top: 15px; font-size: 0.9em;">
-                    Después de registrar, vuelve aquí y busca nuevamente el RUT.
-                </p>
+            <div class="resumen-item">
+              <span>Descuento:</span>
+              <span id="descuentoMonto">$0</span>
             </div>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p style="margin-top: 10px;">Procesando...</p>
+            <div class="resumen-item total">
+              <span>TOTAL:</span>
+              <span id="total">$0</span>
             </div>
+          </div>
 
-            <!-- Productos -->
-            <div id="productosContainer" style="display: none;">
-                <h3 style="margin: 30px 0 15px 0;">🛍️ Productos</h3>
-                <div class="productos-section" id="productosLista">
-                    <div class="producto-item">
-                        <div class="form-group" style="margin: 0;">
-                            <label>Producto</label>
-                            <select class="producto-select">
-                                <option value="">Seleccionar...</option>
-                                <option value="Polera">Polera</option>
-                                <option value="Polerón">Polerón</option>
-                                <option value="Parka">Parka</option>
-                                <option value="Falda">Falda</option>
-                                <option value="bluza">bluza</option>
-                                <option value="Pantalón">Pantalón</option>
-                                <option value="Jean">Jean</option>
-                                <option value="Buzo">Buzo</option>
-                                <option value="Abrigo">Abrigo</option>
-                                <option value="Polar">Polar</option>
-                                <option value="Suéter">Suéter</option>
-                                <option value="Chaleco">Chaleco</option>
-                                <option value="Vestido">Vestido</option>
-                                <option value="Short">Short</option>
-                                <option value="Ropa de cama">Ropa de cama</option>
-                                <option value="Otro">Otro</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin: 0;">
-                            <label>Precio ($)</label>
-                            <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
-                        </div>
-                        <div>
-                            <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
-                        </div>
-                    </div>
-                </div>
-                <button class="btn btn-secondary" onclick="agregarProducto()" style="margin-top: 10px;">
-                    ➕ Agregar Producto
-                </button>
+          <!-- Botones de acción -->
+          <div class="form-actions">
+            <button class="btn btn-success" onclick="registrarVenta()">
+              ✅ Registrar Venta
+            </button>
+            <button class="btn btn-secondary" onclick="limpiarFormulario()">
+              🔄 Nueva Venta
+            </button>
+          </div>
 
-                <!-- Descuento -->
-                <div class="form-group" style="margin-top: 30px;">
-                    <label for="descuento">Descuento (%)</label>
-                    <input type="number" id="descuento" placeholder="0" min="0" max="100" value="0" onchange="calcularTotal()">
-                </div>
-
-                <!-- Resumen -->
-                <div class="resumen">
-                    <h3 style="margin-bottom: 15px;">💰 Resumen de Venta</h3>
-                    <div class="resumen-item">
-                        <span>Subtotal:</span>
-                        <span id="subtotal">$0</span>
-                    </div>
-                    <div class="resumen-item">
-                        <span>Descuento:</span>
-                        <span id="descuentoMonto">$0</span>
-                    </div>
-                    <div class="resumen-item total">
-                        <span>TOTAL:</span>
-                        <span id="total">$0</span>
-                    </div>
-                </div>
-
-                <!-- Botones de acción -->
-                <div class="form-actions">
-                    <button class="btn btn-success" onclick="registrarVenta()">
-                        ✅ Registrar Venta
-                    </button>
-                    <button class="btn btn-secondary" onclick="limpiarFormulario()">
-                        🔄 Nueva Venta
-                    </button>
-                </div>
-
-                <!-- Alerta de éxito después de los botones -->
-                <div class="alert alert-success" id="alertSuccess" style="margin-top: 20px;">
-                    ✅ ¡Venta registrada exitosamente!
-                </div>
-            </div>
-        </div>   
-     </div>
-     <button onclick="prueba()">Prueba</button>
-     <script src="./main.js"></script>
-     <script>
-        function prueba(){
-             alert("Funcion")
+          <!-- Alerta de éxito después de los botones -->
+          <div
+            class="alert alert-success"
+            id="alertSuccess"
+            style="margin-top: 20px;"
+          >
+            ✅ ¡Venta registrada exitosamente!
+          </div>
+        </div>
+      </div>
+    </div>
+    <button onclick="prueba()">Prueba</button>
+    <script src="./main.js"></script>
+    <script>
+      function prueba() {
+        async function fetchFromProxy() {
+          try {
+            const res = await fetch("https://registro-de-ventas-eight.vercel.app/api/proxy");
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(`${res.status} ${err.error || ""}`);
+            }
+            const data = await res.json();
+            console.log(data);
+          } catch (e) {
+            console.error("Error al obtener datos:", e);
+          }
         }
-     </script>
-</body>
+
+        fetchFromProxy();
+      }
+    </script>
+  </body>
 </html>
