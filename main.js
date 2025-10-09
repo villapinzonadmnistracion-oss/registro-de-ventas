@@ -1,25 +1,31 @@
-let data =""
-async function fetchFromProxy() {
-          try {
-            const res = await fetch("https://registro-de-ventas-eight.vercel.app/api/proxy");
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              throw new Error(`${res.status} ${err.error || ""}`);
-            }
-            data = await res.json();
-          } catch (e) {
-            console.error("Error al obtener datos:", e);
-          }
-        }
+let data = "";
 
-        fetchFromProxy();
+fetch("https://registro-de-ventas-eight.vercel.app/api/proxy")
+  .then(async (res) => {
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`${res.status} ${err.error || ""}`);
+    }
+    return res.json();
+  })
+  .then((json) => {
+    data = json;
 
-// Configuración de Airtable
-const AIRTABLE_TOKEN = data.airtableToken
-  
-const BASE_ID = data.baseId_
-const CLIENTES_TABLE_ID =data.clientesTable_
-const VENTAS_TABLE_ID =data.ventasTable_
+    const AIRTABLE_TOKEN = data.airtableToken;
+    const BASE_ID = data.baseId_;
+    const CLIENTES_TABLE_ID = data.clientesTable_;
+    const VENTAS_TABLE_ID = data.ventasTable_;
+
+    console.log("Variables desde proxy:", {
+      AIRTABLE_TOKEN,
+      BASE_ID,
+      CLIENTES_TABLE_ID,
+      VENTAS_TABLE_ID
+    });
+
+    // Usa aquí tus variables
+  })
+  .catch((err) => console.error("Error al obtener datos:", err));
 
 let clienteSeleccionado = null;
 
