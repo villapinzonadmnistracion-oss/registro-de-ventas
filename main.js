@@ -26,7 +26,6 @@ window.buscarClienteEnter = function(event) {
     buscarCliente();
   }
 }
-
 // Buscar cliente por RUT
 window.buscarCliente = async function() {
   const rut = document.getElementById("rutCliente").value.trim();
