@@ -181,6 +181,11 @@ async function cargarAnfitriones() {
 
     const data = await response.json();
     const select = document.getElementById("anfitrionSelect");
+    
+    // Limpiar opciones existentes (excepto la primera que dice "Selecciona...")
+    while (select.options.length > 1) {
+      select.remove(1);
+    }
 
     if (data.records) {
       data.records.forEach(record => {
@@ -259,57 +264,79 @@ window.procesarCodigoProducto = function(event) {
 }
 
 // FUNCIÓN MEJORADA: Buscar producto en el inventario por código
-function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
+async function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
   // Limpiar el código escaneado de espacios y caracteres especiales
   const codigoLimpio = codigoEscaneado.replace(/\s+/g, '').trim();
   
-  console.log("🔎 Código escaneado original:", codigoEscaneado);
-  console.log("🔎 Código limpio para buscar:", codigoLimpio);
-  console.log("📦 Total productos en memoria:", productosInventario.length);
+  console.log("🔎 Buscando producto con código:", codigoLimpio);
   
-  // Buscar por coincidencia exacta
-  let producto = productosInventario.find(p => {
-    const match = p.codigo === codigoLimpio;
-    console.log(`  Comparando: "${p.codigo}" === "${codigoLimpio}" → ${match}`);
-    return match;
-  });
-
-  // Si no encuentra, intentar búsqueda más flexible
-  if (!producto) {
-    console.log("🔎 No encontrado con búsqueda exacta, intentando búsqueda flexible...");
-    producto = productosInventario.find(p => {
-      const codigoProducto = p.codigo.toLowerCase();
-      const codigoBusqueda = codigoLimpio.toLowerCase();
-      return codigoProducto.includes(codigoBusqueda) || codigoBusqueda.includes(codigoProducto);
-    });
-  }
-
-  if (producto) {
-    // Producto encontrado
-    console.log("✅ Producto encontrado:", producto);
-    agregarProductoDesdeInventario(producto);
-    mostrarAlerta("success", `✅ ${producto.categoria} agregado - Stock: ${producto.stock}`);
-  } else {
-    // Producto no encontrado
-    console.log("❌ Producto NO encontrado");
-    console.log("📋 Códigos disponibles en inventario:");
-    productosInventario.forEach(p => {
-      console.log(`   - "${p.codigo}" (${p.categoria})`);
-    });
+  try {
+    const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
     
-    mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado en inventario`);
+    // Buscar en Airtable directamente con el código escaneado
+    const formulaExacta = encodeURIComponent(`{Código por categoría}='${codigoLimpio}'`);
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}?filterByFormula=${formulaExacta}`;
     
-    // Preguntar si desea agregar manualmente
-    setTimeout(() => {
-      const agregar = confirm(`Código "${codigoLimpio}" no encontrado en inventario.\n¿Deseas agregarlo manualmente?`);
-      if (agregar) {
-        agregarProductoConCodigo(codigoLimpio);
+    console.log("🔗 URL de búsqueda:", url);
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    console.log("📦 Respuesta de Airtable:", data);
+
+    if (data.records && data.records.length > 0) {
+      // Producto encontrado
+      const record = data.records[0];
+      const producto = {
+        id: record.id,
+        codigo: record.fields["Código por categoría"] || codigoLimpio,
+        categoria: record.fields["Categoría"] || record.fields.Categoria || 'Sin categoría',
+        stock: record.fields["Inventario"] || 0,
+        recordCompleto: record
+      };
+      
+      console.log("✅ Producto encontrado:", producto);
+      agregarProductoDesdeInventario(producto);
+      mostrarAlerta("success", `✅ ${producto.categoria} agregado - Stock: ${producto.stock}`);
+    } else {
+      // No encontrado, intentar búsqueda sin formato
+      console.log("❌ No encontrado, intentando sin filtro especial...");
+      
+      // Buscar en el cache local
+      const productoLocal = productosInventario.find(p => 
+        p.codigo.replace(/\s+/g, '').toLowerCase() === codigoLimpio.toLowerCase()
+      );
+      
+      if (productoLocal) {
+        console.log("✅ Encontrado en cache local:", productoLocal);
+        agregarProductoDesdeInventario(productoLocal);
+        mostrarAlerta("success", `✅ ${productoLocal.categoria} agregado - Stock: ${productoLocal.stock}`);
+      } else {
+        console.log("❌ Producto NO encontrado");
+        console.log("📋 Códigos disponibles:", productosInventario.map(p => `"${p.codigo}"`));
+        
+        mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado en inventario`);
+        
+        // Preguntar si desea agregar manualmente
+        setTimeout(() => {
+          const agregar = confirm(`Código "${codigoLimpio}" no encontrado.\n¿Deseas agregarlo manualmente?`);
+          if (agregar) {
+            agregarProductoConCodigo(codigoLimpio);
+          }
+        }, 100);
       }
-    }, 100);
+    }
+  } catch (error) {
+    console.error("❌ Error al buscar producto:", error);
+    mostrarAlerta("error", "❌ Error al buscar producto: " + error.message);
   }
 }
 
-// NUEVA FUNCIÓN: Agregar producto desde el inventario
+// NUEVA FUNCIÓN: Agregar producto desde el inventario (con vinculación a Airtable)
 function agregarProductoDesdeInventario(producto) {
   const container = document.getElementById("productosLista");
   
@@ -323,14 +350,15 @@ function agregarProductoDesdeInventario(producto) {
     }
   });
   
+  // Agregar producto vinculado a la tabla de Inventario Principal
   const productoHTML = `
-    <div class="producto-item" data-producto-id="${producto.id}">
+    <div class="producto-item" data-producto-id="${producto.id}" data-producto-record='${JSON.stringify(producto.recordCompleto)}'>
       <div class="form-group" style="margin: 0;">
-        <label>Producto</label>
-        <input type="text" class="producto-nombre" value="${producto.categoria}" readonly style="background-color: #e8f5e9; font-weight: 500;">
+        <label>Producto (vinculado)</label>
+        <input type="text" class="producto-nombre" value="${producto.categoria}" readonly style="background-color: #e8f5e9; font-weight: 500; border: 2px solid #4caf50;">
       </div>
       <div class="form-group" style="margin: 0;">
-        <label>Código: ${producto.codigo} | Stock: ${producto.stock}</label>
+        <label>📦 Código: ${producto.codigo} | 📊 Stock: ${producto.stock}</label>
         <input type="number" class="producto-precio" placeholder="Ingresa el precio" min="0" onchange="calcularTotal()" autofocus>
       </div>
       <div>
@@ -343,7 +371,15 @@ function agregarProductoDesdeInventario(producto) {
   // Enfocar el campo de precio del último producto agregado
   const ultimoPrecio = container.querySelector('.producto-item:last-child .producto-precio');
   if (ultimoPrecio) {
-    setTimeout(() => ultimoPrecio.focus(), 100);
+    setTimeout(() => {
+      ultimoPrecio.focus();
+      // Después de ingresar precio, volver al campo de código
+      ultimoPrecio.addEventListener('blur', () => {
+        setTimeout(() => {
+          document.getElementById("codigoProducto").focus();
+        }, 100);
+      });
+    }, 100);
   }
   
   calcularTotal();
@@ -590,7 +626,7 @@ window.registrarVenta = async function() {
   }
 
   let totalVenta = 0;
-  let productosArray = [];
+  let productosVinculados = []; // Array para guardar los IDs de productos vinculados
   let itemsTexto = "";
 
   if (tipoTransaccionActual === 'venta') {
@@ -599,15 +635,20 @@ window.registrarVenta = async function() {
     for (let item of productosItems) {
       const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
       const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
+      const productoId = item.dataset.productoId; // ID del registro de Inventario
 
       if (precio > 0) {
-        productosArray.push(nombre);
-        itemsTexto += `${nombre} ($${precio}), `;
+        // Si el producto está vinculado a Inventario, guardar el ID
+        if (productoId) {
+          productosVinculados.push(productoId);
+        }
+        
+        itemsTexto += `${nombre} (${precio}), `;
         totalVenta += precio;
       }
     }
 
-    if (productosArray.length === 0) {
+    if (productosVinculados.length === 0 && itemsTexto === "") {
       mostrarAlerta("error", "❌ Debes agregar al menos un producto con precio");
       return;
     }
@@ -639,6 +680,11 @@ window.registrarVenta = async function() {
           Descuento: descuentoPorcentaje,
         },
       };
+
+      // Agregar vinculación de productos si existen
+      if (productosVinculados.length > 0) {
+        ventaData.fields["producto"] = productosVinculados; // Campo "producto" vinculado en tu tabla de Ventas
+      }
 
       if (notas.trim()) {
         ventaData.fields["Notas"] = notas;
