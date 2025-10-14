@@ -402,8 +402,64 @@ window.calcularTotal = function() {
   });
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
+  const descuentoMonto = (subtotal * descuentoPorcentaje) / 100;
+  const total = subtotal - descuentoMonto;
+
+  document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
+  document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
+  document.getElementById("total").textContent = "$" + total.toLocaleString("es-CL");
+}
+
+window.registrarVenta = async function() {
+  if (!clienteSeleccionado) {
+    mostrarAlerta("error", "❌ Primero debes buscar y seleccionar un cliente");
+    return;
+  }
+
+  if (tipoTransaccionActual === 'venta') {
+    const anfitrionSelect = document.getElementById("anfitrionSelect");
+    if (!anfitrionSelect.value) {
+      mostrarAlerta("error", "❌ Debes seleccionar un anfitrión");
+      return;
+    }
+    anfitrionSeleccionado = anfitrionSelect.value;
+  }
+
+  if (!AIRTABLE_TOKEN || !BASE_ID) {
+    mostrarAlerta("error", "❌ Error: Configuración no cargada. Recarga la página.");
+    return;
+  }
+
+  let totalVenta = 0;
+  let productosArray = [];
+  let itemsTexto = "";
+
+  if (tipoTransaccionActual === 'venta') {
+    const productosItems = document.querySelectorAll(".producto-item");
+
+    for (let item of productosItems) {
+      const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
+      const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
+
+      if (precio > 0) {
+        productosArray.push(nombre);
+        itemsTexto += `${nombre} ($${precio}), `;
+        totalVenta += precio;
+      }
+    }
+
+    if (productosArray.length === 0) {
+      mostrarAlerta("error", "❌ Debes agregar al menos un producto con precio");
+      return;
+    }
+  } else {
+    // Devoluciones
+    itemsTexto = devolucionesAgregadas.map(d => `${d.nombre} (${d.cantidad} unidad/es) - ${d.motivo}`).join(", ");
+  }
+
+  const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
   const descuentoMonto = (totalVenta * descuentoPorcentaje) / 100;
-  totalVenta = totalVenta - descuentoMonto;
+  const totalFinal = totalVenta - descuentoMonto;
 
   const notas = document.getElementById("notas").value || "";
 
@@ -419,7 +475,7 @@ window.calcularTotal = function() {
           Cliente: [clienteSeleccionado.id],
           Anfitrión: [anfitrionSeleccionado],
           Items: itemsTexto,
-          "Total de venta": Math.round(totalVenta),
+          "Total de venta": Math.round(totalFinal),
           Descuento: descuentoPorcentaje,
           Notas: notas,
         },
@@ -584,61 +640,4 @@ fetchConfig().then((success) => {
   } else {
     mostrarAlerta("error", "❌ Error al cargar la configuración. Por favor, recarga la página.");
   }
-});uentoMonto = (subtotal * descuentoPorcentaje) / 100;
-  const total = subtotal - descuentoMonto;
-
-  document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
-  document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
-  document.getElementById("total").textContent = "$" + total.toLocaleString("es-CL");
-}
-
-window.registrarVenta = async function() {
-  if (!clienteSeleccionado) {
-    mostrarAlerta("error", "❌ Primero debes buscar y seleccionar un cliente");
-    return;
-  }
-
-  if (tipoTransaccionActual === 'venta') {
-    const anfitrionSelect = document.getElementById("anfitrionSelect");
-    if (!anfitrionSelect.value) {
-      mostrarAlerta("error", "❌ Debes seleccionar un anfitrión");
-      return;
-    }
-    anfitrionSeleccionado = anfitrionSelect.value;
-  }
-
-  if (!AIRTABLE_TOKEN || !BASE_ID) {
-    mostrarAlerta("error", "❌ Error: Configuración no cargada. Recarga la página.");
-    return;
-  }
-
-  let totalVenta = 0;
-  let productosArray = [];
-  let itemsTexto = "";
-
-  if (tipoTransaccionActual === 'venta') {
-    const productosItems = document.querySelectorAll(".producto-item");
-
-    for (let item of productosItems) {
-      const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
-      const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
-
-      if (precio > 0) {
-        productosArray.push(nombre);
-        itemsTexto += `${nombre} ($${precio}), `;
-        totalVenta += precio;
-      }
-    }
-
-    if (productosArray.length === 0) {
-      mostrarAlerta("error", "❌ Debes agregar al menos un producto con precio");
-      return;
-    }
-  } else {
-    // Devoluciones
-    itemsTexto = devolucionesAgregadas.map(d => `${d.nombre} (${d.cantidad} unidad/es) - ${d.motivo}`).join(", ");
-  }
-
-  const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
-  const desc
-}
+});
