@@ -18,6 +18,8 @@ async function fetchConfig() {
     INVENTARIO_TABLE_ID = data.inventarioTable_;
 
     console.log("✅ Configuración cargada correctamente");
+    console.log("📦 BASE_ID:", BASE_ID);
+    console.log("📦 INVENTARIO_TABLE_ID:", INVENTARIO_TABLE_ID);
     
     // Cargar inventario al inicio
     await cargarInventarioCompleto();
@@ -32,7 +34,12 @@ async function fetchConfig() {
 // Cargar todo el inventario al inicio
 async function cargarInventarioCompleto() {
   try {
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_TABLE_ID}`;
+    // Basándome en tu imagen, el ID de la tabla es tblxyk6vtahtFlLVo
+    const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
+    
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}`;
+    console.log("🔍 Cargando inventario desde:", url);
+    
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${AIRTABLE_TOKEN}`,
@@ -40,20 +47,32 @@ async function cargarInventarioCompleto() {
     });
 
     const data = await response.json();
+    console.log("📦 Datos del inventario:", data);
     
     if (data.records) {
-      productosInventario = data.records.map(record => ({
-        id: record.id,
-        codigo: record.fields.Codigo || record.fields.codigo || '',
-        categoria: record.fields.Categoría || record.fields.Categoria || record.fields.categoria || 'Sin categoría',
-        precio: record.fields.Precio || record.fields.precio || 0,
-        stock: record.fields.Cantidad || record.fields.cantidad || record.fields.Stock || 0
-      }));
+      productosInventario = data.records.map(record => {
+        // Basándome en tu tabla: Código por categoría, Categoría, Inventario
+        const codigo = record.fields["Código por categoría"] || record.fields["Codigo por categoria"] || '';
+        const categoria = record.fields["Categoría"] || record.fields.Categoria || 'Sin categoría';
+        const inventario = record.fields["Inventario"] || 0;
+        
+        console.log(`📝 Producto: ${categoria}, Código: ${codigo}, Stock: ${inventario}`);
+        
+        return {
+          id: record.id,
+          codigo: codigo.toString().trim(),
+          categoria: categoria,
+          precio: 0, // No veo campo precio en tu tabla, se ingresará manualmente
+          stock: inventario
+        };
+      });
       
       console.log(`✅ ${productosInventario.length} productos cargados en memoria`);
+      console.log("📋 Productos disponibles:", productosInventario);
     }
   } catch (error) {
     console.error("❌ Error al cargar inventario:", error);
+    mostrarAlerta("error", "⚠️ Error al cargar inventario. Verifica la configuración.");
   }
 }
 
@@ -172,7 +191,8 @@ async function cargarAnfitriones() {
 // Cargar productos de inventario para devoluciones
 async function cargarProductosInventario() {
   try {
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_TABLE_ID}`;
+    const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}`;
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${AIRTABLE_TOKEN}`,
@@ -186,8 +206,8 @@ async function cargarProductosInventario() {
       data.records.forEach(record => {
         const option = document.createElement("option");
         option.value = record.id;
-        const nombre = record.fields.Categoría || record.fields.Categoria || record.fields.Nombre || "Sin nombre";
-        const cantidad = record.fields.Cantidad || record.fields.Stock || 0;
+        const nombre = record.fields.Categoría || record.fields.Categoria || "Sin nombre";
+        const cantidad = record.fields.Inventario || 0;
         option.textContent = `${nombre} (Stock: ${cantidad})`;
         option.dataset.record = JSON.stringify(record);
         select.appendChild(option);
@@ -214,11 +234,14 @@ window.cambiarTipoTransaccion = function(tipo) {
   calcularTotal();
 }
 
-// NUEVA FUNCIÓN: Procesar código escaneado de la pistola
+// FUNCIÓN MEJORADA: Procesar código escaneado de la pistola
 window.procesarCodigoProducto = function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
     const codigo = document.getElementById("codigoProducto").value.trim();
+    
+    console.log("🔍 Buscando código:", codigo);
+    console.log("📦 Productos en memoria:", productosInventario.length);
     
     if (codigo) {
       buscarYAgregarProductoPorCodigo(codigo);
@@ -228,20 +251,39 @@ window.procesarCodigoProducto = function(event) {
   }
 }
 
-// NUEVA FUNCIÓN: Buscar producto en el inventario por código
+// FUNCIÓN MEJORADA: Buscar producto en el inventario por código
 function buscarYAgregarProductoPorCodigo(codigo) {
-  const producto = productosInventario.find(p => 
-    p.codigo.toString().toLowerCase() === codigo.toLowerCase()
-  );
+  console.log("🔎 Buscando código exacto:", codigo);
+  
+  // Buscar por coincidencia exacta primero
+  let producto = productosInventario.find(p => {
+    const codigoProducto = p.codigo.toString().trim().toLowerCase();
+    const codigoBusqueda = codigo.toString().trim().toLowerCase();
+    console.log(`Comparando: "${codigoProducto}" === "${codigoBusqueda}"`);
+    return codigoProducto === codigoBusqueda;
+  });
+
+  // Si no encuentra, buscar por coincidencia parcial
+  if (!producto) {
+    console.log("🔎 Buscando coincidencia parcial...");
+    producto = productosInventario.find(p => 
+      p.codigo.toString().toLowerCase().includes(codigo.toLowerCase()) ||
+      codigo.toLowerCase().includes(p.codigo.toString().toLowerCase())
+    );
+  }
 
   if (producto) {
     // Producto encontrado
+    console.log("✅ Producto encontrado:", producto);
     agregarProductoDesdeInventario(producto);
-    mostrarAlerta("success", `✅ Producto agregado: ${producto.categoria}`);
+    mostrarAlerta("success", `✅ ${producto.categoria} - Stock: ${producto.stock}`);
   } else {
     // Producto no encontrado
-    mostrarAlerta("error", `❌ Código no encontrado: ${codigo}`);
-    // Opcionalmente agregar como producto manual
+    console.log("❌ Código no encontrado en inventario");
+    console.log("📋 Códigos disponibles:", productosInventario.map(p => p.codigo));
+    mostrarAlerta("error", `❌ Código "${codigo}" no encontrado`);
+    
+    // Agregar manualmente
     const agregar = confirm(`Código "${codigo}" no encontrado en inventario.\n¿Deseas agregarlo manualmente?`);
     if (agregar) {
       agregarProductoConCodigo(codigo);
@@ -252,18 +294,26 @@ function buscarYAgregarProductoPorCodigo(codigo) {
 // NUEVA FUNCIÓN: Agregar producto desde el inventario
 function agregarProductoDesdeInventario(producto) {
   const container = document.getElementById("productosLista");
+  
+  // Verificar si ya existe un producto inicial vacío y eliminarlo
+  const productosVacios = container.querySelectorAll('.producto-item');
+  productosVacios.forEach(item => {
+    const nombre = item.querySelector('.producto-nombre').value;
+    const precio = item.querySelector('.producto-precio').value;
+    if (!nombre && !precio) {
+      item.remove();
+    }
+  });
+  
   const productoHTML = `
     <div class="producto-item" data-producto-id="${producto.id}">
       <div class="form-group" style="margin: 0;">
         <label>Producto</label>
-        <input type="text" class="producto-nombre" value="${producto.categoria}" readonly style="background-color: #f0f0f0;">
+        <input type="text" class="producto-nombre" value="${producto.categoria}" readonly style="background-color: #e8f5e9; font-weight: 500;">
       </div>
       <div class="form-group" style="margin: 0;">
-        <label>Precio ($)</label>
-        <input type="number" class="producto-precio" value="${producto.precio}" min="0" onchange="calcularTotal()">
-      </div>
-      <div class="form-group" style="margin: 0;">
-        <label>Stock disponible: ${producto.stock}</label>
+        <label>Código: ${producto.codigo} | Stock: ${producto.stock}</label>
+        <input type="number" class="producto-precio" placeholder="Ingresa el precio" min="0" onchange="calcularTotal()" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -271,6 +321,13 @@ function agregarProductoDesdeInventario(producto) {
     </div>
   `;
   container.insertAdjacentHTML("beforeend", productoHTML);
+  
+  // Enfocar el campo de precio del último producto agregado
+  const ultimoPrecio = container.querySelector('.producto-item:last-child .producto-precio');
+  if (ultimoPrecio) {
+    setTimeout(() => ultimoPrecio.focus(), 100);
+  }
+  
   calcularTotal();
 }
 
@@ -279,7 +336,7 @@ window.agregarProductoConCodigo = function(codigo) {
   const productoHTML = `
     <div class="producto-item">
       <div class="form-group" style="margin: 0;">
-        <label>Producto</label>
+        <label>Producto (Manual)</label>
         <input type="text" class="producto-nombre" value="${codigo}">
       </div>
       <div class="form-group" style="margin: 0;">
@@ -325,7 +382,7 @@ window.agregarDevolucion = function() {
 
   const option = select.options[select.selectedIndex];
   const record = JSON.parse(option.dataset.record);
-  const nombreProducto = record.fields.Categoría || record.fields.Categoria || record.fields.Nombre || "Sin nombre";
+  const nombreProducto = record.fields.Categoría || record.fields.Categoria || "Sin nombre";
 
   const devolucion = {
     id: record.id,
@@ -417,6 +474,7 @@ window.buscarCliente = async function() {
       // Focus en el input de código para comenzar a escanear
       setTimeout(() => {
         document.getElementById("codigoProducto").focus();
+        mostrarAlerta("info", "📱 Escanea el código de barras o ingresa manualmente");
       }, 100);
     } else {
       mostrarClienteNoEncontrado();
@@ -564,7 +622,6 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Agrega notas solo si existen
       if (notas.trim()) {
         ventaData.fields["Notas"] = notas;
       }
@@ -599,7 +656,6 @@ window.registrarVenta = async function() {
         );
       }
     } else {
-      // Registrar devolución
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
@@ -608,7 +664,6 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Agrega notas solo si existen
       if (notas.trim()) {
         devolucionData.fields["Notas"] = notas;
       }
@@ -664,7 +719,7 @@ window.limpiarFormulario = function() {
     <div class="producto-item">
       <div class="form-group" style="margin: 0;">
         <label>Producto</label>
-        <input type="text" class="producto-nombre" placeholder="Nombre del producto">
+        <input type="text" class="producto-nombre" placeholder="Escanea código o ingresa nombre">
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
@@ -679,7 +734,6 @@ window.limpiarFormulario = function() {
   document.getElementById("devolucionesList").innerHTML = "";
   devolucionesAgregadas = [];
 
-  // Reiniciar a tipo venta
   const ventaRadio = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
   if (ventaRadio) {
     ventaRadio.checked = true;
@@ -732,6 +786,7 @@ fetchConfig().then((success) => {
   if (success) {
     calcularTotal();
     console.log("✅ Aplicación lista para usar");
+    console.log("📦 Productos cargados:", productosInventario.length);
   } else {
     mostrarAlerta("error", "❌ Error al cargar la configuración. Por favor, recarga la página.");
   }
