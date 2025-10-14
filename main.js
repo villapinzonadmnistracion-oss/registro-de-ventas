@@ -187,8 +187,6 @@ window.procesarCodigoProducto = function(event) {
     const codigo = document.getElementById("codigoProducto").value.trim();
     
     if (codigo) {
-      // Aquí puedes agregar lógica para buscar en la BD por código
-      // Por ahora, usamos el código como nombre del producto
       agregarProductoConCodigo(codigo);
       document.getElementById("codigoProducto").value = "";
       document.getElementById("codigoProducto").focus();
@@ -477,9 +475,13 @@ window.registrarVenta = async function() {
           Items: itemsTexto,
           "Total de venta": Math.round(totalFinal),
           Descuento: descuentoPorcentaje,
-          Notas: notas,
         },
       };
+
+      // Agrega notas solo si existen
+      if (notas.trim()) {
+        ventaData.fields["Notas"] = notas;
+      }
 
       console.log("Enviando venta:", ventaData);
 
@@ -517,9 +519,13 @@ window.registrarVenta = async function() {
           Cliente: [clienteSeleccionado.id],
           "Productos devueltos": itemsTexto,
           Tipo: "Devolución",
-          Notas: notas,
         },
       };
+
+      // Agrega notas solo si existen
+      if (notas.trim()) {
+        devolucionData.fields["Notas"] = notas;
+      }
 
       console.log("Enviando devolución:", devolucionData);
 
