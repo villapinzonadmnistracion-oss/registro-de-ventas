@@ -1,8 +1,9 @@
-let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
+let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID, PRODUCTOS_TABLE_ID;
 let clienteSeleccionado = null;
 let anfitrionSeleccionado = null;
 let tipoTransaccionActual = 'venta';
 let devolucionesAgregadas = [];
+let productosInventario = [];
 
 async function fetchConfig() {
   try {
@@ -15,6 +16,7 @@ async function fetchConfig() {
     VENTAS_TABLE_ID = data.ventasTable_;
     ANFITRIONES_TABLE_ID = data.anfitrionesTable_;
     INVENTARIO_TABLE_ID = data.inventarioTable_;
+    PRODUCTOS_TABLE_ID = data.productosTable_;
 
     console.log("✅ Configuración cargada correctamente");
     return true;
@@ -148,6 +150,7 @@ async function cargarProductosInventario() {
 
     const data = await response.json();
     const select = document.getElementById("productoDevolucion");
+    productosInventario = data.records || [];
 
     if (data.records) {
       data.records.forEach(record => {
@@ -162,6 +165,25 @@ async function cargarProductosInventario() {
     }
   } catch (error) {
     console.error("Error al cargar inventario:", error);
+  }
+}
+
+// Cargar todos los productos disponibles
+async function cargarProductosDisponibles() {
+  try {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${PRODUCTOS_TABLE_ID}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    productosInventario = data.records || [];
+
+    console.log("Productos cargados:", productosInventario);
+  } catch (error) {
+    console.error("Error al cargar productos:", error);
   }
 }
 
@@ -201,6 +223,7 @@ window.agregarProductoConCodigo = function(codigo) {
       <div class="form-group" style="margin: 0;">
         <label>Producto</label>
         <input type="text" class="producto-nombre" value="${codigo}" readonly>
+        <input type="hidden" class="producto-id" value="">
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
@@ -430,6 +453,7 @@ window.registrarVenta = async function() {
 
   let totalVenta = 0;
   let productosArray = [];
+  let productosIds = [];
   let itemsTexto = "";
 
   if (tipoTransaccionActual === 'venta') {
@@ -437,10 +461,14 @@ window.registrarVenta = async function() {
 
     for (let item of productosItems) {
       const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
+      const productoId = item.querySelector(".producto-id").value;
       const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
 
       if (precio > 0) {
         productosArray.push(nombre);
+        if (productoId) {
+          productosIds.push(productoId);
+        }
         itemsTexto += `${nombre} ($${precio}), `;
         totalVenta += precio;
       }
@@ -451,14 +479,12 @@ window.registrarVenta = async function() {
       return;
     }
   } else {
-    // Devoluciones
     itemsTexto = devolucionesAgregadas.map(d => `${d.nombre} (${d.cantidad} unidad/es) - ${d.motivo}`).join(", ");
   }
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
   const descuentoMonto = (totalVenta * descuentoPorcentaje) / 100;
   const totalFinal = totalVenta - descuentoMonto;
-
   const notas = document.getElementById("notas").value || "";
 
   mostrarLoading(true);
@@ -478,7 +504,10 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Agrega notas solo si existen
+      if (productosIds.length > 0) {
+        ventaData.fields["producto"] = productosIds;
+      }
+
       if (notas.trim()) {
         ventaData.fields["Notas"] = notas;
       }
@@ -513,7 +542,6 @@ window.registrarVenta = async function() {
         );
       }
     } else {
-      // Registrar devolución
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
@@ -522,7 +550,6 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Agrega notas solo si existen
       if (notas.trim()) {
         devolucionData.fields["Notas"] = notas;
       }
@@ -593,7 +620,6 @@ window.limpiarFormulario = function() {
   document.getElementById("devolucionesList").innerHTML = "";
   devolucionesAgregadas = [];
 
-  // Reiniciar a tipo venta
   document.querySelector('input[name="tipoTransaccion"][value="venta"]').checked = true;
   cambiarTipoTransaccion('venta');
 

@@ -7,9 +7,10 @@ export default async function handler(req, res) {
     const ventasTable = process.env.VENTAS_TABLE_ID;
     const anfitrionesTable = process.env.ANFITRIONES_TABLE_ID;
     const inventarioTable = process.env.INVENTARIO_TABLE_ID;
+    const productosTable = process.env.PRODUCTOS_TABLE_ID;
 
     // Valida que todas existan
-    if (!tokenAirtable || !clientesTable || !baseId || !ventasTable || !anfitrionesTable || !inventarioTable) {
+    if (!tokenAirtable || !clientesTable || !baseId || !ventasTable || !anfitrionesTable || !inventarioTable || !productosTable) {
       return res.status(500).json({
         error: "Una o más variables de entorno no están definidas",
         variables: {
@@ -18,7 +19,8 @@ export default async function handler(req, res) {
           baseId_: !!baseId,
           ventasTable_: !!ventasTable,
           anfitrionesTable_: !!anfitrionesTable,
-          inventarioTable_: !!inventarioTable
+          inventarioTable_: !!inventarioTable,
+          productosTable_: !!productosTable
         }
       });
     }
@@ -30,7 +32,8 @@ export default async function handler(req, res) {
       baseId_: baseId,
       ventasTable_: ventasTable,
       anfitrionesTable_: anfitrionesTable,
-      inventarioTable_: inventarioTable
+      inventarioTable_: inventarioTable,
+      productosTable_: productosTable
     });
     
   } catch (err) {
