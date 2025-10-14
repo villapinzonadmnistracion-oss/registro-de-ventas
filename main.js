@@ -47,28 +47,35 @@ async function cargarInventarioCompleto() {
     });
 
     const data = await response.json();
-    console.log("📦 Datos del inventario:", data);
+    console.log("📦 Datos completos del inventario:", data);
     
     if (data.records) {
       productosInventario = data.records.map(record => {
-        // Basándome en tu tabla: Código por categoría, Categoría, Inventario
-        const codigo = record.fields["Código por categoría"] || record.fields["Codigo por categoria"] || '';
+        // Obtener el código y limpiarlo de espacios y caracteres especiales
+        let codigo = record.fields["Código por categoría"] || 
+                     record.fields["Codigo por categoria"] || 
+                     record.fields["codigo por categoria"] || '';
+        
+        // Limpiar el código: quitar espacios, saltos de línea, etc.
+        codigo = codigo.toString().replace(/\s+/g, '').trim();
+        
         const categoria = record.fields["Categoría"] || record.fields.Categoria || 'Sin categoría';
         const inventario = record.fields["Inventario"] || 0;
         
-        console.log(`📝 Producto: ${categoria}, Código: ${codigo}, Stock: ${inventario}`);
+        console.log(`📝 Cargado - Código: "${codigo}" | Categoría: ${categoria} | Stock: ${inventario}`);
         
         return {
           id: record.id,
-          codigo: codigo.toString().trim(),
+          codigo: codigo,
           categoria: categoria,
-          precio: 0, // No veo campo precio en tu tabla, se ingresará manualmente
-          stock: inventario
+          precio: 0,
+          stock: inventario,
+          recordCompleto: record
         };
       });
       
       console.log(`✅ ${productosInventario.length} productos cargados en memoria`);
-      console.log("📋 Productos disponibles:", productosInventario);
+      console.log("📋 Lista de códigos:", productosInventario.map(p => `"${p.codigo}"`).join(", "));
     }
   } catch (error) {
     console.error("❌ Error al cargar inventario:", error);
@@ -252,42 +259,53 @@ window.procesarCodigoProducto = function(event) {
 }
 
 // FUNCIÓN MEJORADA: Buscar producto en el inventario por código
-function buscarYAgregarProductoPorCodigo(codigo) {
-  console.log("🔎 Buscando código exacto:", codigo);
+function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
+  // Limpiar el código escaneado de espacios y caracteres especiales
+  const codigoLimpio = codigoEscaneado.replace(/\s+/g, '').trim();
   
-  // Buscar por coincidencia exacta primero
+  console.log("🔎 Código escaneado original:", codigoEscaneado);
+  console.log("🔎 Código limpio para buscar:", codigoLimpio);
+  console.log("📦 Total productos en memoria:", productosInventario.length);
+  
+  // Buscar por coincidencia exacta
   let producto = productosInventario.find(p => {
-    const codigoProducto = p.codigo.toString().trim().toLowerCase();
-    const codigoBusqueda = codigo.toString().trim().toLowerCase();
-    console.log(`Comparando: "${codigoProducto}" === "${codigoBusqueda}"`);
-    return codigoProducto === codigoBusqueda;
+    const match = p.codigo === codigoLimpio;
+    console.log(`  Comparando: "${p.codigo}" === "${codigoLimpio}" → ${match}`);
+    return match;
   });
 
-  // Si no encuentra, buscar por coincidencia parcial
+  // Si no encuentra, intentar búsqueda más flexible
   if (!producto) {
-    console.log("🔎 Buscando coincidencia parcial...");
-    producto = productosInventario.find(p => 
-      p.codigo.toString().toLowerCase().includes(codigo.toLowerCase()) ||
-      codigo.toLowerCase().includes(p.codigo.toString().toLowerCase())
-    );
+    console.log("🔎 No encontrado con búsqueda exacta, intentando búsqueda flexible...");
+    producto = productosInventario.find(p => {
+      const codigoProducto = p.codigo.toLowerCase();
+      const codigoBusqueda = codigoLimpio.toLowerCase();
+      return codigoProducto.includes(codigoBusqueda) || codigoBusqueda.includes(codigoProducto);
+    });
   }
 
   if (producto) {
     // Producto encontrado
     console.log("✅ Producto encontrado:", producto);
     agregarProductoDesdeInventario(producto);
-    mostrarAlerta("success", `✅ ${producto.categoria} - Stock: ${producto.stock}`);
+    mostrarAlerta("success", `✅ ${producto.categoria} agregado - Stock: ${producto.stock}`);
   } else {
     // Producto no encontrado
-    console.log("❌ Código no encontrado en inventario");
-    console.log("📋 Códigos disponibles:", productosInventario.map(p => p.codigo));
-    mostrarAlerta("error", `❌ Código "${codigo}" no encontrado`);
+    console.log("❌ Producto NO encontrado");
+    console.log("📋 Códigos disponibles en inventario:");
+    productosInventario.forEach(p => {
+      console.log(`   - "${p.codigo}" (${p.categoria})`);
+    });
     
-    // Agregar manualmente
-    const agregar = confirm(`Código "${codigo}" no encontrado en inventario.\n¿Deseas agregarlo manualmente?`);
-    if (agregar) {
-      agregarProductoConCodigo(codigo);
-    }
+    mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado en inventario`);
+    
+    // Preguntar si desea agregar manualmente
+    setTimeout(() => {
+      const agregar = confirm(`Código "${codigoLimpio}" no encontrado en inventario.\n¿Deseas agregarlo manualmente?`);
+      if (agregar) {
+        agregarProductoConCodigo(codigoLimpio);
+      }
+    }, 100);
   }
 }
 
