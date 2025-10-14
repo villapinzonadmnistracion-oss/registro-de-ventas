@@ -3,6 +3,7 @@ let clienteSeleccionado = null;
 let anfitrionSeleccionado = null;
 let tipoTransaccionActual = 'venta';
 let devolucionesAgregadas = [];
+let productosInventario = []; // Cache de productos
 
 async function fetchConfig() {
   try {
@@ -17,10 +18,42 @@ async function fetchConfig() {
     INVENTARIO_TABLE_ID = data.inventarioTable_;
 
     console.log("✅ Configuración cargada correctamente");
+    
+    // Cargar inventario al inicio
+    await cargarInventarioCompleto();
+    
     return true;
   } catch (error) {
     console.error("❌ Error al cargar configuración:", error);
     return false;
+  }
+}
+
+// Cargar todo el inventario al inicio
+async function cargarInventarioCompleto() {
+  try {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_TABLE_ID}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    
+    if (data.records) {
+      productosInventario = data.records.map(record => ({
+        id: record.id,
+        codigo: record.fields.Codigo || record.fields.codigo || '',
+        categoria: record.fields.Categoría || record.fields.Categoria || record.fields.categoria || 'Sin categoría',
+        precio: record.fields.Precio || record.fields.precio || 0,
+        stock: record.fields.Cantidad || record.fields.cantidad || record.fields.Stock || 0
+      }));
+      
+      console.log(`✅ ${productosInventario.length} productos cargados en memoria`);
+    }
+  } catch (error) {
+    console.error("❌ Error al cargar inventario:", error);
   }
 }
 
@@ -153,8 +186,8 @@ async function cargarProductosInventario() {
       data.records.forEach(record => {
         const option = document.createElement("option");
         option.value = record.id;
-        const nombre = record.fields.Nombre || record.fields.Producto || "Sin nombre";
-        const cantidad = record.fields.Cantidad || 0;
+        const nombre = record.fields.Categoría || record.fields.Categoria || record.fields.Nombre || "Sin nombre";
+        const cantidad = record.fields.Cantidad || record.fields.Stock || 0;
         option.textContent = `${nombre} (Stock: ${cantidad})`;
         option.dataset.record = JSON.stringify(record);
         select.appendChild(option);
@@ -181,17 +214,64 @@ window.cambiarTipoTransaccion = function(tipo) {
   calcularTotal();
 }
 
+// NUEVA FUNCIÓN: Procesar código escaneado de la pistola
 window.procesarCodigoProducto = function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
     const codigo = document.getElementById("codigoProducto").value.trim();
     
     if (codigo) {
-      agregarProductoConCodigo(codigo);
+      buscarYAgregarProductoPorCodigo(codigo);
       document.getElementById("codigoProducto").value = "";
       document.getElementById("codigoProducto").focus();
     }
   }
+}
+
+// NUEVA FUNCIÓN: Buscar producto en el inventario por código
+function buscarYAgregarProductoPorCodigo(codigo) {
+  const producto = productosInventario.find(p => 
+    p.codigo.toString().toLowerCase() === codigo.toLowerCase()
+  );
+
+  if (producto) {
+    // Producto encontrado
+    agregarProductoDesdeInventario(producto);
+    mostrarAlerta("success", `✅ Producto agregado: ${producto.categoria}`);
+  } else {
+    // Producto no encontrado
+    mostrarAlerta("error", `❌ Código no encontrado: ${codigo}`);
+    // Opcionalmente agregar como producto manual
+    const agregar = confirm(`Código "${codigo}" no encontrado en inventario.\n¿Deseas agregarlo manualmente?`);
+    if (agregar) {
+      agregarProductoConCodigo(codigo);
+    }
+  }
+}
+
+// NUEVA FUNCIÓN: Agregar producto desde el inventario
+function agregarProductoDesdeInventario(producto) {
+  const container = document.getElementById("productosLista");
+  const productoHTML = `
+    <div class="producto-item" data-producto-id="${producto.id}">
+      <div class="form-group" style="margin: 0;">
+        <label>Producto</label>
+        <input type="text" class="producto-nombre" value="${producto.categoria}" readonly style="background-color: #f0f0f0;">
+      </div>
+      <div class="form-group" style="margin: 0;">
+        <label>Precio ($)</label>
+        <input type="number" class="producto-precio" value="${producto.precio}" min="0" onchange="calcularTotal()">
+      </div>
+      <div class="form-group" style="margin: 0;">
+        <label>Stock disponible: ${producto.stock}</label>
+      </div>
+      <div>
+        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", productoHTML);
+  calcularTotal();
 }
 
 window.agregarProductoConCodigo = function(codigo) {
@@ -200,7 +280,7 @@ window.agregarProductoConCodigo = function(codigo) {
     <div class="producto-item">
       <div class="form-group" style="margin: 0;">
         <label>Producto</label>
-        <input type="text" class="producto-nombre" value="${codigo}" readonly>
+        <input type="text" class="producto-nombre" value="${codigo}">
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
@@ -245,7 +325,7 @@ window.agregarDevolucion = function() {
 
   const option = select.options[select.selectedIndex];
   const record = JSON.parse(option.dataset.record);
-  const nombreProducto = record.fields.Nombre || record.fields.Producto || "Sin nombre";
+  const nombreProducto = record.fields.Categoría || record.fields.Categoria || record.fields.Nombre || "Sin nombre";
 
   const devolucion = {
     id: record.id,
@@ -333,6 +413,11 @@ window.buscarCliente = async function() {
       document.getElementById("productosContainer").style.display = "block";
       document.getElementById("anfitrionContainer").style.display = "block";
       cargarAnfitriones();
+      
+      // Focus en el input de código para comenzar a escanear
+      setTimeout(() => {
+        document.getElementById("codigoProducto").focus();
+      }, 100);
     } else {
       mostrarClienteNoEncontrado();
     }
