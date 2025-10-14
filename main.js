@@ -1,5 +1,8 @@
-let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID;
+let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
 let clienteSeleccionado = null;
+let anfitrionSeleccionado = null;
+let tipoTransaccionActual = 'venta';
+let devolucionesAgregadas = [];
 
 async function fetchConfig() {
   try {
@@ -10,6 +13,8 @@ async function fetchConfig() {
     BASE_ID = data.baseId_;
     CLIENTES_TABLE_ID = data.clientesTable_;
     VENTAS_TABLE_ID = data.ventasTable_;
+    ANFITRIONES_TABLE_ID = data.anfitrionesTable_;
+    INVENTARIO_TABLE_ID = data.inventarioTable_;
 
     console.log("✅ Configuración cargada correctamente");
     return true;
@@ -26,10 +31,8 @@ function cleanRut(rut) {
 
 // Función para formatear RUT chileno
 function formatRut(value) {
-  // Remover todo excepto números y K
   value = value.replace(/[^0-9kK]/g, '').toUpperCase();
   
-  // Limitar a 9 caracteres (8-9 dígitos + DV)
   if (value.length > 9) {
     value = value.substring(0, 9);
   }
@@ -38,11 +41,9 @@ function formatRut(value) {
     return value;
   }
   
-  // Separar dígito verificador
   const dv = value.slice(-1);
   let rut = value.slice(0, -1);
   
-  // Formatear con puntos
   let formatted = '';
   let counter = 0;
   for (let i = rut.length - 1; i >= 0; i--) {
@@ -57,36 +58,28 @@ function formatRut(value) {
   return formatted + '-' + dv;
 }
 
-// Formatear RUT chileno automáticamente
 window.formatearRUT = function(input) {
   const cursorPosition = input.selectionStart;
   const oldValue = input.value;
   const oldLength = oldValue.length;
   
-  // Formatear el valor
   input.value = formatRut(input.value);
   
-  // Ajustar posición del cursor
   const newLength = input.value.length;
   const diff = newLength - oldLength;
   input.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
 }
 
-// Función para validar formato de RUT chileno
 window.validarRUT = function(rut) {
-  // Limpiar RUT
   rut = cleanRut(rut);
   
-  // Debe tener entre 8 y 9 caracteres
   if (rut.length < 8 || rut.length > 9) {
     return false;
   }
   
-  // Separar cuerpo y dígito verificador
   const cuerpo = rut.slice(0, -1);
   const dv = rut.slice(-1);
   
-  // Calcular dígito verificador
   let suma = 0;
   let multiplo = 2;
   
@@ -110,7 +103,6 @@ window.validarRUT = function(rut) {
   return dv === dvCalculado;
 }
 
-// Función para buscar al presionar Enter
 window.buscarClienteEnter = function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
@@ -118,7 +110,177 @@ window.buscarClienteEnter = function(event) {
   }
 }
 
-// Buscar cliente por RUT
+// Cargar anfitriones
+async function cargarAnfitriones() {
+  try {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${ANFITRIONES_TABLE_ID}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    const select = document.getElementById("anfitrionSelect");
+
+    if (data.records) {
+      data.records.forEach(record => {
+        const option = document.createElement("option");
+        option.value = record.id;
+        option.textContent = record.fields.Nombre || record.fields.name || "Sin nombre";
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error("Error al cargar anfitriones:", error);
+  }
+}
+
+// Cargar productos de inventario para devoluciones
+async function cargarProductosInventario() {
+  try {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_TABLE_ID}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    const select = document.getElementById("productoDevolucion");
+
+    if (data.records) {
+      data.records.forEach(record => {
+        const option = document.createElement("option");
+        option.value = record.id;
+        const nombre = record.fields.Nombre || record.fields.Producto || "Sin nombre";
+        const cantidad = record.fields.Cantidad || 0;
+        option.textContent = `${nombre} (Stock: ${cantidad})`;
+        option.dataset.record = JSON.stringify(record);
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error("Error al cargar inventario:", error);
+  }
+}
+
+window.cambiarTipoTransaccion = function(tipo) {
+  tipoTransaccionActual = tipo;
+  const ventasSection = document.getElementById("ventasSection");
+  const devolucionesSection = document.getElementById("devolucionesSection");
+
+  if (tipo === 'venta') {
+    ventasSection.style.display = "block";
+    devolucionesSection.style.display = "none";
+  } else {
+    ventasSection.style.display = "none";
+    devolucionesSection.style.display = "block";
+    cargarProductosInventario();
+  }
+  calcularTotal();
+}
+
+window.procesarCodigoProducto = function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const codigo = document.getElementById("codigoProducto").value.trim();
+    
+    if (codigo) {
+      // Aquí puedes agregar lógica para buscar en la BD por código
+      // Por ahora, usamos el código como nombre del producto
+      agregarProductoConCodigo(codigo);
+      document.getElementById("codigoProducto").value = "";
+      document.getElementById("codigoProducto").focus();
+    }
+  }
+}
+
+window.agregarProductoConCodigo = function(codigo) {
+  const container = document.getElementById("productosLista");
+  const productoHTML = `
+    <div class="producto-item">
+      <div class="form-group" style="margin: 0;">
+        <label>Producto</label>
+        <input type="text" class="producto-nombre" value="${codigo}" readonly>
+      </div>
+      <div class="form-group" style="margin: 0;">
+        <label>Precio ($)</label>
+        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()" autofocus>
+      </div>
+      <div>
+        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", productoHTML);
+}
+
+window.agregarProductoManual = function() {
+  const select = document.getElementById("selectProductoManual");
+  if (select.value) {
+    agregarProductoConCodigo(select.value);
+    select.value = "";
+  }
+}
+
+window.cargarDetallesDevolucion = function() {
+  const select = document.getElementById("productoDevolucion");
+  const detalles = document.getElementById("detallesDevolucion");
+  
+  if (select.value) {
+    detalles.style.display = "block";
+  } else {
+    detalles.style.display = "none";
+  }
+}
+
+window.agregarDevolucion = function() {
+  const select = document.getElementById("productoDevolucion");
+  const cantidad = parseInt(document.getElementById("cantidadDevolucion").value) || 1;
+  const motivo = document.getElementById("motivoDevolucion").value;
+
+  if (!select.value || !motivo) {
+    mostrarAlerta("error", "❌ Debes seleccionar producto y motivo");
+    return;
+  }
+
+  const option = select.options[select.selectedIndex];
+  const record = JSON.parse(option.dataset.record);
+  const nombreProducto = record.fields.Nombre || record.fields.Producto || "Sin nombre";
+
+  const devolucion = {
+    id: record.id,
+    nombre: nombreProducto,
+    cantidad: cantidad,
+    motivo: motivo
+  };
+
+  devolucionesAgregadas.push(devolucion);
+
+  const container = document.getElementById("devolucionesList");
+  const itemHTML = `
+    <div class="devolucion-item" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0;">
+      <strong>${nombreProducto}</strong> - Cantidad: ${cantidad} - Motivo: ${motivo}
+      <button class="btn btn-danger" onclick="eliminarDevolucion('${record.id}')" style="margin-left: 10px; padding: 5px 10px;">🗑️</button>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", itemHTML);
+
+  select.value = "";
+  document.getElementById("detallesDevolucion").style.display = "none";
+  calcularTotal();
+}
+
+window.eliminarDevolucion = function(id) {
+  devolucionesAgregadas = devolucionesAgregadas.filter(d => d.id !== id);
+  document.querySelectorAll(".devolucion-item").forEach(item => {
+    if (item.textContent.includes(devolucionesAgregadas.map(d => d.nombre).join(""))) return;
+    item.remove();
+  });
+  calcularTotal();
+}
+
 window.buscarCliente = async function() {
   const input = document.getElementById("rutCliente");
   const rut = input.value.trim();
@@ -128,7 +290,6 @@ window.buscarCliente = async function() {
     return;
   }
 
-  // Limpiar y validar formato del RUT
   const rutLimpio = cleanRut(rut);
   
   if (rutLimpio.length < 8) {
@@ -153,11 +314,9 @@ window.buscarCliente = async function() {
   ocultarAlertas();
 
   try {
-    // Buscar con múltiples formatos posibles
     const rutLimpioEncoded = encodeURIComponent(rutLimpio);
     const rutFormatEncoded = encodeURIComponent(rut);
     
-    // Buscar por RUT limpio (sin formato) O con formato
     const url = `https://api.airtable.com/v0/${BASE_ID}/${CLIENTES_TABLE_ID}?filterByFormula=OR({Rut.}='${rutLimpioEncoded}',{Rut.}='${rutFormatEncoded}')`;
 
     const response = await fetch(url, {
@@ -174,6 +333,8 @@ window.buscarCliente = async function() {
       clienteSeleccionado = data.records[0];
       mostrarInfoCliente(clienteSeleccionado);
       document.getElementById("productosContainer").style.display = "block";
+      document.getElementById("anfitrionContainer").style.display = "block";
+      cargarAnfitriones();
     } else {
       mostrarClienteNoEncontrado();
     }
@@ -198,6 +359,7 @@ function mostrarClienteNoEncontrado() {
   document.getElementById("clienteInfo").classList.remove("show");
   document.getElementById("clienteNoEncontrado").classList.add("show");
   document.getElementById("productosContainer").style.display = "none";
+  document.getElementById("anfitrionContainer").style.display = "none";
 }
 
 window.agregarProducto = function() {
@@ -206,25 +368,7 @@ window.agregarProducto = function() {
     <div class="producto-item">
       <div class="form-group" style="margin: 0;">
         <label>Producto</label>
-        <select class="producto-select">
-          <option value="">Seleccionar...</option>
-          <option value="Polera">Polera</option>
-          <option value="Polerón">Polerón</option>
-          <option value="Parka">Parka</option>
-          <option value="Falda">Falda</option>
-          <option value="Bluza">Bluza</option>
-          <option value="Pantalón">Pantalón</option>
-          <option value="Jean">Jean</option>
-          <option value="Buzo">Buzo</option>
-          <option value="Abrigo">Abrigo</option>
-          <option value="Polar">Polar</option>
-          <option value="Suéter">Suéter</option>
-          <option value="Chaleco">Chaleco</option>
-          <option value="Vestido">Vestido</option>
-          <option value="Short">Short</option>
-          <option value="Ropa de cama">Ropa de cama</option>
-          <option value="Otro">Otro</option>
-        </select>
+        <input type="text" class="producto-nombre" placeholder="Nombre del producto">
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
@@ -258,93 +402,102 @@ window.calcularTotal = function() {
   });
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
-  const descuentoMonto = (subtotal * descuentoPorcentaje) / 100;
-  const total = subtotal - descuentoMonto;
-
-  document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
-  document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
-  document.getElementById("total").textContent = "$" + total.toLocaleString("es-CL");
-}
-
-window.registrarVenta = async function() {
-  if (!clienteSeleccionado) {
-    mostrarAlerta("error", "❌ Primero debes buscar y seleccionar un cliente");
-    return;
-  }
-
-  if (!AIRTABLE_TOKEN || !BASE_ID) {
-    mostrarAlerta("error", "❌ Error: Configuración no cargada. Recarga la página.");
-    return;
-  }
-
-  const productosItems = document.querySelectorAll(".producto-item");
-  const productos = [];
-  let totalVenta = 0;
-
-  for (let item of productosItems) {
-    const select = item.querySelector(".producto-select");
-    const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
-
-    if (select.value && precio > 0) {
-      productos.push(select.value);
-      totalVenta += precio;
-    }
-  }
-
-  if (productos.length === 0) {
-    mostrarAlerta("error", "❌ Debes agregar al menos un producto con precio");
-    return;
-  }
-
-  const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
   const descuentoMonto = (totalVenta * descuentoPorcentaje) / 100;
   totalVenta = totalVenta - descuentoMonto;
+
+  const notas = document.getElementById("notas").value || "";
 
   mostrarLoading(true);
   ocultarAlertas();
 
   try {
-    const productosString = productos.join(", ");
-    const ventaData = {
-      fields: {
-        Cliente: [clienteSeleccionado.id],
-        Items: productosString,
-        "Total de venta": Math.round(totalVenta),
-      },
-    };
+    itemsTexto = itemsTexto.replace(/,\s*$/, "");
 
-    console.log("Enviando venta:", ventaData);
-
-    const response = await fetch(
-      `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-          "Content-Type": "application/json",
+    if (tipoTransaccionActual === 'venta') {
+      const ventaData = {
+        fields: {
+          Cliente: [clienteSeleccionado.id],
+          Anfitrión: [anfitrionSeleccionado],
+          Items: itemsTexto,
+          "Total de venta": Math.round(totalVenta),
+          Descuento: descuentoPorcentaje,
+          Notas: notas,
         },
-        body: JSON.stringify(ventaData),
-      }
-    );
+      };
 
-    const result = await response.json();
-    mostrarLoading(false);
+      console.log("Enviando venta:", ventaData);
 
-    if (response.ok) {
-      mostrarAlerta("success", "✅ ¡Venta registrada exitosamente!");
-      setTimeout(() => {
-        limpiarFormulario();
-      }, 2000);
-    } else {
-      console.error("Error de Airtable:", result);
-      mostrarAlerta(
-        "error",
-        "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
+      const response = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(ventaData),
+        }
       );
+
+      const result = await response.json();
+      mostrarLoading(false);
+
+      if (response.ok) {
+        mostrarAlerta("success", "✅ ¡Venta registrada exitosamente!");
+        setTimeout(() => {
+          limpiarFormulario();
+        }, 2000);
+      } else {
+        console.error("Error de Airtable:", result);
+        mostrarAlerta(
+          "error",
+          "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
+        );
+      }
+    } else {
+      // Registrar devolución
+      const devolucionData = {
+        fields: {
+          Cliente: [clienteSeleccionado.id],
+          "Productos devueltos": itemsTexto,
+          Tipo: "Devolución",
+          Notas: notas,
+        },
+      };
+
+      console.log("Enviando devolución:", devolucionData);
+
+      const response = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(devolucionData),
+        }
+      );
+
+      const result = await response.json();
+      mostrarLoading(false);
+
+      if (response.ok) {
+        mostrarAlerta("success", "✅ ¡Devolución registrada exitosamente!");
+        setTimeout(() => {
+          limpiarFormulario();
+        }, 2000);
+      } else {
+        console.error("Error de Airtable:", result);
+        mostrarAlerta(
+          "error",
+          "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
+        );
+      }
     }
   } catch (error) {
     mostrarLoading(false);
-    mostrarAlerta("error", "❌ Error al registrar venta: " + error.message);
+    mostrarAlerta("error", "❌ Error al registrar: " + error.message);
     console.error("Error:", error);
   }
 }
@@ -352,34 +505,18 @@ window.registrarVenta = async function() {
 window.limpiarFormulario = function() {
   document.getElementById("rutCliente").value = "";
   document.getElementById("descuento").value = "0";
+  document.getElementById("notas").value = "";
   document.getElementById("clienteInfo").classList.remove("show");
   document.getElementById("clienteNoEncontrado").classList.remove("show");
   document.getElementById("productosContainer").style.display = "none";
+  document.getElementById("anfitrionContainer").style.display = "none";
 
   const container = document.getElementById("productosLista");
   container.innerHTML = `
     <div class="producto-item">
       <div class="form-group" style="margin: 0;">
         <label>Producto</label>
-        <select class="producto-select">
-          <option value="">Seleccionar...</option>
-          <option value="Polera">Polera</option>
-          <option value="Polerón">Polerón</option>
-          <option value="Parka">Parka</option>
-          <option value="Falda">Falda</option>
-          <option value="Bluza">Bluza</option>
-          <option value="Pantalón">Pantalón</option>
-          <option value="Jean">Jean</option>
-          <option value="Buzo">Buzo</option>
-          <option value="Abrigo">Abrigo</option>
-          <option value="Polar">Polar</option>
-          <option value="Suéter">Suéter</option>
-          <option value="Chaleco">Chaleco</option>
-          <option value="Vestido">Vestido</option>
-          <option value="Short">Short</option>
-          <option value="Ropa de cama">Ropa de cama</option>
-          <option value="Otro">Otro</option>
-        </select>
+        <input type="text" class="producto-nombre" placeholder="Nombre del producto" readonly>
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
@@ -391,9 +528,18 @@ window.limpiarFormulario = function() {
     </div>
   `;
 
+  document.getElementById("devolucionesList").innerHTML = "";
+  devolucionesAgregadas = [];
+
+  // Reiniciar a tipo venta
+  document.querySelector('input[name="tipoTransaccion"][value="venta"]').checked = true;
+  cambiarTipoTransaccion('venta');
+
   calcularTotal();
   clienteSeleccionado = null;
+  anfitrionSeleccionado = null;
   ocultarAlertas();
+  document.getElementById("rutCliente").focus();
 }
 
 function mostrarAlerta(tipo, mensaje) {
@@ -438,4 +584,61 @@ fetchConfig().then((success) => {
   } else {
     mostrarAlerta("error", "❌ Error al cargar la configuración. Por favor, recarga la página.");
   }
-});
+});uentoMonto = (subtotal * descuentoPorcentaje) / 100;
+  const total = subtotal - descuentoMonto;
+
+  document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
+  document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
+  document.getElementById("total").textContent = "$" + total.toLocaleString("es-CL");
+}
+
+window.registrarVenta = async function() {
+  if (!clienteSeleccionado) {
+    mostrarAlerta("error", "❌ Primero debes buscar y seleccionar un cliente");
+    return;
+  }
+
+  if (tipoTransaccionActual === 'venta') {
+    const anfitrionSelect = document.getElementById("anfitrionSelect");
+    if (!anfitrionSelect.value) {
+      mostrarAlerta("error", "❌ Debes seleccionar un anfitrión");
+      return;
+    }
+    anfitrionSeleccionado = anfitrionSelect.value;
+  }
+
+  if (!AIRTABLE_TOKEN || !BASE_ID) {
+    mostrarAlerta("error", "❌ Error: Configuración no cargada. Recarga la página.");
+    return;
+  }
+
+  let totalVenta = 0;
+  let productosArray = [];
+  let itemsTexto = "";
+
+  if (tipoTransaccionActual === 'venta') {
+    const productosItems = document.querySelectorAll(".producto-item");
+
+    for (let item of productosItems) {
+      const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
+      const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
+
+      if (precio > 0) {
+        productosArray.push(nombre);
+        itemsTexto += `${nombre} ($${precio}), `;
+        totalVenta += precio;
+      }
+    }
+
+    if (productosArray.length === 0) {
+      mostrarAlerta("error", "❌ Debes agregar al menos un producto con precio");
+      return;
+    }
+  } else {
+    // Devoluciones
+    itemsTexto = devolucionesAgregadas.map(d => `${d.nombre} (${d.cantidad} unidad/es) - ${d.motivo}`).join(", ");
+  }
+
+  const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
+  const desc
+}

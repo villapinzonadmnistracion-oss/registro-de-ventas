@@ -65,61 +65,143 @@
           <p style="margin-top: 10px;">Procesando...</p>
         </div>
 
+        <!-- Selector de Anfitrión -->
+        <div id="anfitrionContainer" style="display: none;">
+          <div class="form-group">
+            <label for="anfitrionSelect">👤 Anfitrión (Vendedor)</label>
+            <select id="anfitrionSelect">
+              <option value="">Seleccionar anfitrión...</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Productos -->
         <div id="productosContainer" style="display: none;">
           <h3 style="margin: 30px 0 15px 0;">🛍️ Productos</h3>
-          <div class="productos-section" id="productosLista">
-            <div class="producto-item">
-              <div class="form-group" style="margin: 0;">
-                <label>Producto</label>
-                <select class="producto-select">
-                  <option value="">Seleccionar...</option>
-                  <option value="Polera">Polera</option>
-                  <option value="Polerón">Polerón</option>
-                  <option value="Parka">Parka</option>
-                  <option value="Falda">Falda</option>
-                  <option value="bluza">bluza</option>
-                  <option value="Pantalón">Pantalón</option>
-                  <option value="Jean">Jean</option>
-                  <option value="Buzo">Buzo</option>
-                  <option value="Abrigo">Abrigo</option>
-                  <option value="Polar">Polar</option>
-                  <option value="Suéter">Suéter</option>
-                  <option value="Chaleco">Chaleco</option>
-                  <option value="Vestido">Vestido</option>
-                  <option value="Short">Short</option>
-                  <option value="Ropa de cama">Ropa de cama</option>
+          
+          <!-- Opción: Venta o Devolución -->
+          <div class="form-group">
+            <label>Tipo de Transacción</label>
+            <div style="display: flex; gap: 10px;">
+              <label style="display: flex; align-items: center; margin: 0;">
+                <input type="radio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')">
+                <span style="margin-left: 5px;">📤 Venta</span>
+              </label>
+              <label style="display: flex; align-items: center; margin: 0;">
+                <input type="radio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')">
+                <span style="margin-left: 5px;">📥 Devolución</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Sección de Ventas -->
+          <div id="ventasSection">
+            <h4>Agregar Productos (Escanear o Manual)</h4>
+            <div class="form-group">
+              <label for="codigoProducto">Código de Barras / Código Producto</label>
+              <input
+                type="text"
+                id="codigoProducto"
+                placeholder="Escanear o escribir código..."
+                autofocus
+                onkeypress="procesarCodigoProducto(event)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="selectProductoManual">O seleccionar manualmente:</label>
+              <select id="selectProductoManual" onchange="agregarProductoManual()">
+                <option value="">Seleccionar...</option>
+                <option value="Polera">Polera</option>
+                <option value="Polerón">Polerón</option>
+                <option value="Parka">Parka</option>
+                <option value="Falda">Falda</option>
+                <option value="Bluza">Bluza</option>
+                <option value="Pantalón">Pantalón</option>
+                <option value="Jean">Jean</option>
+                <option value="Buzo">Buzo</option>
+                <option value="Abrigo">Abrigo</option>
+                <option value="Polar">Polar</option>
+                <option value="Suéter">Suéter</option>
+                <option value="Chaleco">Chaleco</option>
+                <option value="Vestido">Vestido</option>
+                <option value="Short">Short</option>
+                <option value="Ropa de cama">Ropa de cama</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <div class="productos-section" id="productosLista">
+              <div class="producto-item">
+                <div class="form-group" style="margin: 0;">
+                  <label>Producto</label>
+                  <input type="text" class="producto-nombre" placeholder="Nombre producto" readonly>
+                </div>
+                <div class="form-group" style="margin: 0;">
+                  <label>Precio ($)</label>
+                  <input
+                    type="number"
+                    class="producto-precio"
+                    placeholder="0"
+                    min="0"
+                    onchange="calcularTotal()"
+                  />
+                </div>
+                <div>
+                  <button
+                    class="btn btn-danger"
+                    onclick="eliminarProducto(this)"
+                    style="margin-top: 24px;"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button
+              class="btn btn-secondary"
+              onclick="agregarProducto()"
+              style="margin-top: 10px;"
+            >
+              ➕ Agregar Producto Manual
+            </button>
+          </div>
+
+          <!-- Sección de Devoluciones -->
+          <div id="devolucionesSection" style="display: none;">
+            <h4>Productos en Devolución</h4>
+            <div class="form-group">
+              <label for="productoDevolucion">Producto a Devolver</label>
+              <select id="productoDevolucion" onchange="cargarDetallesDevolucion()">
+                <option value="">Seleccionar producto...</option>
+              </select>
+            </div>
+
+            <div id="detallesDevolucion" style="display: none;">
+              <div class="form-group">
+                <label>Cantidad:</label>
+                <input type="number" id="cantidadDevolucion" min="1" value="1" placeholder="1">
+              </div>
+              <div class="form-group">
+                <label>Motivo de Devolución:</label>
+                <select id="motivoDevolucion">
+                  <option value="">Seleccionar motivo...</option>
+                  <option value="Defecto">Defecto del producto</option>
+                  <option value="No es lo que esperaba">No es lo que esperaba</option>
+                  <option value="Cambio de opinión">Cambio de opinión</option>
+                  <option value="Talla incorrecta">Talla incorrecta</option>
                   <option value="Otro">Otro</option>
                 </select>
               </div>
-              <div class="form-group" style="margin: 0;">
-                <label>Precio ($)</label>
-                <input
-                  type="number"
-                  class="producto-precio"
-                  placeholder="0"
-                  min="0"
-                  onchange="calcularTotal()"
-                />
-              </div>
-              <div>
-                <button
-                  class="btn btn-danger"
-                  onclick="eliminarProducto(this)"
-                  style="margin-top: 24px;"
-                >
-                  🗑️
-                </button>
-              </div>
+              <button class="btn btn-secondary" onclick="agregarDevolucion()">
+                ✅ Agregar a Devolución
+              </button>
+            </div>
+
+            <div class="productos-section" id="devolucionesList">
+              <!-- Se llenarán dinámicamente -->
             </div>
           </div>
-          <button
-            class="btn btn-secondary"
-            onclick="agregarProducto()"
-            style="margin-top: 10px;"
-          >
-            ➕ Agregar Producto
-          </button>
 
           <!-- Descuento -->
           <div class="form-group" style="margin-top: 30px;">
@@ -133,6 +215,17 @@
               value="0"
               onchange="calcularTotal()"
             />
+          </div>
+
+          <!-- Notas u Observaciones -->
+          <div class="form-group">
+            <label for="notas">📝 Notas u Observaciones</label>
+            <textarea
+              id="notas"
+              placeholder="Escribir notas o observaciones sobre la venta..."
+              rows="3"
+              style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif;"
+            ></textarea>
           </div>
 
           <!-- Resumen -->
