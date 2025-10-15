@@ -25,8 +25,9 @@
           <input
             type="text"
             id="rutCliente"
-            placeholder="Ej: 12345678"
+            placeholder="Ej: 12.345.678-9"
             onkeypress="buscarClienteEnter(event)"
+            oninput="formatearRUT(this)"
           />
           <button
             class="btn btn-primary"
@@ -82,30 +83,34 @@
           <!-- Opción: Venta o Devolución -->
           <div class="form-group">
             <label>Tipo de Transacción</label>
-            <div style="display: flex; gap: 10px;">
-              <label style="display: flex; align-items: center; margin: 0;">
-                <input type="radio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')">
-                <span style="margin-left: 5px;">📤 Venta</span>
+            <div style="display: flex; gap: 20px; margin-top: 10px;">
+              <label style="display: flex; align-items: center; margin: 0; cursor: pointer;">
+                <input type="radio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')" style="margin-right: 8px;">
+                <span style="font-size: 16px;">📤 Venta</span>
               </label>
-              <label style="display: flex; align-items: center; margin: 0;">
-                <input type="radio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')">
-                <span style="margin-left: 5px;">📥 Devolución</span>
+              <label style="display: flex; align-items: center; margin: 0; cursor: pointer;">
+                <input type="radio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')" style="margin-right: 8px;">
+                <span style="font-size: 16px;">📥 Devolución</span>
               </label>
             </div>
           </div>
 
           <!-- Sección de Ventas -->
           <div id="ventasSection">
-            <h4>Agregar Productos (Escanear o Manual)</h4>
+            <h4 style="margin-top: 25px; color: #2e7d32;">Agregar Productos</h4>
             <div class="form-group">
-              <label for="codigoProducto">Código de Barras / Código Producto</label>
+              <label for="codigoProducto">📱 Código de Barras / Código Producto</label>
               <input
                 type="text"
                 id="codigoProducto"
-                placeholder="Escanear o escribir código..."
+                placeholder="Escanear o escribir código y presionar Enter..."
                 autofocus
                 onkeypress="procesarCodigoProducto(event)"
+                style="font-size: 16px; padding: 12px;"
               />
+              <small style="color: #666; display: block; margin-top: 5px;">
+                💡 Escanea con la pistola o escribe el código y presiona Enter
+              </small>
             </div>
 
             <div class="form-group">
@@ -135,7 +140,7 @@
               <div class="producto-item">
                 <div class="form-group" style="margin: 0;">
                   <label>Producto</label>
-                  <input type="text" class="producto-nombre" placeholder="Nombre producto" readonly>
+                  <input type="text" class="producto-nombre" placeholder="Escanea código o ingresa nombre">
                 </div>
                 <div class="form-group" style="margin: 0;">
                   <label>Precio ($)</label>
@@ -167,45 +172,33 @@
             </button>
           </div>
 
-          <!-- Sección de Devoluciones -->
+          <!-- Sección de Devoluciones SIMPLIFICADA -->
           <div id="devolucionesSection" style="display: none;">
-            <h4>Productos en Devolución</h4>
+            <h4 style="margin-top: 25px; color: #e65100;">📥 Productos en Devolución</h4>
+            
             <div class="form-group">
-              <label for="productoDevolucion">Producto a Devolver</label>
-              <select id="productoDevolucion" onchange="cargarDetallesDevolucion()">
-                <option value="">Seleccionar producto...</option>
-              </select>
+              <label for="codigoDevolucion">📱 Escanear Código de Producto a Devolver</label>
+              <input
+                type="text"
+                id="codigoDevolucion"
+                placeholder="Escanear o escribir código y presionar Enter..."
+                autofocus
+                onkeypress="procesarCodigoDevolucion(event)"
+                style="font-size: 16px; padding: 12px; border: 2px solid #ff9800;"
+              />
+              <small style="color: #e65100; display: block; margin-top: 5px;">
+                💡 Escanea cada producto que el cliente devuelve
+              </small>
             </div>
 
-            <div id="detallesDevolucion" style="display: none;">
-              <div class="form-group">
-                <label>Cantidad:</label>
-                <input type="number" id="cantidadDevolucion" min="1" value="1" placeholder="1">
-              </div>
-              <div class="form-group">
-                <label>Motivo de Devolución:</label>
-                <select id="motivoDevolucion">
-                  <option value="">Seleccionar motivo...</option>
-                  <option value="Defecto">Defecto del producto</option>
-                  <option value="No es lo que esperaba">No es lo que esperaba</option>
-                  <option value="Cambio de opinión">Cambio de opinión</option>
-                  <option value="Talla incorrecta">Talla incorrecta</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </div>
-              <button class="btn btn-secondary" onclick="agregarDevolucion()">
-                ✅ Agregar a Devolución
-              </button>
-            </div>
-
-            <div class="productos-section" id="devolucionesList">
-              <!-- Se llenarán dinámicamente -->
+            <div id="devolucionesList" style="margin-top: 20px;">
+              <!-- Se llenarán dinámicamente los productos devueltos -->
             </div>
           </div>
 
           <!-- Descuento -->
           <div class="form-group" style="margin-top: 30px;">
-            <label for="descuento">Descuento (%)</label>
+            <label for="descuento">💸 Descuento (%)</label>
             <input
               type="number"
               id="descuento"
@@ -222,7 +215,7 @@
             <label for="notas">📝 Notas u Observaciones</label>
             <textarea
               id="notas"
-              placeholder="Escribir notas o observaciones sobre la venta..."
+              placeholder="Escribir notas o observaciones sobre la transacción..."
               rows="3"
               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif;"
             ></textarea>
@@ -248,10 +241,10 @@
           <!-- Botones de acción -->
           <div class="form-actions">
             <button class="btn btn-success" onclick="registrarVenta()">
-              ✅ Registrar Venta
+              ✅ Registrar Transacción
             </button>
             <button class="btn btn-secondary" onclick="limpiarFormulario()">
-              🔄 Nueva Venta
+              🔄 Nueva Transacción
             </button>
           </div>
 
@@ -261,7 +254,7 @@
             id="alertSuccess"
             style="margin-top: 20px;"
           >
-            ✅ ¡Venta registrada exitosamente!
+            ✅ ¡Transacción registrada exitosamente!
           </div>
         </div>
       </div>

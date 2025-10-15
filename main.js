@@ -241,7 +241,9 @@ window.cambiarTipoTransaccion = function(tipo) {
   } else {
     ventasSection.style.display = "none";
     devolucionesSection.style.display = "block";
-    cargarProductosInventario();
+    // Limpiar la lista de devoluciones
+    document.getElementById("devolucionesList").innerHTML = "";
+    devolucionesAgregadas = [];
   }
   calcularTotal();
 }
