@@ -204,16 +204,19 @@ window.cambiarTipoTransaccion = function(tipo) {
   tipoTransaccionActual = tipo;
   const ventasSection = document.getElementById("ventasSection");
   const devolucionesSection = document.getElementById("devolucionesSection");
+  const anfitrionContainer = document.getElementById("anfitrionContainer");
 
   if (tipo === 'venta') {
     ventasSection.style.display = "block";
     devolucionesSection.style.display = "none";
+    anfitrionContainer.style.display = "block"; // Mostrar anfitrión en ventas
     setTimeout(() => {
       document.getElementById("codigoProducto").focus();
     }, 100);
   } else {
     ventasSection.style.display = "none";
     devolucionesSection.style.display = "block";
+    anfitrionContainer.style.display = "none"; // Ocultar anfitrión en devoluciones
     document.getElementById("devolucionesList").innerHTML = "";
     devolucionesAgregadas = [];
     setTimeout(() => {
@@ -446,7 +449,8 @@ function agregarProductoDevolucion(producto) {
 
   devolucionesAgregadas.push(devolucion);
 
-  console.log("✅ Producto agregado a devoluciones:", devolucion);
+  console.log("✅ Producto agregado a lista de devoluciones:", devolucion);
+  console.log("📋 Total en lista:", devolucionesAgregadas.length);
 
   const container = document.getElementById("devolucionesList");
   const itemHTML = `
@@ -460,6 +464,7 @@ function agregarProductoDevolucion(producto) {
   `;
   container.insertAdjacentHTML("beforeend", itemHTML);
   
+  // Solo agregar a la lista visual, NO registrar automáticamente
   setTimeout(() => {
     document.getElementById("codigoDevolucion").focus();
   }, 100);
