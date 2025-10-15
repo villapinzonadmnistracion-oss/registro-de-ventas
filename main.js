@@ -658,18 +658,27 @@ window.registrarVenta = async function() {
         mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
       }
     } else {
-      // Para devoluciones, usamos los mismos campos que ventas
+      // DEVOLUCIONES: No enviamos el campo "Devolución" directamente
+      // Las devoluciones se registran solo vinculando los productos
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
           Items: itemsTexto,
-          "Total de venta": 0, // Las devoluciones no tienen monto positivo
-          Devolución: "Sí", // Marcamos que es una devolución
+          "Total de venta": 0, // Sin monto en devoluciones
         },
       };
 
-      if (productosVinculados.length > 0) devolucionData.fields["producto"] = productosVinculados;
-      if (notas.trim()) devolucionData.fields["Notas"] = notas;
+      // IMPORTANTE: Solo vincular productos del inventario para que se cuenten automáticamente
+      if (productosVinculados.length > 0) {
+        devolucionData.fields["producto"] = productosVinculados;
+      }
+      
+      if (notas.trim()) {
+        devolucionData.fields["Notas"] = notas;
+      } else {
+        // Si no hay notas, agregamos una indicación de que es devolución
+        devolucionData.fields["Notas"] = "DEVOLUCIÓN";
+      }
 
       console.log("🔄 Enviando DEVOLUCIÓN:", JSON.stringify(devolucionData, null, 2));
 
