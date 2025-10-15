@@ -410,7 +410,7 @@ async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
       
       console.log("✅ Producto encontrado para devolución:", producto);
       agregarProductoDevolucion(producto);
-      mostrarAlerta("success", `✅ ${producto.categoria} agregado - Stock actual: ${producto.stock}`);
+      // NO mostrar alerta automática de "agregado"
     } else {
       const productoLocal = productosInventario.find(p => 
         p.codigo.replace(/\s+/g, '').toLowerCase() === codigoLimpio.toLowerCase()
@@ -418,7 +418,6 @@ async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
       
       if (productoLocal) {
         agregarProductoDevolucion(productoLocal);
-        mostrarAlerta("success", `✅ ${productoLocal.categoria} agregado`);
       } else {
         mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado`);
       }
@@ -781,7 +780,7 @@ window.registrarVenta = async function() {
         fields: {
           Cliente: [clienteSeleccionado.id],
           "producto": productosVinculados, // Vincular a Inventario Principal
-          "Productos devueltos": itemsTexto,
+          "Items": itemsTexto, // Usar el mismo campo que las ventas
           Tipo: "Devolución",
         },
       };
