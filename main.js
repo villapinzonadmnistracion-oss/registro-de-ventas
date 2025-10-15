@@ -669,6 +669,7 @@ window.registrarVenta = async function() {
   let itemsTexto = "";
 
   if (tipoTransaccionActual === 'venta') {
+    // ========== PROCESANDO VENTA ==========
     const productosItems = document.querySelectorAll(".producto-item");
 
     for (let item of productosItems) {
@@ -692,12 +693,18 @@ window.registrarVenta = async function() {
       return;
     }
   } else {
-    // Devoluciones
+    // ========== PROCESANDO DEVOLUCIÓN ==========
     if (devolucionesAgregadas.length === 0) {
       mostrarAlerta("error", "❌ Debes escanear al menos un producto para devolver");
       return;
     }
-    itemsTexto = devolucionesAgregadas.map(d => `${d.nombre} (${d.cantidad} unidad/es) - ${d.motivo}`).join(", ");
+    
+    // Extraer IDs y nombres de productos devueltos
+    productosVinculados = devolucionesAgregadas.map(d => d.id);
+    itemsTexto = devolucionesAgregadas.map(d => d.nombre).join(", ");
+    
+    console.log("🔄 Devolución - Productos vinculados:", productosVinculados);
+    console.log("📝 Devolución - Texto:", itemsTexto);
   }
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
@@ -714,6 +721,7 @@ window.registrarVenta = async function() {
 
   try {
     if (tipoTransaccionActual === 'venta') {
+      // ========== REGISTRAR VENTA ==========
       const ventaData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
@@ -726,14 +734,14 @@ window.registrarVenta = async function() {
 
       // Agregar vinculación de productos si existen
       if (productosVinculados.length > 0) {
-        ventaData.fields["producto"] = productosVinculados; // Campo "producto" vinculado en tu tabla de Ventas
+        ventaData.fields["producto"] = productosVinculados;
       }
 
       if (notas.trim()) {
         ventaData.fields["Notas"] = notas;
       }
 
-      console.log("Enviando venta:", ventaData);
+      console.log("💰 Enviando VENTA:", ventaData);
 
       const response = await fetch(
         `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
@@ -756,36 +764,19 @@ window.registrarVenta = async function() {
           limpiarFormulario();
         }, 2000);
       } else {
-        console.error("Error de Airtable:", result);
+        console.error("❌ Error de Airtable:", result);
         mostrarAlerta(
           "error",
           "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
         );
       }
     } else {
-      // ========== DEVOLUCIONES SIMPLIFICADAS ==========
-      if (devolucionesAgregadas.length === 0) {
-        mostrarAlerta("error", "❌ Debes escanear al menos un producto para devolver");
-        return;
-      }
-
-      // Extraer IDs de productos para vincularlos
-      const productosIDs = devolucionesAgregadas.map(d => d.id);
-
-      // Crear lista de productos devueltos (solo nombres)
-      const productosTexto = devolucionesAgregadas
-        .map(d => d.nombre)
-        .join(", ");
-
-      console.log("🔄 Registrando devolución...");
-      console.log("📦 Productos IDs a vincular:", productosIDs);
-      console.log("📝 Productos texto:", productosTexto);
-
+      // ========== REGISTRAR DEVOLUCIÓN ==========
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
-          "producto": productosIDs, // Vincular a Inventario Principal
-          "Productos devueltos": productosTexto,
+          "producto": productosVinculados, // Vincular a Inventario Principal
+          "Productos devueltos": itemsTexto,
           Tipo: "Devolución",
         },
       };
@@ -794,7 +785,7 @@ window.registrarVenta = async function() {
         devolucionData.fields["Notas"] = notas;
       }
 
-      console.log("📤 Datos a enviar:", JSON.stringify(devolucionData, null, 2));
+      console.log("🔄 Enviando DEVOLUCIÓN:", devolucionData);
 
       const response = await fetch(
         `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
@@ -809,13 +800,11 @@ window.registrarVenta = async function() {
       );
 
       const result = await response.json();
-      
       mostrarLoading(false);
 
       if (response.ok) {
-        console.log("✅ Devolución registrada exitosamente");
-        console.log("📋 Resultado:", result);
-        mostrarAlerta("success", `✅ ¡Devolución registrada! ${devolucionesAgregadas.length} producto(s) devuelto(s)`);
+        console.log("✅ Devolución registrada:", result);
+        mostrarAlerta("success", `✅ ¡Devolución registrada! ${devolucionesAgregadas.length} producto(s)`);
         setTimeout(() => {
           limpiarFormulario();
         }, 2000);
