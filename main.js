@@ -3,7 +3,7 @@ let clienteSeleccionado = null;
 let anfitrionSeleccionado = null;
 let tipoTransaccionActual = 'venta';
 let devolucionesAgregadas = [];
-let productosInventario = []; // Cache de productos
+let productosInventario = [];
 
 async function fetchConfig() {
   try {
@@ -18,10 +18,7 @@ async function fetchConfig() {
     INVENTARIO_TABLE_ID = data.inventarioTable_;
 
     console.log("✅ Configuración cargada correctamente");
-    console.log("📦 BASE_ID:", BASE_ID);
-    console.log("📦 INVENTARIO_TABLE_ID:", INVENTARIO_TABLE_ID);
     
-    // Cargar inventario al inicio
     await cargarInventarioCompleto();
     
     return true;
@@ -31,10 +28,8 @@ async function fetchConfig() {
   }
 }
 
-// Cargar todo el inventario al inicio
 async function cargarInventarioCompleto() {
   try {
-    // Basándome en tu imagen, el ID de la tabla es tblxyk6vtahtFlLVo
     const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
     
     const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}`;
@@ -47,22 +42,17 @@ async function cargarInventarioCompleto() {
     });
 
     const data = await response.json();
-    console.log("📦 Datos completos del inventario:", data);
     
     if (data.records) {
       productosInventario = data.records.map(record => {
-        // Obtener el código y limpiarlo de espacios y caracteres especiales
         let codigo = record.fields["Código por categoría"] || 
                      record.fields["Codigo por categoria"] || 
                      record.fields["codigo por categoria"] || '';
         
-        // Limpiar el código: quitar espacios, saltos de línea, etc.
         codigo = codigo.toString().replace(/\s+/g, '').trim();
         
         const categoria = record.fields["Categoría"] || record.fields.Categoria || 'Sin categoría';
         const inventario = record.fields["Inventario"] || 0;
-        
-        console.log(`📝 Cargado - Código: "${codigo}" | Categoría: ${categoria} | Stock: ${inventario}`);
         
         return {
           id: record.id,
@@ -75,7 +65,6 @@ async function cargarInventarioCompleto() {
       });
       
       console.log(`✅ ${productosInventario.length} productos cargados en memoria`);
-      console.log("📋 Lista de códigos:", productosInventario.map(p => `"${p.codigo}"`).join(", "));
     }
   } catch (error) {
     console.error("❌ Error al cargar inventario:", error);
@@ -83,12 +72,10 @@ async function cargarInventarioCompleto() {
   }
 }
 
-// Función para limpiar RUT (solo números y K)
 function cleanRut(rut) {
   return rut.replace(/[^0-9kK]/g, '').toUpperCase();
 }
 
-// Función para formatear RUT chileno
 function formatRut(value) {
   value = value.replace(/[^0-9kK]/g, '').toUpperCase();
   
@@ -169,7 +156,6 @@ window.buscarClienteEnter = function(event) {
   }
 }
 
-// Cargar anfitriones
 async function cargarAnfitriones() {
   try {
     const url = `https://api.airtable.com/v0/${BASE_ID}/${ANFITRIONES_TABLE_ID}`;
@@ -182,7 +168,6 @@ async function cargarAnfitriones() {
     const data = await response.json();
     const select = document.getElementById("anfitrionSelect");
     
-    // Limpiar opciones existentes (excepto la primera que dice "Selecciona...")
     while (select.options.length > 1) {
       select.remove(1);
     }
@@ -209,14 +194,14 @@ window.cambiarTipoTransaccion = function(tipo) {
   if (tipo === 'venta') {
     ventasSection.style.display = "block";
     devolucionesSection.style.display = "none";
-    anfitrionContainer.style.display = "block"; // Mostrar anfitrión en ventas
+    anfitrionContainer.style.display = "block";
     setTimeout(() => {
       document.getElementById("codigoProducto").focus();
     }, 100);
   } else {
     ventasSection.style.display = "none";
     devolucionesSection.style.display = "block";
-    anfitrionContainer.style.display = "none"; // Ocultar anfitrión en devoluciones
+    anfitrionContainer.style.display = "none";
     document.getElementById("devolucionesList").innerHTML = "";
     devolucionesAgregadas = [];
     setTimeout(() => {
@@ -226,14 +211,10 @@ window.cambiarTipoTransaccion = function(tipo) {
   calcularTotal();
 }
 
-// FUNCIÓN MEJORADA: Procesar código escaneado de la pistola
 window.procesarCodigoProducto = function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
     const codigo = document.getElementById("codigoProducto").value.trim();
-    
-    console.log("🔍 Buscando código:", codigo);
-    console.log("📦 Productos en memoria:", productosInventario.length);
     
     if (codigo) {
       buscarYAgregarProductoPorCodigo(codigo);
@@ -243,13 +224,10 @@ window.procesarCodigoProducto = function(event) {
   }
 }
 
-// NUEVA FUNCIÓN: Procesar código de devolución
 window.procesarCodigoDevolucion = function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
     const codigo = document.getElementById("codigoDevolucion").value.trim();
-    
-    console.log("🔍 Buscando código para devolución:", codigo);
     
     if (codigo) {
       buscarYMostrarProductoDevolucion(codigo);
@@ -258,21 +236,14 @@ window.procesarCodigoDevolucion = function(event) {
   }
 }
 
-// FUNCIÓN MEJORADA: Buscar producto en el inventario por código
 async function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
-  // Limpiar el código escaneado de espacios y caracteres especiales
   const codigoLimpio = codigoEscaneado.replace(/\s+/g, '').trim();
-  
-  console.log("🔎 Buscando producto con código:", codigoLimpio);
   
   try {
     const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
     
-    // Buscar en Airtable directamente con el código escaneado
     const formulaExacta = encodeURIComponent(`{Código por categoría}='${codigoLimpio}'`);
     const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}?filterByFormula=${formulaExacta}`;
-    
-    console.log("🔗 URL de búsqueda:", url);
     
     const response = await fetch(url, {
       headers: {
@@ -281,10 +252,8 @@ async function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
     });
 
     const data = await response.json();
-    console.log("📦 Respuesta de Airtable:", data);
 
     if (data.records && data.records.length > 0) {
-      // Producto encontrado
       const record = data.records[0];
       const producto = {
         id: record.id,
@@ -294,29 +263,19 @@ async function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
         recordCompleto: record
       };
       
-      console.log("✅ Producto encontrado:", producto);
       agregarProductoDesdeInventario(producto);
       mostrarAlerta("success", `✅ ${producto.categoria} agregado - Stock: ${producto.stock}`);
     } else {
-      // No encontrado, intentar búsqueda sin formato
-      console.log("❌ No encontrado, intentando sin filtro especial...");
-      
-      // Buscar en el cache local
       const productoLocal = productosInventario.find(p => 
         p.codigo.replace(/\s+/g, '').toLowerCase() === codigoLimpio.toLowerCase()
       );
       
       if (productoLocal) {
-        console.log("✅ Encontrado en cache local:", productoLocal);
         agregarProductoDesdeInventario(productoLocal);
         mostrarAlerta("success", `✅ ${productoLocal.categoria} agregado - Stock: ${productoLocal.stock}`);
       } else {
-        console.log("❌ Producto NO encontrado");
-        console.log("📋 Códigos disponibles:", productosInventario.map(p => `"${p.codigo}"`));
-        
         mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado en inventario`);
         
-        // Preguntar si desea agregar manualmente
         setTimeout(() => {
           const agregar = confirm(`Código "${codigoLimpio}" no encontrado.\n¿Deseas agregarlo manualmente?`);
           if (agregar) {
@@ -331,11 +290,9 @@ async function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
   }
 }
 
-// NUEVA FUNCIÓN: Agregar producto desde el inventario (con vinculación a Airtable)
 function agregarProductoDesdeInventario(producto) {
   const container = document.getElementById("productosLista");
   
-  // Verificar si ya existe un producto inicial vacío y eliminarlo
   const productosVacios = container.querySelectorAll('.producto-item');
   productosVacios.forEach(item => {
     const nombre = item.querySelector('.producto-nombre').value;
@@ -345,7 +302,6 @@ function agregarProductoDesdeInventario(producto) {
     }
   });
   
-  // Agregar producto vinculado a la tabla de Inventario Principal
   const productoHTML = `
     <div class="producto-item" data-producto-id="${producto.id}" data-producto-record='${JSON.stringify(producto.recordCompleto)}'>
       <div class="form-group" style="margin: 0;">
@@ -363,12 +319,10 @@ function agregarProductoDesdeInventario(producto) {
   `;
   container.insertAdjacentHTML("beforeend", productoHTML);
   
-  // Enfocar el campo de precio del último producto agregado
   const ultimoPrecio = container.querySelector('.producto-item:last-child .producto-precio');
   if (ultimoPrecio) {
     setTimeout(() => {
       ultimoPrecio.focus();
-      // Después de ingresar precio, volver al campo de código
       ultimoPrecio.addEventListener('blur', () => {
         setTimeout(() => {
           document.getElementById("codigoProducto").focus();
@@ -380,11 +334,8 @@ function agregarProductoDesdeInventario(producto) {
   calcularTotal();
 }
 
-// FUNCIÓN: Buscar y mostrar producto para devolución
 async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
   const codigoLimpio = codigoEscaneado.replace(/\s+/g, '').trim();
-  
-  console.log("🔎 Buscando producto para devolución:", codigoLimpio);
   
   try {
     const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
@@ -408,9 +359,7 @@ async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
         stock: record.fields["Inventario"] || 0,
       };
       
-      console.log("✅ Producto encontrado para devolución:", producto);
       agregarProductoDevolucion(producto);
-      // NO mostrar alerta automática de "agregado"
     } else {
       const productoLocal = productosInventario.find(p => 
         p.codigo.replace(/\s+/g, '').toLowerCase() === codigoLimpio.toLowerCase()
@@ -428,11 +377,9 @@ async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
   }
 }
 
-// FUNCIÓN SIMPLIFICADA: Agregar producto a la lista de devoluciones (SIN motivo)
 function agregarProductoDevolucion(producto) {
   const yaExiste = devolucionesAgregadas.find(d => d.id === producto.id);
   if (yaExiste) {
-    mostrarAlerta("info", "⚠️ Este producto ya está en la lista");
     setTimeout(() => {
       document.getElementById("codigoDevolucion").focus();
     }, 100);
@@ -448,30 +395,27 @@ function agregarProductoDevolucion(producto) {
 
   devolucionesAgregadas.push(devolucion);
 
-  console.log("✅ Producto agregado a lista de devoluciones:", devolucion);
-  console.log("📋 Total en lista:", devolucionesAgregadas.length);
+  console.log("✅ Producto agregado a lista:", devolucion);
 
   const container = document.getElementById("devolucionesList");
   const itemHTML = `
     <div class="devolucion-item" data-devolucion-id="${producto.id}" style="background: #e8f5e9; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #4caf50; display: flex; justify-content: space-between; align-items: center;">
       <div>
         <strong style="font-size: 16px; color: #2e7d32;">📦 ${producto.categoria}</strong>
-        <div style="color: #666; margin-top: 4px; font-size: 14px;">Código: ${producto.codigo} | Stock: ${producto.stock}</div>
+        <div style="color: #666; margin-top: 4px; font-size: 14px;">Código: ${producto.codigo}</div>
       </div>
       <button class="btn btn-danger" onclick="eliminarDevolucion('${producto.id}')" style="padding: 8px 12px; font-size: 14px;">🗑️</button>
     </div>
   `;
   container.insertAdjacentHTML("beforeend", itemHTML);
   
-  // Solo agregar a la lista visual, NO registrar automáticamente
   setTimeout(() => {
     document.getElementById("codigoDevolucion").focus();
   }, 100);
 }
 
-// FUNCIÓN: Actualizar motivo de devolución (YA NO SE USA)
 window.actualizarMotivoDevolucion = function(id, motivo) {
-  // Función deprecada - se mantiene por compatibilidad
+  // Función deprecada
 }
 
 window.agregarProductoConCodigo = function(codigo) {
@@ -568,7 +512,6 @@ window.buscarCliente = async function() {
       document.getElementById("anfitrionContainer").style.display = "block";
       cargarAnfitriones();
       
-      // Focus en el input de código para comenzar a escanear
       setTimeout(() => {
         document.getElementById("codigoProducto").focus();
         mostrarAlerta("info", "📱 Escanea el código de barras o ingresa manualmente");
@@ -649,6 +592,8 @@ window.calcularTotal = function() {
 }
 
 window.registrarVenta = async function() {
+  console.log("🔘 Botón presionado - Tipo:", tipoTransaccionActual);
+  
   if (!clienteSeleccionado) {
     mostrarAlerta("error", "❌ Primero debes buscar y seleccionar un cliente");
     return;
@@ -669,25 +614,24 @@ window.registrarVenta = async function() {
   }
 
   let totalVenta = 0;
-  let productosVinculados = []; // Array para guardar los IDs de productos vinculados
+  let productosVinculados = [];
   let itemsTexto = "";
 
   if (tipoTransaccionActual === 'venta') {
-    // ========== PROCESANDO VENTA ==========
+    // VENTA
     const productosItems = document.querySelectorAll(".producto-item");
 
     for (let item of productosItems) {
       const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
       const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
-      const productoId = item.dataset.productoId; // ID del registro de Inventario
+      const productoId = item.dataset.productoId;
 
       if (precio > 0) {
-        // Si el producto está vinculado a Inventario, guardar el ID
         if (productoId) {
           productosVinculados.push(productoId);
         }
         
-        itemsTexto += `${nombre} (${precio}), `;
+        itemsTexto += `${nombre} ($${precio}), `;
         totalVenta += precio;
       }
     }
@@ -697,18 +641,23 @@ window.registrarVenta = async function() {
       return;
     }
   } else {
-    // ========== PROCESANDO DEVOLUCIÓN ==========
+    // DEVOLUCIÓN - IGUAL QUE VENTA
+    console.log("📦 Devoluciones:", devolucionesAgregadas);
+    
     if (devolucionesAgregadas.length === 0) {
       mostrarAlerta("error", "❌ Debes escanear al menos un producto para devolver");
       return;
     }
     
-    // Extraer IDs y nombres de productos devueltos
-    productosVinculados = devolucionesAgregadas.map(d => d.id);
-    itemsTexto = devolucionesAgregadas.map(d => d.nombre).join(", ");
+    for (let devolucion of devolucionesAgregadas) {
+      if (devolucion.id) {
+        productosVinculados.push(devolucion.id);
+      }
+      itemsTexto += `${devolucion.nombre}, `;
+    }
     
-    console.log("🔄 Devolución - Productos vinculados:", productosVinculados);
-    console.log("📝 Devolución - Texto:", itemsTexto);
+    console.log("📦 IDs vinculados:", productosVinculados);
+    console.log("📝 Items:", itemsTexto);
   }
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
@@ -717,7 +666,6 @@ window.registrarVenta = async function() {
 
   const notas = document.getElementById("notas").value || "";
 
-  // Limpiar coma final
   itemsTexto = itemsTexto.replace(/,\s*$/, "");
 
   mostrarLoading(true);
@@ -725,7 +673,6 @@ window.registrarVenta = async function() {
 
   try {
     if (tipoTransaccionActual === 'venta') {
-      // ========== REGISTRAR VENTA ==========
       const ventaData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
@@ -736,7 +683,6 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Agregar vinculación de productos si existen
       if (productosVinculados.length > 0) {
         ventaData.fields["producto"] = productosVinculados;
       }
@@ -768,52 +714,7 @@ window.registrarVenta = async function() {
           limpiarFormulario();
         }, 2000);
       } else {
-        console.error("❌ Error de Airtable:", result);
-        mostrarAlerta(
-          "error",
-          "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
-        );
-      }
-    } else {
-      // ========== REGISTRAR DEVOLUCIÓN ==========
-      const devolucionData = {
-        fields: {
-          Cliente: [clienteSeleccionado.id],
-          "producto": productosVinculados, // Vincular a Inventario Principal
-          "Items": itemsTexto, // Usar el mismo campo que las ventas
-          Tipo: "Devolución",
-        },
-      };
-
-      if (notas.trim()) {
-        devolucionData.fields["Notas"] = notas;
-      }
-
-      console.log("🔄 Enviando DEVOLUCIÓN:", devolucionData);
-
-      const response = await fetch(
-        `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(devolucionData),
-        }
-      );
-
-      const result = await response.json();
-      mostrarLoading(false);
-
-      if (response.ok) {
-        console.log("✅ Devolución registrada:", result);
-        mostrarAlerta("success", `✅ ¡Devolución registrada! ${devolucionesAgregadas.length} producto(s)`);
-        setTimeout(() => {
-          limpiarFormulario();
-        }, 2000);
-      } else {
-        console.error("❌ Error de Airtable:", result);
+        console.error("❌ Error:", result);
         mostrarAlerta(
           "error",
           "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
@@ -903,13 +804,60 @@ function mostrarLoading(show) {
   }
 }
 
-// Inicializar la aplicación
+// Inicializar
 fetchConfig().then((success) => {
   if (success) {
     calcularTotal();
-    console.log("✅ Aplicación lista para usar");
-    console.log("📦 Productos cargados:", productosInventario.length);
+    console.log("✅ Aplicación lista");
   } else {
     mostrarAlerta("error", "❌ Error al cargar la configuración. Por favor, recarga la página.");
   }
 });
+    } else {
+      // DEVOLUCIÓN - MISMO FORMATO QUE VENTA
+      const devolucionData = {
+        fields: {
+          Cliente: [clienteSeleccionado.id],
+          Items: itemsTexto,
+          Tipo: "Devolución",
+        },
+      };
+
+      if (productosVinculados.length > 0) {
+        devolucionData.fields["producto"] = productosVinculados;
+      }
+
+      if (notas.trim()) {
+        devolucionData.fields["Notas"] = notas;
+      }
+
+      console.log("🔄 Enviando DEVOLUCIÓN:", JSON.stringify(devolucionData, null, 2));
+
+      const response = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(devolucionData),
+        }
+      );
+
+      const result = await response.json();
+      mostrarLoading(false);
+
+      if (response.ok) {
+        console.log("✅ Devolución registrada:", result);
+        mostrarAlerta("success", `✅ ¡Devolución registrada! ${devolucionesAgregadas.length} producto(s)`);
+        setTimeout(() => {
+          limpiarFormulario();
+        }, 2000);
+      } else {
+        console.error("❌ Error:", result);
+        mostrarAlerta(
+          "error",
+          "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
+        );
+      }
