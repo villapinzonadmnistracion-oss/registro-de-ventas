@@ -761,6 +761,11 @@ window.registrarVenta = async function() {
         );
       }
     } else {
+      // Recopilar IDs de productos vinculados en devoluciones
+      const productosDevolucionVinculados = devolucionesAgregadas
+        .filter(d => d.id)
+        .map(d => d.id);
+
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
@@ -769,11 +774,17 @@ window.registrarVenta = async function() {
         },
       };
 
+      // Vincular productos de inventario en devoluciones
+      if (productosDevolucionVinculados.length > 0) {
+        devolucionData.fields["producto"] = productosDevolucionVinculados;
+      }
+
       if (notas.trim()) {
         devolucionData.fields["Notas"] = notas;
       }
 
       console.log("Enviando devolución:", devolucionData);
+      console.log("Productos vinculados en devolución:", productosDevolucionVinculados);
 
       const response = await fetch(
         `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
