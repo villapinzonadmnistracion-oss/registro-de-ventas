@@ -431,25 +431,43 @@ async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
 
 // FUNCIÓN: Agregar producto a la lista de devoluciones
 function agregarProductoDevolucion(producto) {
+  // Verificar si ya existe en la lista
+  const yaExiste = devolucionesAgregadas.find(d => d.id === producto.id);
+  if (yaExiste) {
+    mostrarAlerta("info", "⚠️ Este producto ya está en la lista de devoluciones");
+    setTimeout(() => {
+      document.getElementById("codigoDevolucion").focus();
+    }, 100);
+    return;
+  }
+
   const devolucion = {
-    id: producto.id,
+    id: producto.id, // ID del registro en Inventario Principal
     nombre: producto.categoria,
     cantidad: 1,
     codigo: producto.codigo,
-    motivo: "Escaneado"
+    motivo: ""
   };
 
   devolucionesAgregadas.push(devolucion);
 
+  console.log("✅ Producto agregado a devoluciones:", devolucion);
+  console.log("📦 Total de devoluciones:", devolucionesAgregadas.length);
+
   const container = document.getElementById("devolucionesList");
   const itemHTML = `
-    <div class="devolucion-item" data-devolucion-id="${producto.id}">
-      <strong>${producto.categoria}</strong> - Código: ${producto.codigo}
-      <div style="margin-top: 5px;">
-        <label style="font-size: 14px;">Motivo:</label>
-        <input type="text" placeholder="Ingresa el motivo..." style="margin-left: 10px; padding: 5px; width: 200px;" onchange="actualizarMotivoDevolucion('${producto.id}', this.value)">
+    <div class="devolucion-item" data-devolucion-id="${producto.id}" style="background: #fff3cd; padding: 10px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div>
+          <strong style="font-size: 16px;">📦 ${producto.categoria}</strong>
+          <div style="color: #666; margin-top: 5px;">Código: ${producto.codigo}</div>
+          <div style="margin-top: 10px;">
+            <label style="font-size: 14px; font-weight: 500;">Motivo de devolución:</label>
+            <input type="text" placeholder="Ej: Producto defectuoso, talla incorrecta..." style="margin-top: 5px; padding: 8px; width: 100%; border: 1px solid #ddd; border-radius: 4px;" onchange="actualizarMotivoDevolucion('${producto.id}', this.value)">
+          </div>
+        </div>
+        <button class="btn btn-danger" onclick="eliminarDevolucion('${producto.id}')" style="padding: 5px 10px; font-size: 12px;">🗑️</button>
       </div>
-      <button class="btn btn-danger" onclick="eliminarDevolucion('${producto.id}')" style="margin-top: 10px; padding: 5px 10px;">🗑️ Eliminar</button>
     </div>
   `;
   container.insertAdjacentHTML("beforeend", itemHTML);
@@ -761,10 +779,31 @@ window.registrarVenta = async function() {
         );
       }
     } else {
+      // ========== DEVOLUCIONES ==========
+      if (devolucionesAgregadas.length === 0) {
+        mostrarAlerta("error", "❌ Debes escanear al menos un producto para devolver");
+        return;
+      }
+
       // Recopilar IDs de productos vinculados en devoluciones
       const productosDevolucionVinculados = devolucionesAgregadas
-        .filter(d => d.id)
-        .map(d => d.id);
+        .filter(d => d.id) // Filtrar solo los que tienen ID
+        .map(d => d.id);   // Extraer los IDs
+
+      console.log("📦 Productos a vincular en devolución:", productosDevolucionVinculados);
+      console.log("📋 Devoluciones completas:", devolucionesAgregadas);
+
+      // Verificar que todos los productos tienen motivo
+      const sinMotivo = devolucionesAgregadas.filter(d => !d.motivo || d.motivo.trim() === "");
+      if (sinMotivo.length > 0) {
+        mostrarAlerta("error", "❌ Por favor, ingresa el motivo para todas las devoluciones");
+        return;
+      }
+
+      // Construir texto descriptivo de las devoluciones
+      itemsTexto = devolucionesAgregadas
+        .map(d => `${d.nombre} (Código: ${d.codigo}) - Motivo: ${d.motivo}`)
+        .join(", ");
 
       const devolucionData = {
         fields: {
@@ -774,17 +813,19 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Vincular productos de inventario en devoluciones
+      // ⚠️ CRÍTICO: Vincular productos de inventario en devoluciones
       if (productosDevolucionVinculados.length > 0) {
         devolucionData.fields["producto"] = productosDevolucionVinculados;
+        console.log("✅ Campo 'producto' agregado con IDs:", productosDevolucionVinculados);
+      } else {
+        console.warn("⚠️ NO se encontraron IDs de productos para vincular");
       }
 
       if (notas.trim()) {
         devolucionData.fields["Notas"] = notas;
       }
 
-      console.log("Enviando devolución:", devolucionData);
-      console.log("Productos vinculados en devolución:", productosDevolucionVinculados);
+      console.log("📤 Enviando devolución a Airtable:", JSON.stringify(devolucionData, null, 2));
 
       const response = await fetch(
         `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
@@ -799,15 +840,18 @@ window.registrarVenta = async function() {
       );
 
       const result = await response.json();
+      console.log("📥 Respuesta de Airtable:", result);
+      
       mostrarLoading(false);
 
       if (response.ok) {
+        console.log("✅ Devolución registrada con éxito. ID:", result.id);
         mostrarAlerta("success", "✅ ¡Devolución registrada exitosamente!");
         setTimeout(() => {
           limpiarFormulario();
         }, 2000);
       } else {
-        console.error("Error de Airtable:", result);
+        console.error("❌ Error de Airtable:", result);
         mostrarAlerta(
           "error",
           "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
