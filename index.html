@@ -1,573 +1,914 @@
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Punto Secreto - Registro de Ventas</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
+let clienteSeleccionado = null;
+let anfitrionSeleccionado = null;
+let tipoTransaccionActual = 'venta';
+let devolucionesAgregadas = [];
+let productosInventario = []; // Cache de productos
+
+async function fetchConfig() {
+  try {
+    const res = await fetch("https://registro-de-ventas-eight.vercel.app/api/proxy");
+    const data = await res.json();
+
+    AIRTABLE_TOKEN = data.airtableToken;
+    BASE_ID = data.baseId_;
+    CLIENTES_TABLE_ID = data.clientesTable_;
+    VENTAS_TABLE_ID = data.ventasTable_;
+    ANFITRIONES_TABLE_ID = data.anfitrionesTable_;
+    INVENTARIO_TABLE_ID = data.inventarioTable_;
+
+    console.log("✅ Configuración cargada correctamente");
+    console.log("📦 BASE_ID:", BASE_ID);
+    console.log("📦 INVENTARIO_TABLE_ID:", INVENTARIO_TABLE_ID);
+    
+    // Cargar inventario al inicio
+    await cargarInventarioCompleto();
+    
+    return true;
+  } catch (error) {
+    console.error("❌ Error al cargar configuración:", error);
+    return false;
+  }
+}
+
+// Cargar todo el inventario al inicio
+async function cargarInventarioCompleto() {
+  try {
+    // Basándome en tu imagen, el ID de la tabla es tblxyk6vtahtFlLVo
+    const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
+    
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}`;
+    console.log("🔍 Cargando inventario desde:", url);
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    console.log("📦 Datos completos del inventario:", data);
+    
+    if (data.records) {
+      productosInventario = data.records.map(record => {
+        // Obtener el código y limpiarlo de espacios y caracteres especiales
+        let codigo = record.fields["Código por categoría"] || 
+                     record.fields["Codigo por categoria"] || 
+                     record.fields["codigo por categoria"] || '';
+        
+        // Limpiar el código: quitar espacios, saltos de línea, etc.
+        codigo = codigo.toString().replace(/\s+/g, '').trim();
+        
+        const categoria = record.fields["Categoría"] || record.fields.Categoria || 'Sin categoría';
+        const inventario = record.fields["Inventario"] || 0;
+        
+        console.log(`📝 Cargado - Código: "${codigo}" | Categoría: ${categoria} | Stock: ${inventario}`);
+        
+        return {
+          id: record.id,
+          codigo: codigo,
+          categoria: categoria,
+          precio: 0,
+          stock: inventario,
+          recordCompleto: record
+        };
+      });
+      
+      console.log(`✅ ${productosInventario.length} productos cargados en memoria`);
+      console.log("📋 Lista de códigos:", productosInventario.map(p => `"${p.codigo}"`).join(", "));
+    }
+  } catch (error) {
+    console.error("❌ Error al cargar inventario:", error);
+    mostrarAlerta("error", "⚠️ Error al cargar inventario. Verifica la configuración.");
+  }
+}
+
+// Función para limpiar RUT (solo números y K)
+function cleanRut(rut) {
+  return rut.replace(/[^0-9kK]/g, '').toUpperCase();
+}
+
+// Función para formatear RUT chileno
+function formatRut(value) {
+  value = value.replace(/[^0-9kK]/g, '').toUpperCase();
+  
+  if (value.length > 9) {
+    value = value.substring(0, 9);
+  }
+  
+  if (value.length <= 1) {
+    return value;
+  }
+  
+  const dv = value.slice(-1);
+  let rut = value.slice(0, -1);
+  
+  let formatted = '';
+  let counter = 0;
+  for (let i = rut.length - 1; i >= 0; i--) {
+    formatted = rut[i] + formatted;
+    counter++;
+    if (counter === 3 && i !== 0) {
+      formatted = '.' + formatted;
+      counter = 0;
+    }
+  }
+  
+  return formatted + '-' + dv;
+}
+
+window.formatearRUT = function(input) {
+  const cursorPosition = input.selectionStart;
+  const oldValue = input.value;
+  const oldLength = oldValue.length;
+  
+  input.value = formatRut(input.value);
+  
+  const newLength = input.value.length;
+  const diff = newLength - oldLength;
+  input.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+}
+
+window.validarRUT = function(rut) {
+  rut = cleanRut(rut);
+  
+  if (rut.length < 8 || rut.length > 9) {
+    return false;
+  }
+  
+  const cuerpo = rut.slice(0, -1);
+  const dv = rut.slice(-1);
+  
+  let suma = 0;
+  let multiplo = 2;
+  
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i]) * multiplo;
+    multiplo = multiplo === 7 ? 2 : multiplo + 1;
+  }
+  
+  const resto = suma % 11;
+  const dvEsperado = 11 - resto;
+  let dvCalculado;
+  
+  if (dvEsperado === 11) {
+    dvCalculado = '0';
+  } else if (dvEsperado === 10) {
+    dvCalculado = 'K';
+  } else {
+    dvCalculado = dvEsperado.toString();
+  }
+  
+  return dv === dvCalculado;
+}
+
+window.buscarClienteEnter = function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    buscarCliente();
+  }
+}
+
+// Cargar anfitriones
+async function cargarAnfitriones() {
+  try {
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${ANFITRIONES_TABLE_ID}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    const select = document.getElementById("anfitrionSelect");
+    
+    // Limpiar opciones existentes (excepto la primera que dice "Selecciona...")
+    while (select.options.length > 1) {
+      select.remove(1);
+    }
+
+    if (data.records) {
+      data.records.forEach(record => {
+        const option = document.createElement("option");
+        option.value = record.id;
+        option.textContent = record.fields.Nombre || record.fields.name || "Sin nombre";
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error("Error al cargar anfitriones:", error);
+  }
+}
+
+window.cambiarTipoTransaccion = function(tipo) {
+  tipoTransaccionActual = tipo;
+  const ventasSection = document.getElementById("ventasSection");
+  const devolucionesSection = document.getElementById("devolucionesSection");
+  const anfitrionContainer = document.getElementById("anfitrionContainer");
+
+  if (tipo === 'venta') {
+    ventasSection.style.display = "block";
+    devolucionesSection.style.display = "none";
+    anfitrionContainer.style.display = "block"; // Mostrar anfitrión en ventas
+    setTimeout(() => {
+      document.getElementById("codigoProducto").focus();
+    }, 100);
+  } else {
+    ventasSection.style.display = "none";
+    devolucionesSection.style.display = "block";
+    anfitrionContainer.style.display = "none"; // Ocultar anfitrión en devoluciones
+    document.getElementById("devolucionesList").innerHTML = "";
+    devolucionesAgregadas = [];
+    setTimeout(() => {
+      document.getElementById("codigoDevolucion").focus();
+    }, 100);
+  }
+  calcularTotal();
+}
+
+// FUNCIÓN MEJORADA: Procesar código escaneado de la pistola
+window.procesarCodigoProducto = function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const codigo = document.getElementById("codigoProducto").value.trim();
+    
+    console.log("🔍 Buscando código:", codigo);
+    console.log("📦 Productos en memoria:", productosInventario.length);
+    
+    if (codigo) {
+      buscarYAgregarProductoPorCodigo(codigo);
+      document.getElementById("codigoProducto").value = "";
+      document.getElementById("codigoProducto").focus();
+    }
+  }
+}
+
+// NUEVA FUNCIÓN: Procesar código de devolución
+window.procesarCodigoDevolucion = function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const codigo = document.getElementById("codigoDevolucion").value.trim();
+    
+    console.log("🔍 Buscando código para devolución:", codigo);
+    
+    if (codigo) {
+      buscarYMostrarProductoDevolucion(codigo);
+      document.getElementById("codigoDevolucion").value = "";
+    }
+  }
+}
+
+// FUNCIÓN MEJORADA: Buscar producto en el inventario por código
+async function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
+  // Limpiar el código escaneado de espacios y caracteres especiales
+  const codigoLimpio = codigoEscaneado.replace(/\s+/g, '').trim();
+  
+  console.log("🔎 Buscando producto con código:", codigoLimpio);
+  
+  try {
+    const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
+    
+    // Buscar en Airtable directamente con el código escaneado
+    const formulaExacta = encodeURIComponent(`{Código por categoría}='${codigoLimpio}'`);
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}?filterByFormula=${formulaExacta}`;
+    
+    console.log("🔗 URL de búsqueda:", url);
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    console.log("📦 Respuesta de Airtable:", data);
+
+    if (data.records && data.records.length > 0) {
+      // Producto encontrado
+      const record = data.records[0];
+      const producto = {
+        id: record.id,
+        codigo: record.fields["Código por categoría"] || codigoLimpio,
+        categoria: record.fields["Categoría"] || record.fields.Categoria || 'Sin categoría',
+        stock: record.fields["Inventario"] || 0,
+        recordCompleto: record
+      };
+      
+      console.log("✅ Producto encontrado:", producto);
+      agregarProductoDesdeInventario(producto);
+      mostrarAlerta("success", `✅ ${producto.categoria} agregado - Stock: ${producto.stock}`);
+    } else {
+      // No encontrado, intentar búsqueda sin formato
+      console.log("❌ No encontrado, intentando sin filtro especial...");
+      
+      // Buscar en el cache local
+      const productoLocal = productosInventario.find(p => 
+        p.codigo.replace(/\s+/g, '').toLowerCase() === codigoLimpio.toLowerCase()
+      );
+      
+      if (productoLocal) {
+        console.log("✅ Encontrado en cache local:", productoLocal);
+        agregarProductoDesdeInventario(productoLocal);
+        mostrarAlerta("success", `✅ ${productoLocal.categoria} agregado - Stock: ${productoLocal.stock}`);
+      } else {
+        console.log("❌ Producto NO encontrado");
+        console.log("📋 Códigos disponibles:", productosInventario.map(p => `"${p.codigo}"`));
+        
+        mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado en inventario`);
+        
+        // Preguntar si desea agregar manualmente
+        setTimeout(() => {
+          const agregar = confirm(`Código "${codigoLimpio}" no encontrado.\n¿Deseas agregarlo manualmente?`);
+          if (agregar) {
+            agregarProductoConCodigo(codigoLimpio);
+          }
+        }, 100);
       }
+    }
+  } catch (error) {
+    console.error("❌ Error al buscar producto:", error);
+    mostrarAlerta("error", "❌ Error al buscar producto: " + error.message);
+  }
+}
 
-      body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        padding: 20px;
-      }
-
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        overflow: hidden;
-      }
-
-      .header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 30px;
-        text-align: center;
-      }
-
-      .header h1 {
-        font-size: 2.5em;
-        margin-bottom: 10px;
-      }
-
-      .header p {
-        font-size: 1.1em;
-        opacity: 0.9;
-      }
-
-      .form-section {
-        padding: 30px;
-      }
-
-      .form-group {
-        margin-bottom: 20px;
-      }
-
-      .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #333;
-        font-size: 14px;
-      }
-
-      .form-group input,
-      .form-group select,
-      .form-group textarea {
-        width: 100%;
-        padding: 12px;
-        border: 2px solid #ddd;
-        border-radius: 8px;
-        font-size: 16px;
-        transition: border-color 0.3s;
-      }
-
-      .form-group input:focus,
-      .form-group select:focus,
-      .form-group textarea:focus {
-        outline: none;
-        border-color: #667eea;
-      }
-
-      .btn {
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-      }
-
-      .btn-primary {
-        background: #667eea;
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background: #5568d3;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-      }
-
-      .btn-success {
-        background: #4caf50;
-        color: white;
-      }
-
-      .btn-success:hover {
-        background: #45a049;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-      }
-
-      .btn-secondary {
-        background: #6c757d;
-        color: white;
-      }
-
-      .btn-secondary:hover {
-        background: #5a6268;
-      }
-
-      .btn-danger {
-        background: #f44336;
-        color: white;
-        padding: 8px 16px;
-      }
-
-      .btn-danger:hover {
-        background: #da190b;
-      }
-
-      .btn-registrar-cliente {
-        display: inline-block;
-        background: #2196F3;
-        color: white;
-        padding: 12px 24px;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: all 0.3s;
-      }
-
-      .btn-registrar-cliente:hover {
-        background: #0b7dda;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
-      }
-
-      .alert {
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        display: none;
-        animation: slideIn 0.3s ease;
-      }
-
-      .alert.show {
-        display: block;
-      }
-
-      .alert-success {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-      }
-
-      .alert-error {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-      }
-
-      .alert-info {
-        background: #d1ecf1;
-        color: #0c5460;
-        border: 1px solid #bee5eb;
-      }
-
-      .cliente-info,
-      .cliente-no-encontrado {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin: 20px 0;
-        display: none;
-        animation: slideIn 0.3s ease;
-      }
-
-      .cliente-info.show,
-      .cliente-no-encontrado.show {
-        display: block;
-      }
-
-      .cliente-info h3 {
-        color: #667eea;
-        margin-bottom: 15px;
-      }
-
-      .cliente-no-encontrado h3 {
-        color: #f44336;
-        margin-bottom: 15px;
-      }
-
-      .cliente-info p,
-      .cliente-no-encontrado p {
-        margin: 10px 0;
-        font-size: 16px;
-      }
-
-      .loading {
-        display: none;
-        text-align: center;
-        padding: 20px;
-      }
-
-      .loading.show {
-        display: block;
-      }
-
-      .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #667eea;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto;
-      }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .productos-section {
-        margin: 20px 0;
-      }
-
-      .producto-item {
-        display: grid;
-        grid-template-columns: 2fr 1fr auto;
-        gap: 15px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        align-items: end;
-      }
-
-      .resumen {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin: 30px 0;
-      }
-
-      .resumen-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 0;
-        font-size: 16px;
-      }
-
-      .resumen-item.total {
-        border-top: 2px solid #667eea;
-        margin-top: 10px;
-        padding-top: 15px;
-        font-size: 20px;
-        font-weight: bold;
-        color: #667eea;
-      }
-
-      .form-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-top: 20px;
-      }
-
-      .devolucion-item {
-        padding: 10px;
-        border: 2px solid #ff9800;
-        border-radius: 4px;
-        margin: 10px 0;
-        background-color: #fff3e0;
-      }
-
-      @media (max-width: 768px) {
-        .container {
-          margin: 10px;
-        }
-
-        .producto-item {
-          grid-template-columns: 1fr;
-        }
-
-        .form-actions {
-          grid-template-columns: 1fr;
-        }
-
-        .header h1 {
-          font-size: 1.8em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>Punto Secreto</h1>
-        <p>Sistema de Registro de Ventas</p>
+// NUEVA FUNCIÓN: Agregar producto desde el inventario (con vinculación a Airtable)
+function agregarProductoDesdeInventario(producto) {
+  const container = document.getElementById("productosLista");
+  
+  // Verificar si ya existe un producto inicial vacío y eliminarlo
+  const productosVacios = container.querySelectorAll('.producto-item');
+  productosVacios.forEach(item => {
+    const nombre = item.querySelector('.producto-nombre').value;
+    const precio = item.querySelector('.producto-precio').value;
+    if (!nombre && !precio) {
+      item.remove();
+    }
+  });
+  
+  // Agregar producto vinculado a la tabla de Inventario Principal
+  const productoHTML = `
+    <div class="producto-item" data-producto-id="${producto.id}" data-producto-record='${JSON.stringify(producto.recordCompleto)}'>
+      <div class="form-group" style="margin: 0;">
+        <label>Producto (vinculado)</label>
+        <input type="text" class="producto-nombre" value="${producto.categoria}" readonly style="background-color: #e8f5e9; font-weight: 500; border: 2px solid #4caf50;">
       </div>
-
-      <div class="form-section">
-        <div class="alert alert-error" id="alertError">
-          ❌ Error al registrar la venta. Por favor, intenta nuevamente.
-        </div>
-        <div class="alert alert-info" id="alertInfo"></div>
-
-        <!-- Búsqueda de Cliente -->
-        <div class="form-group">
-          <label for="rutCliente">RUT del Cliente</label>
-          <input
-            type="text"
-            id="rutCliente"
-            placeholder="Ej: 12.345.678-9"
-            onkeypress="buscarClienteEnter(event)"
-            oninput="formatearRUT(this)"
-          />
-          <button
-            class="btn btn-primary"
-            onclick="buscarCliente()"
-            style="margin-top: 10px; width: 100%;"
-          >
-            🔍 Buscar Cliente
-          </button>
-        </div>
-
-        <div class="cliente-info" id="clienteInfo">
-          <h3>📋 Información del Cliente</h3>
-          <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
-          <p><strong>Teléfono:</strong> <span id="clienteTelefono"></span></p>
-          <p><strong>RUT:</strong> <span id="clienteRUT"></span></p>
-        </div>
-
-        <div class="cliente-no-encontrado" id="clienteNoEncontrado">
-          <h3>⚠️ Cliente No Encontrado</h3>
-          <p>El RUT ingresado no está registrado en la base de datos.</p>
-          <p>¿Deseas registrar este nuevo cliente?</p>
-          <a
-            href="https://admnistracionpsecreto233-spec.github.io/formulario-clientes/"
-            target="_blank"
-            class="btn btn-registrar-cliente"
-          >
-            ➕ Registrar Nuevo Cliente
-          </a>
-          <p style="margin-top: 15px; font-size: 0.9em;">
-            Después de registrar, vuelve aquí y busca nuevamente el RUT.
-          </p>
-        </div>
-
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <p style="margin-top: 10px;">Procesando...</p>
-        </div>
-
-        <!-- Selector de Anfitrión -->
-        <div id="anfitrionContainer" style="display: none;">
-          <div class="form-group">
-            <label for="anfitrionSelect">👤 Anfitrión (Vendedor)</label>
-            <select id="anfitrionSelect">
-              <option value="">Seleccionar anfitrión...</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Productos -->
-        <div id="productosContainer" style="display: none;">
-          <h3 style="margin: 30px 0 15px 0;">🛍️ Productos</h3>
-          
-          <!-- Opción: Venta o Devolución -->
-          <div class="form-group">
-            <label>Tipo de Transacción</label>
-            <div style="display: flex; gap: 20px; margin-top: 10px;">
-              <label style="display: flex; align-items: center; margin: 0; cursor: pointer;">
-                <input type="radio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')" style="margin-right: 8px;">
-                <span style="font-size: 16px;">📤 Venta</span>
-              </label>
-              <label style="display: flex; align-items: center; margin: 0; cursor: pointer;">
-                <input type="radio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')" style="margin-right: 8px;">
-                <span style="font-size: 16px;">📥 Devolución</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Sección de Ventas -->
-          <div id="ventasSection">
-            <h4 style="margin-top: 25px; color: #2e7d32;">Agregar Productos</h4>
-            <div class="form-group">
-              <label for="codigoProducto">📱 Código de Barras / Código Producto</label>
-              <input
-                type="text"
-                id="codigoProducto"
-                placeholder="Escanear o escribir código y presionar Enter..."
-                autofocus
-                onkeypress="procesarCodigoProducto(event)"
-                style="font-size: 16px; padding: 12px;"
-              />
-              <small style="color: #666; display: block; margin-top: 5px;">
-                💡 Escanea con la pistola o escribe el código y presiona Enter
-              </small>
-            </div>
-
-            <div class="form-group">
-              <label for="selectProductoManual">O seleccionar manualmente:</label>
-              <select id="selectProductoManual" onchange="agregarProductoManual()">
-                <option value="">Seleccionar...</option>
-                <option value="Polera">Polera</option>
-                <option value="Polerón">Polerón</option>
-                <option value="Parka">Parka</option>
-                <option value="Falda">Falda</option>
-                <option value="Bluza">Bluza</option>
-                <option value="Pantalón">Pantalón</option>
-                <option value="Jean">Jean</option>
-                <option value="Buzo">Buzo</option>
-                <option value="Abrigo">Abrigo</option>
-                <option value="Polar">Polar</option>
-                <option value="Suéter">Suéter</option>
-                <option value="Chaleco">Chaleco</option>
-                <option value="Vestido">Vestido</option>
-                <option value="Short">Short</option>
-                <option value="Ropa de cama">Ropa de cama</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
-
-            <div class="productos-section" id="productosLista">
-              <div class="producto-item">
-                <div class="form-group" style="margin: 0;">
-                  <label>Producto</label>
-                  <input type="text" class="producto-nombre" placeholder="Escanea código o ingresa nombre">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                  <label>Precio ($)</label>
-                  <input
-                    type="number"
-                    class="producto-precio"
-                    placeholder="0"
-                    min="0"
-                    onchange="calcularTotal()"
-                  />
-                </div>
-                <div>
-                  <button
-                    class="btn btn-danger"
-                    onclick="eliminarProducto(this)"
-                    style="margin-top: 24px;"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            </div>
-            <button
-              class="btn btn-secondary"
-              onclick="agregarProducto()"
-              style="margin-top: 10px;"
-            >
-              ➕ Agregar Producto Manual
-            </button>
-          </div>
-
-          <!-- Sección de Devoluciones SIMPLIFICADA -->
-          <div id="devolucionesSection" style="display: none;">
-            <h4 style="margin-top: 25px; color: #e65100;">📥 Productos en Devolución</h4>
-            
-            <div class="form-group">
-              <label for="codigoDevolucion">📱 Escanear Código de Producto a Devolver</label>
-              <input
-                type="text"
-                id="codigoDevolucion"
-                placeholder="Escanear o escribir código y presionar Enter..."
-                autofocus
-                onkeypress="procesarCodigoDevolucion(event)"
-                style="font-size: 16px; padding: 12px; border: 2px solid #ff9800;"
-              />
-              <small style="color: #e65100; display: block; margin-top: 5px;">
-                💡 Escanea cada producto que el cliente devuelve
-              </small>
-            </div>
-
-            <div id="devolucionesList" style="margin-top: 20px;">
-              <!-- Se llenarán dinámicamente los productos devueltos -->
-            </div>
-          </div>
-
-          <!-- Descuento -->
-          <div class="form-group" style="margin-top: 30px;">
-            <label for="descuento">💸 Descuento (%)</label>
-            <input
-              type="number"
-              id="descuento"
-              placeholder="0"
-              min="0"
-              max="100"
-              value="0"
-              onchange="calcularTotal()"
-            />
-          </div>
-
-          <!-- Notas u Observaciones -->
-          <div class="form-group">
-            <label for="notas">📝 Notas u Observaciones</label>
-            <textarea
-              id="notas"
-              placeholder="Escribir notas o observaciones sobre la transacción..."
-              rows="3"
-              style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif;"
-            ></textarea>
-          </div>
-
-          <!-- Resumen -->
-          <div class="resumen">
-            <h3 style="margin-bottom: 15px;">💰 Resumen de Venta</h3>
-            <div class="resumen-item">
-              <span>Subtotal:</span>
-              <span id="subtotal">$0</span>
-            </div>
-            <div class="resumen-item">
-              <span>Descuento:</span>
-              <span id="descuentoMonto">$0</span>
-            </div>
-            <div class="resumen-item total">
-              <span>TOTAL:</span>
-              <span id="total">$0</span>
-            </div>
-          </div>
-
-          <!-- Botones de acción -->
-          <div class="form-actions">
-            <button class="btn btn-success" onclick="registrarVenta()">
-              ✅ Registrar Transacción
-            </button>
-            <button class="btn btn-secondary" onclick="limpiarFormulario()">
-              🔄 Nueva Transacción
-            </button>
-          </div>
-
-          <!-- Alerta de éxito después de los botones -->
-          <div
-            class="alert alert-success"
-            id="alertSuccess"
-            style="margin-top: 20px;"
-          >
-            ✅ ¡Transacción registrada exitosamente!
-          </div>
-        </div>
+      <div class="form-group" style="margin: 0;">
+        <label>📦 Código: ${producto.codigo} | 📊 Stock: ${producto.stock}</label>
+        <input type="number" class="producto-precio" placeholder="Ingresa el precio" min="0" onchange="calcularTotal()" autofocus>
+      </div>
+      <div>
+        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
       </div>
     </div>
-    <script src="./main.js"></script>
-  </body>
-</html>
+  `;
+  container.insertAdjacentHTML("beforeend", productoHTML);
+  
+  // Enfocar el campo de precio del último producto agregado
+  const ultimoPrecio = container.querySelector('.producto-item:last-child .producto-precio');
+  if (ultimoPrecio) {
+    setTimeout(() => {
+      ultimoPrecio.focus();
+      // Después de ingresar precio, volver al campo de código
+      ultimoPrecio.addEventListener('blur', () => {
+        setTimeout(() => {
+          document.getElementById("codigoProducto").focus();
+        }, 100);
+      });
+    }, 100);
+  }
+  
+  calcularTotal();
+}
+
+// FUNCIÓN: Buscar y mostrar producto para devolución
+async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
+  const codigoLimpio = codigoEscaneado.replace(/\s+/g, '').trim();
+  
+  console.log("🔎 Buscando producto para devolución:", codigoLimpio);
+  
+  try {
+    const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
+    const formulaExacta = encodeURIComponent(`{Código por categoría}='${codigoLimpio}'`);
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}?filterByFormula=${formulaExacta}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.records && data.records.length > 0) {
+      const record = data.records[0];
+      const producto = {
+        id: record.id,
+        codigo: record.fields["Código por categoría"] || codigoLimpio,
+        categoria: record.fields["Categoría"] || record.fields.Categoria || 'Sin categoría',
+        stock: record.fields["Inventario"] || 0,
+      };
+      
+      console.log("✅ Producto encontrado para devolución:", producto);
+      agregarProductoDevolucion(producto);
+      mostrarAlerta("success", `✅ ${producto.categoria} agregado - Stock actual: ${producto.stock}`);
+    } else {
+      const productoLocal = productosInventario.find(p => 
+        p.codigo.replace(/\s+/g, '').toLowerCase() === codigoLimpio.toLowerCase()
+      );
+      
+      if (productoLocal) {
+        agregarProductoDevolucion(productoLocal);
+        mostrarAlerta("success", `✅ ${productoLocal.categoria} agregado`);
+      } else {
+        mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error al buscar producto:", error);
+    mostrarAlerta("error", "❌ Error al buscar producto: " + error.message);
+  }
+}
+
+// FUNCIÓN SIMPLIFICADA: Agregar producto a la lista de devoluciones (SIN motivo)
+function agregarProductoDevolucion(producto) {
+  const yaExiste = devolucionesAgregadas.find(d => d.id === producto.id);
+  if (yaExiste) {
+    mostrarAlerta("info", "⚠️ Este producto ya está en la lista");
+    setTimeout(() => {
+      document.getElementById("codigoDevolucion").focus();
+    }, 100);
+    return;
+  }
+
+  const devolucion = {
+    id: producto.id,
+    nombre: producto.categoria,
+    codigo: producto.codigo,
+    stock: producto.stock || 0
+  };
+
+  devolucionesAgregadas.push(devolucion);
+
+  console.log("✅ Producto agregado a devoluciones:", devolucion);
+
+  const container = document.getElementById("devolucionesList");
+  const itemHTML = `
+    <div class="devolucion-item" data-devolucion-id="${producto.id}" style="background: #e8f5e9; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #4caf50; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <strong style="font-size: 16px; color: #2e7d32;">📦 ${producto.categoria}</strong>
+        <div style="color: #666; margin-top: 4px; font-size: 14px;">Código: ${producto.codigo} | Stock: ${producto.stock}</div>
+      </div>
+      <button class="btn btn-danger" onclick="eliminarDevolucion('${producto.id}')" style="padding: 8px 12px; font-size: 14px;">🗑️</button>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", itemHTML);
+  
+  setTimeout(() => {
+    document.getElementById("codigoDevolucion").focus();
+  }, 100);
+}
+
+// FUNCIÓN: Actualizar motivo de devolución (YA NO SE USA)
+window.actualizarMotivoDevolucion = function(id, motivo) {
+  // Función deprecada - se mantiene por compatibilidad
+}
+
+window.agregarProductoConCodigo = function(codigo) {
+  const container = document.getElementById("productosLista");
+  const productoHTML = `
+    <div class="producto-item">
+      <div class="form-group" style="margin: 0;">
+        <label>Producto (Manual)</label>
+        <input type="text" class="producto-nombre" value="${codigo}">
+      </div>
+      <div class="form-group" style="margin: 0;">
+        <label>Precio ($)</label>
+        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()" autofocus>
+      </div>
+      <div>
+        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", productoHTML);
+}
+
+window.agregarProductoManual = function() {
+  const select = document.getElementById("selectProductoManual");
+  if (select.value) {
+    agregarProductoConCodigo(select.value);
+    select.value = "";
+  }
+}
+
+window.eliminarDevolucion = function(id) {
+  devolucionesAgregadas = devolucionesAgregadas.filter(d => d.id !== id);
+  const items = document.querySelectorAll(".devolucion-item");
+  items.forEach(item => {
+    if (item.dataset.devolucionId === id) {
+      item.remove();
+    }
+  });
+  calcularTotal();
+}
+
+window.buscarCliente = async function() {
+  const input = document.getElementById("rutCliente");
+  const rut = input.value.trim();
+
+  if (!rut) {
+    mostrarAlerta("info", "⚠️ Por favor, ingresa un RUT");
+    return;
+  }
+
+  const rutLimpio = cleanRut(rut);
+  
+  if (rutLimpio.length < 8) {
+    mostrarAlerta("error", "❌ RUT incompleto. Debe tener al menos 8 dígitos.");
+    input.focus();
+    return;
+  }
+
+  if (!validarRUT(rut)) {
+    mostrarAlerta("error", "❌ RUT inválido. Verifica el dígito verificador.");
+    input.focus();
+    input.select();
+    return;
+  }
+
+  if (!AIRTABLE_TOKEN || !BASE_ID) {
+    mostrarAlerta("error", "❌ Error: Configuración no cargada. Recarga la página.");
+    return;
+  }
+
+  mostrarLoading(true);
+  ocultarAlertas();
+
+  try {
+    const rutLimpioEncoded = encodeURIComponent(rutLimpio);
+    const rutFormatEncoded = encodeURIComponent(rut);
+    
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${CLIENTES_TABLE_ID}?filterByFormula=OR({Rut.}='${rutLimpioEncoded}',{Rut.}='${rutFormatEncoded}')`;
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+
+    mostrarLoading(false);
+
+    if (data.records && data.records.length > 0) {
+      clienteSeleccionado = data.records[0];
+      mostrarInfoCliente(clienteSeleccionado);
+      document.getElementById("productosContainer").style.display = "block";
+      document.getElementById("anfitrionContainer").style.display = "block";
+      cargarAnfitriones();
+      
+      // Focus en el input de código para comenzar a escanear
+      setTimeout(() => {
+        document.getElementById("codigoProducto").focus();
+        mostrarAlerta("info", "📱 Escanea el código de barras o ingresa manualmente");
+      }, 100);
+    } else {
+      mostrarClienteNoEncontrado();
+    }
+  } catch (error) {
+    mostrarLoading(false);
+    mostrarAlerta("error", "❌ Error al buscar cliente: " + error.message);
+    console.error("Error:", error);
+  }
+}
+
+function mostrarInfoCliente(cliente) {
+  const fields = cliente.fields;
+  document.getElementById("clienteNombre").textContent = fields.Nombre || "N/A";
+  document.getElementById("clienteTelefono").textContent = fields["Teléfono"] || "N/A";
+  document.getElementById("clienteRUT").textContent = fields["Rut."] || "N/A";
+  document.getElementById("clienteInfo").classList.add("show");
+  document.getElementById("clienteNoEncontrado").classList.remove("show");
+}
+
+function mostrarClienteNoEncontrado() {
+  clienteSeleccionado = null;
+  document.getElementById("clienteInfo").classList.remove("show");
+  document.getElementById("clienteNoEncontrado").classList.add("show");
+  document.getElementById("productosContainer").style.display = "none";
+  document.getElementById("anfitrionContainer").style.display = "none";
+}
+
+window.agregarProducto = function() {
+  const container = document.getElementById("productosLista");
+  const productoHTML = `
+    <div class="producto-item">
+      <div class="form-group" style="margin: 0;">
+        <label>Producto</label>
+        <input type="text" class="producto-nombre" placeholder="Nombre del producto">
+      </div>
+      <div class="form-group" style="margin: 0;">
+        <label>Precio ($)</label>
+        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
+      </div>
+      <div>
+        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", productoHTML);
+}
+
+window.eliminarProducto = function(btn) {
+  const items = document.querySelectorAll(".producto-item");
+  if (items.length > 1) {
+    btn.closest(".producto-item").remove();
+    calcularTotal();
+  } else {
+    mostrarAlerta("info", "⚠️ Debe haber al menos un producto");
+  }
+}
+
+window.calcularTotal = function() {
+  let subtotal = 0;
+  const precios = document.querySelectorAll(".producto-precio");
+
+  precios.forEach((input) => {
+    const precio = parseFloat(input.value) || 0;
+    subtotal += precio;
+  });
+
+  const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
+  const descuentoMonto = (subtotal * descuentoPorcentaje) / 100;
+  const total = subtotal - descuentoMonto;
+
+  document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
+  document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
+  document.getElementById("total").textContent = "$" + total.toLocaleString("es-CL");
+}
+
+window.registrarVenta = async function() {
+  if (!clienteSeleccionado) {
+    mostrarAlerta("error", "❌ Primero debes buscar y seleccionar un cliente");
+    return;
+  }
+
+  if (tipoTransaccionActual === 'venta') {
+    const anfitrionSelect = document.getElementById("anfitrionSelect");
+    if (!anfitrionSelect.value) {
+      mostrarAlerta("error", "❌ Debes seleccionar un anfitrión");
+      return;
+    }
+    anfitrionSeleccionado = anfitrionSelect.value;
+  }
+
+  if (!AIRTABLE_TOKEN || !BASE_ID) {
+    mostrarAlerta("error", "❌ Error: Configuración no cargada. Recarga la página.");
+    return;
+  }
+
+  let totalVenta = 0;
+  let productosVinculados = []; // Array para guardar los IDs de productos vinculados
+  let itemsTexto = "";
+
+  if (tipoTransaccionActual === 'venta') {
+    // ========== PROCESANDO VENTA ==========
+    const productosItems = document.querySelectorAll(".producto-item");
+
+    for (let item of productosItems) {
+      const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
+      const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
+      const productoId = item.dataset.productoId; // ID del registro de Inventario
+
+      if (precio > 0) {
+        // Si el producto está vinculado a Inventario, guardar el ID
+        if (productoId) {
+          productosVinculados.push(productoId);
+        }
+        
+        itemsTexto += `${nombre} (${precio}), `;
+        totalVenta += precio;
+      }
+    }
+
+    if (productosVinculados.length === 0 && itemsTexto === "") {
+      mostrarAlerta("error", "❌ Debes agregar al menos un producto con precio");
+      return;
+    }
+  } else {
+    // ========== PROCESANDO DEVOLUCIÓN ==========
+    if (devolucionesAgregadas.length === 0) {
+      mostrarAlerta("error", "❌ Debes escanear al menos un producto para devolver");
+      return;
+    }
+    
+    // Extraer IDs y nombres de productos devueltos
+    productosVinculados = devolucionesAgregadas.map(d => d.id);
+    itemsTexto = devolucionesAgregadas.map(d => d.nombre).join(", ");
+    
+    console.log("🔄 Devolución - Productos vinculados:", productosVinculados);
+    console.log("📝 Devolución - Texto:", itemsTexto);
+  }
+
+  const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
+  const descuentoMonto = (totalVenta * descuentoPorcentaje) / 100;
+  totalVenta = totalVenta - descuentoMonto;
+
+  const notas = document.getElementById("notas").value || "";
+
+  // Limpiar coma final
+  itemsTexto = itemsTexto.replace(/,\s*$/, "");
+
+  mostrarLoading(true);
+  ocultarAlertas();
+
+  try {
+    if (tipoTransaccionActual === 'venta') {
+      // ========== REGISTRAR VENTA ==========
+      const ventaData = {
+        fields: {
+          Cliente: [clienteSeleccionado.id],
+          Anfitrión: [anfitrionSeleccionado],
+          Items: itemsTexto,
+          "Total de venta": Math.round(totalVenta),
+          Descuento: descuentoPorcentaje,
+        },
+      };
+
+      // Agregar vinculación de productos si existen
+      if (productosVinculados.length > 0) {
+        ventaData.fields["producto"] = productosVinculados;
+      }
+
+      if (notas.trim()) {
+        ventaData.fields["Notas"] = notas;
+      }
+
+      console.log("💰 Enviando VENTA:", ventaData);
+
+      const response = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(ventaData),
+        }
+      );
+
+      const result = await response.json();
+      mostrarLoading(false);
+
+      if (response.ok) {
+        mostrarAlerta("success", "✅ ¡Venta registrada exitosamente!");
+        setTimeout(() => {
+          limpiarFormulario();
+        }, 2000);
+      } else {
+        console.error("❌ Error de Airtable:", result);
+        mostrarAlerta(
+          "error",
+          "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
+        );
+      }
+    } else {
+      // ========== REGISTRAR DEVOLUCIÓN ==========
+      const devolucionData = {
+        fields: {
+          Cliente: [clienteSeleccionado.id],
+          "producto": productosVinculados, // Vincular a Inventario Principal
+          "Productos devueltos": itemsTexto,
+          Tipo: "Devolución",
+        },
+      };
+
+      if (notas.trim()) {
+        devolucionData.fields["Notas"] = notas;
+      }
+
+      console.log("🔄 Enviando DEVOLUCIÓN:", devolucionData);
+
+      const response = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(devolucionData),
+        }
+      );
+
+      const result = await response.json();
+      mostrarLoading(false);
+
+      if (response.ok) {
+        console.log("✅ Devolución registrada:", result);
+        mostrarAlerta("success", `✅ ¡Devolución registrada! ${devolucionesAgregadas.length} producto(s)`);
+        setTimeout(() => {
+          limpiarFormulario();
+        }, 2000);
+      } else {
+        console.error("❌ Error de Airtable:", result);
+        mostrarAlerta(
+          "error",
+          "❌ Error al registrar: " + (result.error?.message || "Error desconocido")
+        );
+      }
+    }
+  } catch (error) {
+    mostrarLoading(false);
+    mostrarAlerta("error", "❌ Error al registrar: " + error.message);
+    console.error("Error:", error);
+  }
+}
+
+window.limpiarFormulario = function() {
+  document.getElementById("rutCliente").value = "";
+  document.getElementById("descuento").value = "0";
+  document.getElementById("notas").value = "";
+  document.getElementById("clienteInfo").classList.remove("show");
+  document.getElementById("clienteNoEncontrado").classList.remove("show");
+  document.getElementById("productosContainer").style.display = "none";
+  document.getElementById("anfitrionContainer").style.display = "none";
+
+  const container = document.getElementById("productosLista");
+  container.innerHTML = `
+    <div class="producto-item">
+      <div class="form-group" style="margin: 0;">
+        <label>Producto</label>
+        <input type="text" class="producto-nombre" placeholder="Escanea código o ingresa nombre">
+      </div>
+      <div class="form-group" style="margin: 0;">
+        <label>Precio ($)</label>
+        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
+      </div>
+      <div>
+        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("devolucionesList").innerHTML = "";
+  devolucionesAgregadas = [];
+
+  const ventaRadio = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
+  if (ventaRadio) {
+    ventaRadio.checked = true;
+    cambiarTipoTransaccion('venta');
+  }
+
+  calcularTotal();
+  clienteSeleccionado = null;
+  anfitrionSeleccionado = null;
+  ocultarAlertas();
+  document.getElementById("rutCliente").focus();
+}
+
+function mostrarAlerta(tipo, mensaje) {
+  ocultarAlertas();
+  const alertId =
+    tipo === "success"
+      ? "alertSuccess"
+      : tipo === "error"
+      ? "alertError"
+      : "alertInfo";
+  const alert = document.getElementById(alertId);
+  alert.textContent = mensaje;
+  alert.classList.add("show");
+
+  if (tipo !== "info") {
+    setTimeout(() => {
+      alert.classList.remove("show");
+    }, 5000);
+  }
+}
+
+function ocultarAlertas() {
+  document.getElementById("alertSuccess").classList.remove("show");
+  document.getElementById("alertError").classList.remove("show");
+  document.getElementById("alertInfo").classList.remove("show");
+}
+
+function mostrarLoading(show) {
+  const loading = document.getElementById("loading");
+  if (show) {
+    loading.classList.add("show");
+  } else {
+    loading.classList.remove("show");
+  }
+}
+
+// Inicializar la aplicación
+fetchConfig().then((success) => {
+  if (success) {
+    calcularTotal();
+    console.log("✅ Aplicación lista para usar");
+    console.log("📦 Productos cargados:", productosInventario.length);
+  } else {
+    mostrarAlerta("error", "❌ Error al cargar la configuración. Por favor, recarga la página.");
+  }
+});
