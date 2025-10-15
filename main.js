@@ -200,36 +200,6 @@ async function cargarAnfitriones() {
   }
 }
 
-// Cargar productos de inventario para devoluciones
-async function cargarProductosInventario() {
-  try {
-    const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}`;
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-      },
-    });
-
-    const data = await response.json();
-    const select = document.getElementById("productoDevolucion");
-
-    if (data.records) {
-      data.records.forEach(record => {
-        const option = document.createElement("option");
-        option.value = record.id;
-        const nombre = record.fields.Categoría || record.fields.Categoria || "Sin nombre";
-        const cantidad = record.fields.Inventario || 0;
-        option.textContent = `${nombre} (Stock: ${cantidad})`;
-        option.dataset.record = JSON.stringify(record);
-        select.appendChild(option);
-      });
-    }
-  } catch (error) {
-    console.error("Error al cargar inventario:", error);
-  }
-}
-
 window.cambiarTipoTransaccion = function(tipo) {
   tipoTransaccionActual = tipo;
   const ventasSection = document.getElementById("ventasSection");
@@ -238,12 +208,20 @@ window.cambiarTipoTransaccion = function(tipo) {
   if (tipo === 'venta') {
     ventasSection.style.display = "block";
     devolucionesSection.style.display = "none";
+    // Enfocar en el campo de código de productos
+    setTimeout(() => {
+      document.getElementById("codigoProducto").focus();
+    }, 100);
   } else {
     ventasSection.style.display = "none";
     devolucionesSection.style.display = "block";
     // Limpiar la lista de devoluciones
     document.getElementById("devolucionesList").innerHTML = "";
     devolucionesAgregadas = [];
+    // Enfocar en el campo de código de devolución
+    setTimeout(() => {
+      document.getElementById("codigoDevolucion").focus();
+    }, 100);
   }
   calcularTotal();
 }
@@ -261,6 +239,21 @@ window.procesarCodigoProducto = function(event) {
       buscarYAgregarProductoPorCodigo(codigo);
       document.getElementById("codigoProducto").value = "";
       document.getElementById("codigoProducto").focus();
+    }
+  }
+}
+
+// NUEVA FUNCIÓN: Procesar código de devolución
+window.procesarCodigoDevolucion = function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const codigo = document.getElementById("codigoDevolucion").value.trim();
+    
+    console.log("🔍 Buscando código para devolución:", codigo);
+    
+    if (codigo) {
+      buscarYMostrarProductoDevolucion(codigo);
+      document.getElementById("codigoDevolucion").value = "";
     }
   }
 }
@@ -387,6 +380,94 @@ function agregarProductoDesdeInventario(producto) {
   calcularTotal();
 }
 
+// FUNCIÓN: Buscar y mostrar producto para devolución
+async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
+  const codigoLimpio = codigoEscaneado.replace(/\s+/g, '').trim();
+  
+  console.log("🔎 Buscando producto para devolución:", codigoLimpio);
+  
+  try {
+    const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
+    const formulaExacta = encodeURIComponent(`{Código por categoría}='${codigoLimpio}'`);
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${INVENTARIO_PRINCIPAL_ID}?filterByFormula=${formulaExacta}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.records && data.records.length > 0) {
+      const record = data.records[0];
+      const producto = {
+        id: record.id,
+        codigo: record.fields["Código por categoría"] || codigoLimpio,
+        categoria: record.fields["Categoría"] || record.fields.Categoria || 'Sin categoría',
+        stock: record.fields["Inventario"] || 0,
+      };
+      
+      console.log("✅ Producto encontrado para devolución:", producto);
+      agregarProductoDevolucion(producto);
+      mostrarAlerta("success", `✅ ${producto.categoria} agregado a devolución`);
+    } else {
+      const productoLocal = productosInventario.find(p => 
+        p.codigo.replace(/\s+/g, '').toLowerCase() === codigoLimpio.toLowerCase()
+      );
+      
+      if (productoLocal) {
+        agregarProductoDevolucion(productoLocal);
+        mostrarAlerta("success", `✅ ${productoLocal.categoria} agregado a devolución`);
+      } else {
+        mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error al buscar producto:", error);
+    mostrarAlerta("error", "❌ Error al buscar producto: " + error.message);
+  }
+}
+
+// FUNCIÓN: Agregar producto a la lista de devoluciones
+function agregarProductoDevolucion(producto) {
+  const devolucion = {
+    id: producto.id,
+    nombre: producto.categoria,
+    cantidad: 1,
+    codigo: producto.codigo,
+    motivo: "Escaneado"
+  };
+
+  devolucionesAgregadas.push(devolucion);
+
+  const container = document.getElementById("devolucionesList");
+  const itemHTML = `
+    <div class="devolucion-item" data-devolucion-id="${producto.id}">
+      <strong>${producto.categoria}</strong> - Código: ${producto.codigo}
+      <div style="margin-top: 5px;">
+        <label style="font-size: 14px;">Motivo:</label>
+        <input type="text" placeholder="Ingresa el motivo..." style="margin-left: 10px; padding: 5px; width: 200px;" onchange="actualizarMotivoDevolucion('${producto.id}', this.value)">
+      </div>
+      <button class="btn btn-danger" onclick="eliminarDevolucion('${producto.id}')" style="margin-top: 10px; padding: 5px 10px;">🗑️ Eliminar</button>
+    </div>
+  `;
+  container.insertAdjacentHTML("beforeend", itemHTML);
+  
+  // Enfocar el campo de código para continuar escaneando
+  setTimeout(() => {
+    document.getElementById("codigoDevolucion").focus();
+  }, 100);
+}
+
+// FUNCIÓN: Actualizar motivo de devolución
+window.actualizarMotivoDevolucion = function(id, motivo) {
+  const devolucion = devolucionesAgregadas.find(d => d.id === id);
+  if (devolucion) {
+    devolucion.motivo = motivo;
+  }
+}
+
 window.agregarProductoConCodigo = function(codigo) {
   const container = document.getElementById("productosLista");
   const productoHTML = `
@@ -415,59 +496,13 @@ window.agregarProductoManual = function() {
   }
 }
 
-window.cargarDetallesDevolucion = function() {
-  const select = document.getElementById("productoDevolucion");
-  const detalles = document.getElementById("detallesDevolucion");
-  
-  if (select.value) {
-    detalles.style.display = "block";
-  } else {
-    detalles.style.display = "none";
-  }
-}
-
-window.agregarDevolucion = function() {
-  const select = document.getElementById("productoDevolucion");
-  const cantidad = parseInt(document.getElementById("cantidadDevolucion").value) || 1;
-  const motivo = document.getElementById("motivoDevolucion").value;
-
-  if (!select.value || !motivo) {
-    mostrarAlerta("error", "❌ Debes seleccionar producto y motivo");
-    return;
-  }
-
-  const option = select.options[select.selectedIndex];
-  const record = JSON.parse(option.dataset.record);
-  const nombreProducto = record.fields.Categoría || record.fields.Categoria || "Sin nombre";
-
-  const devolucion = {
-    id: record.id,
-    nombre: nombreProducto,
-    cantidad: cantidad,
-    motivo: motivo
-  };
-
-  devolucionesAgregadas.push(devolucion);
-
-  const container = document.getElementById("devolucionesList");
-  const itemHTML = `
-    <div class="devolucion-item" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0;">
-      <strong>${nombreProducto}</strong> - Cantidad: ${cantidad} - Motivo: ${motivo}
-      <button class="btn btn-danger" onclick="eliminarDevolucion('${record.id}')" style="margin-left: 10px; padding: 5px 10px;">🗑️</button>
-    </div>
-  `;
-  container.insertAdjacentHTML("beforeend", itemHTML);
-
-  select.value = "";
-  document.getElementById("detallesDevolucion").style.display = "none";
-  calcularTotal();
-}
-
 window.eliminarDevolucion = function(id) {
   devolucionesAgregadas = devolucionesAgregadas.filter(d => d.id !== id);
-  document.querySelectorAll(".devolucion-item").forEach(item => {
-    if (item.textContent.includes(devolucionesAgregadas.map(d => d.nombre).join(""))) return;
-    item.remove();
+  const items = document.querySelectorAll(".devolucion-item");
+  items.forEach(item => {
+    if (item.dataset.devolucionId === id) {
+      item.remove();
+    }
   });
   calcularTotal();
 }
@@ -656,6 +691,10 @@ window.registrarVenta = async function() {
     }
   } else {
     // Devoluciones
+    if (devolucionesAgregadas.length === 0) {
+      mostrarAlerta("error", "❌ Debes escanear al menos un producto para devolver");
+      return;
+    }
     itemsTexto = devolucionesAgregadas.map(d => `${d.nombre} (${d.cantidad} unidad/es) - ${d.motivo}`).join(", ");
   }
 
