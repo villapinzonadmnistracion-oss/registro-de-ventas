@@ -658,11 +658,13 @@ window.registrarVenta = async function() {
         mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
       }
     } else {
+      // Para devoluciones, usamos los mismos campos que ventas
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
           Items: itemsTexto,
-          Tipo: "Devolución",
+          "Total de venta": 0, // Las devoluciones no tienen monto positivo
+          Devolución: "Sí", // Marcamos que es una devolución
         },
       };
 
