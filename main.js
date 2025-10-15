@@ -658,7 +658,7 @@ window.registrarVenta = async function() {
         mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
       }
     } else {
-      // DEVOLUCIONES: Se registran como ventas pero solo con productos vinculados
+      // DEVOLUCIONES: Se registran vinculando los productos en el campo "Devolución"
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
@@ -667,9 +667,9 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Vincular productos del inventario
+      // Vincular productos en el campo DEVOLUCIÓN (no en "producto")
       if (productosVinculados.length > 0) {
-        devolucionData.fields["producto"] = productosVinculados;
+        devolucionData.fields["Devolución"] = productosVinculados;
       }
 
       console.log("🔄 Enviando DEVOLUCIÓN:", JSON.stringify(devolucionData, null, 2));
