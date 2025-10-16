@@ -1,33 +1,4 @@
-function mostrarInfoCliente(cliente) {
-  const fields = cliente.fields;
-  document.getElementById("clienteNombre").textContent = fields.Nombre || "N/A";
-  document.getElementById("clienteTelefono").textContent = fields["Teléfono"] || "N/A";
-  document.getElementById("clienteRUT").textContent = fields["Rut."] || "N/A";
-  document.getElementById("clienteInfo").classList.add("show");
-  document.getElementById("clienteNoEncontrado").classList.remove("show");
-  
-  // Verificar si es cumpleaños del cliente
-  verificarCumpleanos(cliente);
-}
-
-function verificarCumpleanos(cliente) {
-  const fields = cliente.fields;
-  
-  // Verificar si existe un campo que indique cumpleaños
-  // Ajusta el nombre del campo según tu tabla de Airtable
-  const esCumpleanos = fields["Cumpleaños"] === true || 
-                       fields["Es Cumpleaños"] === true ||
-                       fields["cumpleaños"] === true ||
-                       fields["Descuento Cumpleaños"] === "🎉 Descuento del 10%";
-  
-  if (esCumpleanos) {
-    // Aplicar descuento del 10% automáticamente
-    document.getElementById("descuento").value = "10";
-    calcularTotal();
-    
-    // Mostrar mensaje de cumpleaños
-    const nombreCliente = fields.Nombre || "Cliente";
-    mostrarAlerta("success", `🎉🎂let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
+let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
 let clienteSeleccionado = null;
 let anfitrionSeleccionado = null;
 let tipoTransaccionActual = 'venta';
@@ -299,7 +270,7 @@ function agregarProductoDesdeInventario(producto) {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>📦 Código: ${producto.codigo} | 📊 Stock: ${producto.stock}</label>
-        <input type="number" class="producto-precio" placeholder="Ingresa el precio" min="0" onchange="calcularTotal()" autofocus>
+        <input type="text" class="producto-precio" placeholder="Ingresa el precio" oninput="formatearPrecio(this)" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -425,7 +396,7 @@ window.agregarProductoConCodigo = function(codigo) {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()" autofocus>
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -523,33 +494,6 @@ function mostrarInfoCliente(cliente) {
   document.getElementById("clienteRUT").textContent = fields["Rut."] || "N/A";
   document.getElementById("clienteInfo").classList.add("show");
   document.getElementById("clienteNoEncontrado").classList.remove("show");
-  
-  // Verificar si es cumpleaños del cliente
-  verificarCumpleanos(cliente);
-}
-
-function verificarCumpleanos(cliente) {
-  const fields = cliente.fields;
-  
-  // Verificar si el campo "Descuento Cumpleaños" contiene el mensaje de cumpleaños
-  const descuentoCumpleanos = fields["Descuento Cumpleaños"] || fields["Descuento Cumpleanos"] || "";
-  const esCumpleanos = descuentoCumpleanos.includes("🎉 Descuento del 10%");
-  
-  if (esCumpleanos) {
-    // Aplicar descuento del 10% automáticamente
-    document.getElementById("descuento").value = "10";
-    calcularTotal();
-    
-    // Mostrar mensaje de cumpleaños
-    const nombreCliente = fields.Nombre || "Cliente";
-    mostrarAlerta("success", `🎉🎂 ¡Feliz Cumpleaños ${nombreCliente}! Se aplicó descuento del 10%`);
-    
-    // Agregar la nota de cumpleaños automáticamente
-    const notasInput = document.getElementById("notas");
-    if (notasInput && !notasInput.value.includes("Cumpleaños")) {
-      notasInput.value = "🎉 Descuento del 10% por Cumpleaños";
-    }
-  }
 }
 
 function mostrarClienteNoEncontrado() {
@@ -570,7 +514,7 @@ window.agregarProducto = function() {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)">
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -594,13 +538,20 @@ window.calcularTotal = function() {
   let subtotal = 0;
   const precios = document.querySelectorAll(".producto-precio");
   precios.forEach((input) => {
-    const precio = parseFloat(input.value) || 0;
+    // Remover puntos y obtener el valor numérico completo
+    const valorLimpio = input.value.replace(/\./g, '').replace(/\D/g, '');
+    const precio = valorLimpio ? parseInt(valorLimpio) : 0;
     subtotal += precio;
+    
+    // Debug: mostrar en consola
+    console.log(`Precio input: "${input.value}" → Valor limpio: "${valorLimpio}" → Número: ${precio}`);
   });
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
   const descuentoMonto = (subtotal * descuentoPorcentaje) / 100;
   const total = subtotal - descuentoMonto;
+
+  console.log(`Subtotal: ${subtotal}, Descuento: ${descuentoMonto}, Total: ${total}`);
 
   document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
   document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
@@ -784,7 +735,7 @@ window.limpiarFormulario = function() {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)">
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
