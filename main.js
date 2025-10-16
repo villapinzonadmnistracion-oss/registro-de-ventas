@@ -102,6 +102,9 @@ window.formatearRUT = function(input) {
 }
 
 window.formatearPrecio = function(input) {
+  // Guardar la posición del cursor
+  const cursorPos = input.selectionStart;
+  
   // Remover todo excepto números
   let valor = input.value.replace(/\D/g, '');
   
@@ -112,9 +115,21 @@ window.formatearPrecio = function(input) {
     return;
   }
   
+  // Remover ceros a la izquierda
+  valor = valor.replace(/^0+/, '') || '0';
+  
   // Convertir a número y formatear con puntos de miles
   const numero = parseInt(valor);
-  input.value = numero.toLocaleString('es-CL');
+  const valorFormateado = numero.toLocaleString('es-CL');
+  
+  // Calcular la diferencia de longitud para ajustar el cursor
+  const diferencia = valorFormateado.length - input.value.length;
+  
+  input.value = valorFormateado;
+  
+  // Ajustar la posición del cursor
+  const nuevaPos = cursorPos + diferencia;
+  input.setSelectionRange(nuevaPos, nuevaPos);
   
   calcularTotal();
 }
@@ -561,14 +576,20 @@ window.calcularTotal = function() {
   let subtotal = 0;
   const precios = document.querySelectorAll(".producto-precio");
   precios.forEach((input) => {
-    // Remover puntos y obtener el valor numérico
-    const precio = parseInt(input.value.replace(/\D/g, '') || '0');
+    // Remover puntos y obtener el valor numérico completo
+    const valorLimpio = input.value.replace(/\./g, '').replace(/\D/g, '');
+    const precio = valorLimpio ? parseInt(valorLimpio) : 0;
     subtotal += precio;
+    
+    // Debug: mostrar en consola
+    console.log(`Precio input: "${input.value}" → Valor limpio: "${valorLimpio}" → Número: ${precio}`);
   });
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
   const descuentoMonto = (subtotal * descuentoPorcentaje) / 100;
   const total = subtotal - descuentoMonto;
+
+  console.log(`Subtotal: ${subtotal}, Descuento: ${descuentoMonto}, Total: ${total}`);
 
   document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
   document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
