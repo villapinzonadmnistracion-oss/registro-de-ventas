@@ -101,6 +101,29 @@ window.formatearRUT = function(input) {
   input.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
 }
 
+window.formatearPrecio = function(input) {
+  // Remover todo excepto números
+  let valor = input.value.replace(/\D/g, '');
+  
+  // Si está vacío, dejarlo vacío
+  if (valor === '') {
+    input.value = '';
+    calcularTotal();
+    return;
+  }
+  
+  // Convertir a número y formatear con puntos de miles
+  const numero = parseInt(valor);
+  input.value = numero.toLocaleString('es-CL');
+  
+  calcularTotal();
+}
+
+window.obtenerValorPrecio = function(input) {
+  // Función auxiliar para obtener el valor numérico sin formato
+  return parseInt(input.value.replace(/\D/g, '') || '0');
+}
+
 window.validarRUT = function(rut) {
   rut = cleanRut(rut);
   if (rut.length < 8 || rut.length > 9) return false;
@@ -270,7 +293,7 @@ function agregarProductoDesdeInventario(producto) {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>📦 Código: ${producto.codigo} | 📊 Stock: ${producto.stock}</label>
-        <input type="number" class="producto-precio" placeholder="Ingresa el precio" min="0" onchange="calcularTotal()" autofocus>
+        <input type="text" class="producto-precio" placeholder="Ingresa el precio" oninput="formatearPrecio(this)" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -396,7 +419,7 @@ window.agregarProductoConCodigo = function(codigo) {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()" autofocus>
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -514,7 +537,7 @@ window.agregarProducto = function() {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)">
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -538,7 +561,8 @@ window.calcularTotal = function() {
   let subtotal = 0;
   const precios = document.querySelectorAll(".producto-precio");
   precios.forEach((input) => {
-    const precio = parseFloat(input.value) || 0;
+    // Remover puntos y obtener el valor numérico
+    const precio = parseInt(input.value.replace(/\D/g, '') || '0');
     subtotal += precio;
   });
 
@@ -728,7 +752,7 @@ window.limpiarFormulario = function() {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)">
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
