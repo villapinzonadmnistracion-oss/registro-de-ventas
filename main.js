@@ -644,7 +644,10 @@ window.registrarVenta = async function() {
       const productoId = item.dataset.productoId;
 
       if (precio > 0) {
-        if (productoId) productosVinculados.push(productoId);
+        // Agregar ID solo si existe y aún no está en el array (evitar duplicados)
+        if (productoId && !productosVinculados.includes(productoId)) {
+          productosVinculados.push(productoId);
+        }
         itemsTexto += `${nombre} (${precio}), `;
         totalVenta += precio;
       }
@@ -661,11 +664,19 @@ window.registrarVenta = async function() {
       return;
     }
     
+    // Usar Set para eliminar duplicados automáticamente
+    const idsUnicos = new Set();
+    
     for (let devolucion of devolucionesAgregadas) {
-      if (devolucion.id) productosVinculados.push(devolucion.id);
+      if (devolucion.id) {
+        idsUnicos.add(devolucion.id);
+      }
       itemsTexto += `${devolucion.nombre}, `;
     }
-    console.log("📦 IDs:", productosVinculados);
+    
+    // Convertir Set a Array
+    productosVinculados = Array.from(idsUnicos);
+    console.log("📦 IDs únicos:", productosVinculados);
   }
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
@@ -689,7 +700,13 @@ window.registrarVenta = async function() {
         },
       };
 
-      if (productosVinculados.length > 0) ventaData.fields["producto"] = productosVinculados;
+      // Asegurar que no haya duplicados usando Set
+      if (productosVinculados.length > 0) {
+        const idsUnicos = [...new Set(productosVinculados)];
+        ventaData.fields["producto"] = idsUnicos;
+        console.log("📦 Productos vinculados (sin duplicados):", idsUnicos);
+      }
+      
       if (notas.trim()) ventaData.fields["Box Observaciones"] = notas;
 
       console.log("💰 Enviando VENTA:", ventaData);
@@ -726,8 +743,11 @@ window.registrarVenta = async function() {
         },
       };
 
+      // Asegurar que no haya duplicados usando Set
       if (productosVinculados.length > 0) {
-        devolucionData.fields["Devolución"] = productosVinculados;
+        const idsUnicos = [...new Set(productosVinculados)];
+        devolucionData.fields["Devolución"] = idsUnicos;
+        console.log("📦 Devoluciones vinculadas (sin duplicados):", idsUnicos);
       }
 
       if (notas.trim()) {
