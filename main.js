@@ -101,44 +101,6 @@ window.formatearRUT = function(input) {
   input.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
 }
 
-window.formatearPrecio = function(input) {
-  // Guardar la posición del cursor
-  const cursorPos = input.selectionStart;
-  
-  // Remover todo excepto números
-  let valor = input.value.replace(/\D/g, '');
-  
-  // Si está vacío, dejarlo vacío
-  if (valor === '') {
-    input.value = '';
-    calcularTotal();
-    return;
-  }
-  
-  // Remover ceros a la izquierda
-  valor = valor.replace(/^0+/, '') || '0';
-  
-  // Convertir a número y formatear con puntos de miles
-  const numero = parseInt(valor);
-  const valorFormateado = numero.toLocaleString('es-CL');
-  
-  // Calcular la diferencia de longitud para ajustar el cursor
-  const diferencia = valorFormateado.length - input.value.length;
-  
-  input.value = valorFormateado;
-  
-  // Ajustar la posición del cursor
-  const nuevaPos = cursorPos + diferencia;
-  input.setSelectionRange(nuevaPos, nuevaPos);
-  
-  calcularTotal();
-}
-
-window.obtenerValorPrecio = function(input) {
-  // Función auxiliar para obtener el valor numérico sin formato
-  return parseInt(input.value.replace(/\D/g, '') || '0');
-}
-
 window.validarRUT = function(rut) {
   rut = cleanRut(rut);
   if (rut.length < 8 || rut.length > 9) return false;
@@ -308,7 +270,7 @@ function agregarProductoDesdeInventario(producto) {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>📦 Código: ${producto.codigo} | 📊 Stock: ${producto.stock}</label>
-        <input type="text" class="producto-precio" placeholder="Ingresa el precio" oninput="formatearPrecio(this)" autofocus>
+        <input type="number" class="producto-precio" placeholder="Ingresa el precio" min="0" onchange="calcularTotal()" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -434,7 +396,7 @@ window.agregarProductoConCodigo = function(codigo) {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)" autofocus>
+        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -552,7 +514,7 @@ window.agregarProducto = function() {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)">
+        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -576,20 +538,13 @@ window.calcularTotal = function() {
   let subtotal = 0;
   const precios = document.querySelectorAll(".producto-precio");
   precios.forEach((input) => {
-    // Remover puntos y obtener el valor numérico completo
-    const valorLimpio = input.value.replace(/\./g, '').replace(/\D/g, '');
-    const precio = valorLimpio ? parseInt(valorLimpio) : 0;
+    const precio = parseFloat(input.value) || 0;
     subtotal += precio;
-    
-    // Debug: mostrar en consola
-    console.log(`Precio input: "${input.value}" → Valor limpio: "${valorLimpio}" → Número: ${precio}`);
   });
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
   const descuentoMonto = (subtotal * descuentoPorcentaje) / 100;
   const total = subtotal - descuentoMonto;
-
-  console.log(`Subtotal: ${subtotal}, Descuento: ${descuentoMonto}, Total: ${total}`);
 
   document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
   document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
@@ -773,7 +728,7 @@ window.limpiarFormulario = function() {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)">
+        <input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()">
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
