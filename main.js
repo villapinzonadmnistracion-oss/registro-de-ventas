@@ -1,4 +1,33 @@
-let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
+function mostrarInfoCliente(cliente) {
+  const fields = cliente.fields;
+  document.getElementById("clienteNombre").textContent = fields.Nombre || "N/A";
+  document.getElementById("clienteTelefono").textContent = fields["Teléfono"] || "N/A";
+  document.getElementById("clienteRUT").textContent = fields["Rut."] || "N/A";
+  document.getElementById("clienteInfo").classList.add("show");
+  document.getElementById("clienteNoEncontrado").classList.remove("show");
+  
+  // Verificar si es cumpleaños del cliente
+  verificarCumpleanos(cliente);
+}
+
+function verificarCumpleanos(cliente) {
+  const fields = cliente.fields;
+  
+  // Verificar si existe un campo que indique cumpleaños
+  // Ajusta el nombre del campo según tu tabla de Airtable
+  const esCumpleanos = fields["Cumpleaños"] === true || 
+                       fields["Es Cumpleaños"] === true ||
+                       fields["cumpleaños"] === true ||
+                       fields["Descuento Cumpleaños"] === "🎉 Descuento del 10%";
+  
+  if (esCumpleanos) {
+    // Aplicar descuento del 10% automáticamente
+    document.getElementById("descuento").value = "10";
+    calcularTotal();
+    
+    // Mostrar mensaje de cumpleaños
+    const nombreCliente = fields.Nombre || "Cliente";
+    mostrarAlerta("success", `🎉🎂let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
 let clienteSeleccionado = null;
 let anfitrionSeleccionado = null;
 let tipoTransaccionActual = 'venta';
@@ -494,6 +523,33 @@ function mostrarInfoCliente(cliente) {
   document.getElementById("clienteRUT").textContent = fields["Rut."] || "N/A";
   document.getElementById("clienteInfo").classList.add("show");
   document.getElementById("clienteNoEncontrado").classList.remove("show");
+  
+  // Verificar si es cumpleaños del cliente
+  verificarCumpleanos(cliente);
+}
+
+function verificarCumpleanos(cliente) {
+  const fields = cliente.fields;
+  
+  // Verificar si el campo "Descuento Cumpleaños" contiene el mensaje de cumpleaños
+  const descuentoCumpleanos = fields["Descuento Cumpleaños"] || fields["Descuento Cumpleanos"] || "";
+  const esCumpleanos = descuentoCumpleanos.includes("🎉 Descuento del 10%");
+  
+  if (esCumpleanos) {
+    // Aplicar descuento del 10% automáticamente
+    document.getElementById("descuento").value = "10";
+    calcularTotal();
+    
+    // Mostrar mensaje de cumpleaños
+    const nombreCliente = fields.Nombre || "Cliente";
+    mostrarAlerta("success", `🎉🎂 ¡Feliz Cumpleaños ${nombreCliente}! Se aplicó descuento del 10%`);
+    
+    // Agregar la nota de cumpleaños automáticamente
+    const notasInput = document.getElementById("notas");
+    if (notasInput && !notasInput.value.includes("Cumpleaños")) {
+      notasInput.value = "🎉 Descuento del 10% por Cumpleaños";
+    }
+  }
 }
 
 function mostrarClienteNoEncontrado() {
