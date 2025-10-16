@@ -630,7 +630,7 @@ window.registrarVenta = async function() {
       };
 
       if (productosVinculados.length > 0) ventaData.fields["producto"] = productosVinculados;
-      if (notas.trim()) ventaData.fields["Notas"] = notas;
+      if (notas.trim()) ventaData.fields["Box Observaciones"] = notas;
 
       console.log("💰 Enviando VENTA:", ventaData);
 
@@ -657,7 +657,7 @@ window.registrarVenta = async function() {
         mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
       }
     } else {
-      // DEVOLUCIONES: Ahora también incluye Anfitrión
+      // DEVOLUCIONES: Ahora también incluye Anfitrión y Box Observaciones
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
@@ -670,6 +670,11 @@ window.registrarVenta = async function() {
       // Vincular productos en el campo DEVOLUCIÓN (no en "producto")
       if (productosVinculados.length > 0) {
         devolucionData.fields["Devolución"] = productosVinculados;
+      }
+
+      // Agregar notas al campo Box Observaciones
+      if (notas.trim()) {
+        devolucionData.fields["Box Observaciones"] = notas;
       }
 
       console.log("🔄 Enviando DEVOLUCIÓN:", JSON.stringify(devolucionData, null, 2));
