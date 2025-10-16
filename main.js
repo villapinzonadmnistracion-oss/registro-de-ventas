@@ -169,12 +169,12 @@ window.cambiarTipoTransaccion = function(tipo) {
   if (tipo === 'venta') {
     ventasSection.style.display = "block";
     devolucionesSection.style.display = "none";
-    anfitrionContainer.style.display = "block";
+    anfitrionContainer.style.display = "block"; // Siempre visible
     setTimeout(() => document.getElementById("codigoProducto").focus(), 100);
   } else {
     ventasSection.style.display = "none";
     devolucionesSection.style.display = "block";
-    anfitrionContainer.style.display = "none";
+    anfitrionContainer.style.display = "block"; // También visible en devoluciones
     document.getElementById("devolucionesList").innerHTML = "";
     devolucionesAgregadas = [];
     setTimeout(() => document.getElementById("codigoDevolucion").focus(), 100);
@@ -559,14 +559,13 @@ window.registrarVenta = async function() {
     return;
   }
 
-  if (tipoTransaccionActual === 'venta') {
-    const anfitrionSelect = document.getElementById("anfitrionSelect");
-    if (!anfitrionSelect.value) {
-      mostrarAlerta("error", "❌ Debes seleccionar un anfitrión");
-      return;
-    }
-    anfitrionSeleccionado = anfitrionSelect.value;
+  // Validar anfitrión para AMBOS casos (venta y devolución)
+  const anfitrionSelect = document.getElementById("anfitrionSelect");
+  if (!anfitrionSelect.value) {
+    mostrarAlerta("error", "❌ Debes seleccionar un anfitrión");
+    return;
   }
+  anfitrionSeleccionado = anfitrionSelect.value;
 
   if (!AIRTABLE_TOKEN || !BASE_ID) {
     mostrarAlerta("error", "❌ Error: Configuración no cargada.");
@@ -586,7 +585,7 @@ window.registrarVenta = async function() {
 
       if (precio > 0) {
         if (productoId) productosVinculados.push(productoId);
-        itemsTexto += `${nombre} ($${precio}), `;
+        itemsTexto += `${nombre} (${precio}), `;
         totalVenta += precio;
       }
     }
@@ -658,10 +657,11 @@ window.registrarVenta = async function() {
         mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
       }
     } else {
-      // DEVOLUCIONES: Se registran vinculando los productos en el campo "Devolución"
+      // DEVOLUCIONES: Ahora también incluye Anfitrión
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
+          Anfitrión: [anfitrionSeleccionado],
           Items: itemsTexto,
           "Total de venta": 0,
         },
