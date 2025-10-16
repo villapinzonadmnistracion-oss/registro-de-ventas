@@ -425,43 +425,24 @@ window.eliminarDevolucion = function(id) {
   });
 }
 
-// FUNCIÓN NUEVA: Verificar si es cumpleaños del cliente
+// FUNCIÓN: Verificar si el cliente tiene descuento de cumpleaños
 function verificarCumpleanos(cliente) {
   try {
+    // Buscar el campo "Descuento Cumpleaños" en los fields del cliente
     const campoDescuento = cliente.fields["Descuento Cumpleaños"];
     
-    console.log("🎂 Campo Descuento Cumpleaños:", campoDescuento);
-    console.log("🎂 Tipo de dato:", typeof campoDescuento);
+    console.log("🎂 Verificando campo 'Descuento Cumpleaños':", campoDescuento);
     
-    // Si el campo existe y tiene CUALQUIER contenido (no está vacío, null o undefined)
-    if (campoDescuento !== undefined && campoDescuento !== null && campoDescuento !== "") {
-      // Si es string con contenido
-      if (typeof campoDescuento === 'string' && campoDescuento.trim().length > 0) {
-        console.log("✅ Cliente con cumpleaños detectado (texto encontrado) - Aplicando 10%");
-        return 10;
-      }
-      
-      // Si es número
-      if (typeof campoDescuento === 'number') {
-        console.log("✅ Cliente con cumpleaños detectado (número encontrado) - Aplicando 10%");
-        return 10;
-      }
-      
-      // Si es booleano true
-      if (typeof campoDescuento === 'boolean' && campoDescuento === true) {
-        console.log("✅ Cliente con cumpleaños detectado (checkbox marcado) - Aplicando 10%");
-        return 10;
-      }
-      
-      // Cualquier otro valor que no sea vacío
-      console.log("✅ Cliente con cumpleaños detectado (valor presente) - Aplicando 10%");
+    // Si el campo tiene cualquier contenido (texto, emoji, etc.), aplicar 10%
+    if (campoDescuento && String(campoDescuento).trim().length > 0) {
+      console.log("✅ ¡Cliente con cumpleaños! Aplicando 10% automáticamente");
       return 10;
     }
     
-    console.log("ℹ️ No hay descuento de cumpleaños");
+    console.log("ℹ️ Cliente sin descuento de cumpleaños");
     return 0;
   } catch (error) {
-    console.error("Error al verificar cumpleaños:", error);
+    console.error("❌ Error al verificar cumpleaños:", error);
     return 0;
   }
 }
