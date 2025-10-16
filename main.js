@@ -712,7 +712,7 @@ window.limpiarFormulario = function() {
   document.getElementById("clienteInfo").classList.remove("show");
   document.getElementById("clienteNoEncontrado").classList.remove("show");
   document.getElementById("productosContainer").style.display = "none";
-  document.getElementById("anfitrionContainer").style.display = "none";
+  document.getElementById("anfitrionContainer").style.display = "none"; // Ocultar anfitrión al inicio
 
   const container = document.getElementById("productosLista");
   container.innerHTML = `
@@ -736,10 +736,16 @@ window.limpiarFormulario = function() {
   clienteSeleccionado = null;
   anfitrionSeleccionado = null;
   
+  // Resetear el selector de anfitrión
+  const anfitrionSelect = document.getElementById("anfitrionSelect");
+  if (anfitrionSelect) {
+    anfitrionSelect.value = "";
+  }
+  
   const ventaRadio = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
   if (ventaRadio) {
     ventaRadio.checked = true;
-    cambiarTipoTransaccion('venta');
+    // No llamamos cambiarTipoTransaccion aquí para no mostrar anfitrión
   }
 
   calcularTotal();
