@@ -262,7 +262,6 @@ function agregarProductoDesdeInventario(producto) {
     if (!nombre && !precio) item.remove();
   });
   
-  // Asegurar que el código sea un string
   const codigoTexto = String(producto.codigo || 'N/A');
   const stockTexto = String(producto.stock || 0);
   
@@ -426,6 +425,38 @@ window.eliminarDevolucion = function(id) {
   });
 }
 
+// FUNCIÓN NUEVA: Verificar si es cumpleaños del cliente
+function verificarCumpleanos(cliente) {
+  try {
+    const campoDescuento = cliente.fields["ito Cumple"] || 
+                          cliente.fields["Descuento Cumple"] || 
+                          cliente.fields["Descuento por Cumpleaños"] ||
+                          cliente.fields["descuento cumpleaños"];
+    
+    console.log("🎂 Campo descuento encontrado:", campoDescuento);
+    
+    // Si el campo existe y tiene un valor (podría ser 10, "10%", etc)
+    if (campoDescuento) {
+      let descuentoValor = campoDescuento;
+      
+      // Si es string, extraer el número
+      if (typeof descuentoValor === 'string') {
+        descuentoValor = parseFloat(descuentoValor.replace(/[^0-9.]/g, ''));
+      }
+      
+      // Si es un número válido mayor a 0
+      if (!isNaN(descuentoValor) && descuentoValor > 0) {
+        return descuentoValor;
+      }
+    }
+    
+    return 0;
+  } catch (error) {
+    console.error("Error al verificar cumpleaños:", error);
+    return 0;
+  }
+}
+
 window.buscarCliente = async function() {
   const input = document.getElementById("rutCliente");
   const rut = input.value.trim();
@@ -472,6 +503,24 @@ window.buscarCliente = async function() {
 
     if (data.records && data.records.length > 0) {
       clienteSeleccionado = data.records[0];
+      
+      // VERIFICAR CUMPLEAÑOS
+      const descuentoCumple = verificarCumpleanos(clienteSeleccionado);
+      
+      if (descuentoCumple > 0) {
+        // Aplicar descuento automáticamente
+        const campoDescuento = document.getElementById("descuento");
+        campoDescuento.value = descuentoCumple;
+        
+        // Mostrar mensaje de cumpleaños
+        mostrarAlerta("success", `🎉 ¡FELIZ CUMPLEAÑOS! Se ha aplicado ${descuentoCumple}% de descuento automáticamente`);
+        
+        // Actualizar visual del campo de descuento
+        campoDescuento.style.backgroundColor = "#fff3cd";
+        campoDescuento.style.border = "2px solid #ffc107";
+        campoDescuento.style.fontWeight = "bold";
+      }
+      
       mostrarInfoCliente(clienteSeleccionado);
       document.getElementById("productosContainer").style.display = "block";
       document.getElementById("anfitrionContainer").style.display = "block";
@@ -479,8 +528,14 @@ window.buscarCliente = async function() {
       
       setTimeout(() => {
         document.getElementById("codigoProducto").focus();
-        mostrarAlerta("info", "📱 Escanea el código de barras");
-      }, 100);
+        if (descuentoCumple === 0) {
+          mostrarAlerta("info", "📱 Escanea el código de barras");
+        }
+      }, descuentoCumple > 0 ? 3000 : 100);
+      
+      // Calcular el total con el descuento aplicado
+      calcularTotal();
+      
     } else {
       mostrarClienteNoEncontrado();
     }
@@ -542,7 +597,6 @@ window.calcularTotal = function() {
   let subtotal = 0;
   const precios = document.querySelectorAll(".producto-precio");
   precios.forEach((input) => {
-    // Remover puntos y obtener el valor numérico completo
     const valorLimpio = input.value.replace(/\./g, '').replace(/\D/g, '');
     const precio = valorLimpio ? parseInt(valorLimpio) : 0;
     subtotal += precio;
@@ -565,7 +619,6 @@ window.registrarVenta = async function() {
     return;
   }
 
-  // Validar anfitrión para AMBOS casos (venta y devolución)
   const anfitrionSelect = document.getElementById("anfitrionSelect");
   if (!anfitrionSelect.value) {
     mostrarAlerta("error", "❌ Debes seleccionar un anfitrión");
@@ -665,7 +718,6 @@ window.registrarVenta = async function() {
         mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
       }
     } else {
-      // DEVOLUCIONES: Ahora también incluye Anfitrión y Box Observaciones
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
@@ -675,12 +727,10 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Vincular productos en el campo DEVOLUCIÓN (no en "producto")
       if (productosVinculados.length > 0) {
         devolucionData.fields["Devolución"] = productosVinculados;
       }
 
-      // Agregar notas al campo Box Observaciones
       if (notas.trim()) {
         devolucionData.fields["Box Observaciones"] = notas;
       }
@@ -726,6 +776,12 @@ window.limpiarFormulario = function() {
   document.getElementById("clienteNoEncontrado").classList.remove("show");
   document.getElementById("productosContainer").style.display = "none";
   document.getElementById("anfitrionContainer").style.display = "none";
+
+  // Resetear estilo del campo de descuento
+  const campoDescuento = document.getElementById("descuento");
+  campoDescuento.style.backgroundColor = "";
+  campoDescuento.style.border = "";
+  campoDescuento.style.fontWeight = "";
 
   const container = document.getElementById("productosLista");
   container.innerHTML = `
