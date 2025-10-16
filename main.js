@@ -428,26 +428,34 @@ window.eliminarDevolucion = function(id) {
 // FUNCIÓN NUEVA: Verificar si es cumpleaños del cliente
 function verificarCumpleanos(cliente) {
   try {
-    const campoDescuento = cliente.fields["ito Cumple"] || 
-                          cliente.fields["Descuento Cumple"] || 
-                          cliente.fields["Descuento por Cumpleaños"] ||
-                          cliente.fields["descuento cumpleaños"];
+    const campoDescuento = cliente.fields["Descuento Cumpleaños"];
     
-    console.log("🎂 Campo descuento encontrado:", campoDescuento);
+    console.log("🎂 Campo Descuento Cumpleaños:", campoDescuento);
     
-    // Si el campo existe y tiene un valor (podría ser 10, "10%", etc)
+    // Si el campo existe y tiene un valor (podría ser 10, "10%", true, etc)
     if (campoDescuento) {
       let descuentoValor = campoDescuento;
+      
+      // Si es booleano o checkbox marcado, devolver 10%
+      if (typeof descuentoValor === 'boolean' && descuentoValor === true) {
+        console.log("✅ Cliente con cumpleaños detectado - Aplicando 10%");
+        return 10;
+      }
       
       // Si es string, extraer el número
       if (typeof descuentoValor === 'string') {
         descuentoValor = parseFloat(descuentoValor.replace(/[^0-9.]/g, ''));
       }
       
-      // Si es un número válido mayor a 0
+      // Si es un número válido mayor a 0, devolverlo
       if (!isNaN(descuentoValor) && descuentoValor > 0) {
+        console.log("✅ Descuento encontrado:", descuentoValor + "%");
         return descuentoValor;
       }
+      
+      // Si el campo existe pero no es número válido, asumir 10%
+      console.log("✅ Campo marcado - Aplicando 10% por defecto");
+      return 10;
     }
     
     return 0;
