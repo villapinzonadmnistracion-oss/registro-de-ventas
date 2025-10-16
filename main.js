@@ -169,12 +169,12 @@ window.cambiarTipoTransaccion = function(tipo) {
   if (tipo === 'venta') {
     ventasSection.style.display = "block";
     devolucionesSection.style.display = "none";
-    anfitrionContainer.style.display = "block"; // Siempre visible
+    anfitrionContainer.style.display = "block";
     setTimeout(() => document.getElementById("codigoProducto").focus(), 100);
   } else {
     ventasSection.style.display = "none";
     devolucionesSection.style.display = "block";
-    anfitrionContainer.style.display = "block"; // También visible en devoluciones
+    anfitrionContainer.style.display = "block";
     document.getElementById("devolucionesList").innerHTML = "";
     devolucionesAgregadas = [];
     setTimeout(() => document.getElementById("codigoDevolucion").focus(), 100);
@@ -262,6 +262,10 @@ function agregarProductoDesdeInventario(producto) {
     if (!nombre && !precio) item.remove();
   });
   
+  // Asegurar que el código sea un string
+  const codigoTexto = String(producto.codigo || 'N/A');
+  const stockTexto = String(producto.stock || 0);
+  
   const productoHTML = `
     <div class="producto-item" data-producto-id="${producto.id}">
       <div class="form-group" style="margin: 0;">
@@ -269,8 +273,8 @@ function agregarProductoDesdeInventario(producto) {
         <input type="text" class="producto-nombre" value="${producto.categoria}" readonly style="background-color: #e8f5e9; font-weight: 500; border: 2px solid #4caf50;">
       </div>
       <div class="form-group" style="margin: 0;">
-        <label>📦 Código: ${producto.codigo} | 📊 Stock: ${producto.stock}</label>
-        <input type="text" class="producto-precio" placeholder="Ingresa el precio" oninput="formatearPrecio(this)" autofocus>
+        <label>📦 Código: ${codigoTexto} | 📊 Stock: ${stockTexto}</label>
+        <input type="text" class="producto-precio" placeholder="Ingresa el precio" oninput="formatearPrecio(this); calcularTotal();" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -396,7 +400,7 @@ window.agregarProductoConCodigo = function(codigo) {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)" autofocus>
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();" autofocus>
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -514,7 +518,7 @@ window.agregarProducto = function() {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)">
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();">
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -542,16 +546,11 @@ window.calcularTotal = function() {
     const valorLimpio = input.value.replace(/\./g, '').replace(/\D/g, '');
     const precio = valorLimpio ? parseInt(valorLimpio) : 0;
     subtotal += precio;
-    
-    // Debug: mostrar en consola
-    console.log(`Precio input: "${input.value}" → Valor limpio: "${valorLimpio}" → Número: ${precio}`);
   });
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
-  const descuentoMonto = (subtotal * descuentoPorcentaje) / 100;
+  const descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
   const total = subtotal - descuentoMonto;
-
-  console.log(`Subtotal: ${subtotal}, Descuento: ${descuentoMonto}, Total: ${total}`);
 
   document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
   document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
@@ -587,7 +586,9 @@ window.registrarVenta = async function() {
     const productosItems = document.querySelectorAll(".producto-item");
     for (let item of productosItems) {
       const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
-      const precio = parseFloat(item.querySelector(".producto-precio").value) || 0;
+      const precioInput = item.querySelector(".producto-precio").value || "0";
+      const valorLimpio = precioInput.replace(/\./g, '').replace(/\D/g, '');
+      const precio = valorLimpio ? parseInt(valorLimpio) : 0;
       const productoId = item.dataset.productoId;
 
       if (precio > 0) {
@@ -616,7 +617,7 @@ window.registrarVenta = async function() {
   }
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
-  const descuentoMonto = (totalVenta * descuentoPorcentaje) / 100;
+  const descuentoMonto = Math.round((totalVenta * descuentoPorcentaje) / 100);
   totalVenta = totalVenta - descuentoMonto;
   const notas = document.getElementById("notas").value || "";
   itemsTexto = itemsTexto.replace(/,\s*$/, "");
@@ -724,7 +725,7 @@ window.limpiarFormulario = function() {
   document.getElementById("clienteInfo").classList.remove("show");
   document.getElementById("clienteNoEncontrado").classList.remove("show");
   document.getElementById("productosContainer").style.display = "none";
-  document.getElementById("anfitrionContainer").style.display = "none"; // Ocultar anfitrión al inicio
+  document.getElementById("anfitrionContainer").style.display = "none";
 
   const container = document.getElementById("productosLista");
   container.innerHTML = `
@@ -735,7 +736,7 @@ window.limpiarFormulario = function() {
       </div>
       <div class="form-group" style="margin: 0;">
         <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this)">
+        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();">
       </div>
       <div>
         <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
@@ -748,7 +749,6 @@ window.limpiarFormulario = function() {
   clienteSeleccionado = null;
   anfitrionSeleccionado = null;
   
-  // Resetear el selector de anfitrión
   const anfitrionSelect = document.getElementById("anfitrionSelect");
   if (anfitrionSelect) {
     anfitrionSelect.value = "";
@@ -757,12 +757,19 @@ window.limpiarFormulario = function() {
   const ventaRadio = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
   if (ventaRadio) {
     ventaRadio.checked = true;
-    // No llamamos cambiarTipoTransaccion aquí para no mostrar anfitrión
   }
 
   calcularTotal();
   ocultarAlertas();
   document.getElementById("rutCliente").focus();
+}
+
+window.formatearPrecio = function(input) {
+  let valor = input.value.replace(/\D/g, '');
+  if (valor) {
+    valor = parseInt(valor).toLocaleString('es-CL');
+  }
+  input.value = valor;
 }
 
 // Inicialización al cargar la página
