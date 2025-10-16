@@ -428,13 +428,57 @@ window.eliminarDevolucion = function(id) {
 // FUNCIÓN: Verificar si el cliente tiene descuento de cumpleaños
 function verificarCumpleanos(cliente) {
   try {
-    // Buscar el campo "Descuento Cumpleaños" en los fields del cliente
-    const campoDescuento = cliente.fields["Descuento Cumpleaños"];
+    // PRIMERO: Mostrar TODOS los campos disponibles del cliente
+    console.log("🔍 TODOS LOS CAMPOS DEL CLIENTE:", Object.keys(cliente.fields));
+    console.log("📋 DATOS COMPLETOS:", cliente.fields);
     
-    console.log("🎂 Verificando campo 'Descuento Cumpleaños':", campoDescuento);
+    // Intentar diferentes nombres posibles del campo
+    const posiblesNombres = [
+      "Descuento Cumpleaños",
+      "Descuento Cumpleanos",
+      "descuento cumpleaños",
+      "Descuento cumpleaños",
+      "Descuento Cumple",
+      "DescuentoCumpleaños",
+      "Descuento de Cumpleaños"
+    ];
+    
+    let campoDescuento = null;
+    let nombreEncontrado = "";
+    
+    // Buscar el campo con cualquiera de los nombres posibles
+    for (let nombre of posiblesNombres) {
+      if (cliente.fields[nombre] !== undefined) {
+        campoDescuento = cliente.fields[nombre];
+        nombreEncontrado = nombre;
+        console.log(`✅ Campo encontrado con nombre: "${nombreEncontrado}"`);
+        break;
+      }
+    }
+    
+    if (!campoDescuento) {
+      console.log("❌ No se encontró el campo con ninguno de los nombres esperados");
+      console.log("💡 Revisa la lista de campos arriba para ver el nombre exacto");
+      return 0;
+    }
+    
+    console.log("🎂 Campo RAW 'Descuento Cumpleaños':", campoDescuento);
+    console.log("🎂 Tipo:", typeof campoDescuento);
+    console.log("🎂 Es Array?", Array.isArray(campoDescuento));
+    
+    // Si es un array (campo Lookup), tomar el primer elemento
+    if (Array.isArray(campoDescuento) && campoDescuento.length > 0) {
+      campoDescuento = campoDescuento[0];
+      console.log("🎂 Valor del array:", campoDescuento);
+    }
+    
+    // Convertir a string y verificar si tiene contenido
+    const valorTexto = String(campoDescuento || "").trim();
+    console.log("🎂 Valor como texto:", valorTexto);
+    console.log("🎂 Longitud del texto:", valorTexto.length);
     
     // Si el campo tiene cualquier contenido (texto, emoji, etc.), aplicar 10%
-    if (campoDescuento && String(campoDescuento).trim().length > 0) {
+    if (valorTexto.length > 0 && valorTexto !== "undefined" && valorTexto !== "null") {
       console.log("✅ ¡Cliente con cumpleaños! Aplicando 10% automáticamente");
       return 10;
     }
