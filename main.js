@@ -133,6 +133,8 @@ window.buscarClienteEnter = function(event) {
   }
 }
 
+window.buscarCliente = buscarCliente;
+
 async function cargarAnfitriones() {
   try {
     const url = `https://api.airtable.com/v0/${BASE_ID}/${ANFITRIONES_TABLE_ID}`;
