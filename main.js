@@ -431,33 +431,34 @@ function verificarCumpleanos(cliente) {
     const campoDescuento = cliente.fields["Descuento Cumpleaños"];
     
     console.log("🎂 Campo Descuento Cumpleaños:", campoDescuento);
+    console.log("🎂 Tipo de dato:", typeof campoDescuento);
     
-    // Si el campo existe y tiene un valor (podría ser 10, "10%", true, etc)
-    if (campoDescuento) {
-      let descuentoValor = campoDescuento;
-      
-      // Si es booleano o checkbox marcado, devolver 10%
-      if (typeof descuentoValor === 'boolean' && descuentoValor === true) {
-        console.log("✅ Cliente con cumpleaños detectado - Aplicando 10%");
+    // Si el campo existe y tiene CUALQUIER contenido (no está vacío, null o undefined)
+    if (campoDescuento !== undefined && campoDescuento !== null && campoDescuento !== "") {
+      // Si es string con contenido
+      if (typeof campoDescuento === 'string' && campoDescuento.trim().length > 0) {
+        console.log("✅ Cliente con cumpleaños detectado (texto encontrado) - Aplicando 10%");
         return 10;
       }
       
-      // Si es string, extraer el número
-      if (typeof descuentoValor === 'string') {
-        descuentoValor = parseFloat(descuentoValor.replace(/[^0-9.]/g, ''));
+      // Si es número
+      if (typeof campoDescuento === 'number') {
+        console.log("✅ Cliente con cumpleaños detectado (número encontrado) - Aplicando 10%");
+        return 10;
       }
       
-      // Si es un número válido mayor a 0, devolverlo
-      if (!isNaN(descuentoValor) && descuentoValor > 0) {
-        console.log("✅ Descuento encontrado:", descuentoValor + "%");
-        return descuentoValor;
+      // Si es booleano true
+      if (typeof campoDescuento === 'boolean' && campoDescuento === true) {
+        console.log("✅ Cliente con cumpleaños detectado (checkbox marcado) - Aplicando 10%");
+        return 10;
       }
       
-      // Si el campo existe pero no es número válido, asumir 10%
-      console.log("✅ Campo marcado - Aplicando 10% por defecto");
+      // Cualquier otro valor que no sea vacío
+      console.log("✅ Cliente con cumpleaños detectado (valor presente) - Aplicando 10%");
       return 10;
     }
     
+    console.log("ℹ️ No hay descuento de cumpleaños");
     return 0;
   } catch (error) {
     console.error("Error al verificar cumpleaños:", error);
