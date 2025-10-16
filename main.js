@@ -428,41 +428,10 @@ window.eliminarDevolucion = function(id) {
 // FUNCIÓN: Verificar si el cliente tiene descuento de cumpleaños
 function verificarCumpleanos(cliente) {
   try {
-    // PRIMERO: Mostrar TODOS los campos disponibles del cliente
-    console.log("🔍 TODOS LOS CAMPOS DEL CLIENTE:", Object.keys(cliente.fields));
-    console.log("📋 DATOS COMPLETOS:", cliente.fields);
+    // Buscar el campo exacto "Descuento Cumpleaños"
+    let campoDescuento = cliente.fields["Descuento Cumpleaños"];
     
-    // Intentar diferentes nombres posibles del campo
-    const posiblesNombres = [
-      "Descuento Cumpleaños",
-      "Descuento Cumpleanos",
-      "descuento cumpleaños",
-      "Descuento cumpleaños",
-      "Descuento Cumple",
-      "DescuentoCumpleaños",
-      "Descuento de Cumpleaños"
-    ];
-    
-    let campoDescuento = null;
-    let nombreEncontrado = "";
-    
-    // Buscar el campo con cualquiera de los nombres posibles
-    for (let nombre of posiblesNombres) {
-      if (cliente.fields[nombre] !== undefined) {
-        campoDescuento = cliente.fields[nombre];
-        nombreEncontrado = nombre;
-        console.log(`✅ Campo encontrado con nombre: "${nombreEncontrado}"`);
-        break;
-      }
-    }
-    
-    if (!campoDescuento) {
-      console.log("❌ No se encontró el campo con ninguno de los nombres esperados");
-      console.log("💡 Revisa la lista de campos arriba para ver el nombre exacto");
-      return 0;
-    }
-    
-    console.log("🎂 Campo RAW 'Descuento Cumpleaños':", campoDescuento);
+    console.log("🎂 Campo 'Descuento Cumpleaños':", campoDescuento);
     console.log("🎂 Tipo:", typeof campoDescuento);
     console.log("🎂 Es Array?", Array.isArray(campoDescuento));
     
