@@ -133,8 +133,6 @@ window.buscarClienteEnter = function(event) {
   }
 }
 
-window.buscarCliente = buscarCliente;
-
 async function cargarAnfitriones() {
   try {
     const url = `https://api.airtable.com/v0/${BASE_ID}/${ANFITRIONES_TABLE_ID}`;
@@ -427,37 +425,39 @@ window.eliminarDevolucion = function(id) {
   });
 }
 
-// FUNCIÓN: Verificar si el cliente tiene descuento de cumpleaños
+// FUNCIÓN: Verificar cumpleaños buscando en todos los campos
 function verificarCumpleanos(cliente) {
   try {
-    // Buscar el campo exacto "Descuento Cumpleaños"
-    let campoDescuento = cliente.fields["Descuento Cumpleaños"];
+    console.log("🎂 === BUSCANDO CAMPO DE CUMPLEAÑOS ===");
+    console.log("🔍 Campos disponibles:", Object.keys(cliente.fields));
     
-    console.log("🎂 Campo 'Descuento Cumpleaños':", campoDescuento);
-    console.log("🎂 Tipo:", typeof campoDescuento);
-    console.log("🎂 Es Array?", Array.isArray(campoDescuento));
-    
-    // Si es un array (campo Lookup), tomar el primer elemento
-    if (Array.isArray(campoDescuento) && campoDescuento.length > 0) {
-      campoDescuento = campoDescuento[0];
-      console.log("🎂 Valor del array:", campoDescuento);
+    // Buscar cualquier campo que contenga "cumple" en su nombre
+    for (let nombreCampo in cliente.fields) {
+      if (nombreCampo.toLowerCase().includes('cumple') || nombreCampo.toLowerCase().includes('birthday')) {
+        let valorCampo = cliente.fields[nombreCampo];
+        console.log(`🎂 Campo encontrado: "${nombreCampo}" =`, valorCampo);
+        
+        // Si es array (Lookup), tomar primer elemento
+        if (Array.isArray(valorCampo) && valorCampo.length > 0) {
+          valorCampo = valorCampo[0];
+          console.log("🎂 Valor extraído del array:", valorCampo);
+        }
+        
+        // Convertir a texto y verificar
+        const valorTexto = String(valorCampo || "").trim();
+        console.log("🎂 Valor como texto:", valorTexto);
+        
+        if (valorTexto.length > 0 && valorTexto !== "undefined" && valorTexto !== "null") {
+          console.log("✅ ¡CUMPLEAÑOS DETECTADO! Aplicando 10%");
+          return 10;
+        }
+      }
     }
     
-    // Convertir a string y verificar si tiene contenido
-    const valorTexto = String(campoDescuento || "").trim();
-    console.log("🎂 Valor como texto:", valorTexto);
-    console.log("🎂 Longitud del texto:", valorTexto.length);
-    
-    // Si el campo tiene cualquier contenido (texto, emoji, etc.), aplicar 10%
-    if (valorTexto.length > 0 && valorTexto !== "undefined" && valorTexto !== "null") {
-      console.log("✅ ¡Cliente con cumpleaños! Aplicando 10% automáticamente");
-      return 10;
-    }
-    
-    console.log("ℹ️ Cliente sin descuento de cumpleaños");
+    console.log("ℹ️ No se encontró descuento de cumpleaños");
     return 0;
   } catch (error) {
-    console.error("❌ Error al verificar cumpleaños:", error);
+    console.error("❌ Error:", error);
     return 0;
   }
 }
@@ -513,14 +513,9 @@ window.buscarCliente = async function() {
       const descuentoCumple = verificarCumpleanos(clienteSeleccionado);
       
       if (descuentoCumple > 0) {
-        // Aplicar descuento automáticamente
         const campoDescuento = document.getElementById("descuento");
         campoDescuento.value = descuentoCumple;
-        
-        // Mostrar mensaje de cumpleaños
         mostrarAlerta("success", `🎉 ¡FELIZ CUMPLEAÑOS! Se ha aplicado ${descuentoCumple}% de descuento automáticamente`);
-        
-        // Actualizar visual del campo de descuento
         campoDescuento.style.backgroundColor = "#fff3cd";
         campoDescuento.style.border = "2px solid #ffc107";
         campoDescuento.style.fontWeight = "bold";
@@ -538,7 +533,6 @@ window.buscarCliente = async function() {
         }
       }, descuentoCumple > 0 ? 3000 : 100);
       
-      // Calcular el total con el descuento aplicado
       calcularTotal();
       
     } else {
@@ -782,7 +776,6 @@ window.limpiarFormulario = function() {
   document.getElementById("productosContainer").style.display = "none";
   document.getElementById("anfitrionContainer").style.display = "none";
 
-  // Resetear estilo del campo de descuento
   const campoDescuento = document.getElementById("descuento");
   campoDescuento.style.backgroundColor = "";
   campoDescuento.style.border = "";
@@ -833,7 +826,6 @@ window.formatearPrecio = function(input) {
   input.value = valor;
 }
 
-// Inicialización al cargar la página
 fetchConfig().then((success) => {
   if (success) {
     calcularTotal();
