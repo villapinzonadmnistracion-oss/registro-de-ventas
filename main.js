@@ -576,9 +576,17 @@ function generarResumenYConteoIndividual(productosItems) {
     }
   });
   
-  // Crear string resumen: "Parka (x3), Chaqueta (x1), Camisa (x2)"
-  const resumenItems = Object.entries(conteo)
-    .map(([nombre, cantidad]) => `${nombre} (x${cantidad})`)
+  // ========================================
+  // CREAR RESUMEN DETALLADO CON PRECIOS
+  // ========================================
+  // Formato: "Parka($33.333), Parka($33.333), Chaqueta($25.000)"
+  const resumenItems = productosItems
+    .map(item => {
+      const nombre = item.nombre || "Sin nombre";
+      const precio = item.precio || 0;
+      const precioFormateado = precio.toLocaleString('es-CL');
+      return `${nombre}(${precioFormateado})`;
+    })
     .join(", ");
   
   // ========================================
@@ -665,8 +673,8 @@ window.registrarVenta = async function() {
         if (productoId) {
           productosVinculados.push(productoId);
         }
-        // Guardar para resumen
-        productosParaResumen.push({ nombre: nombre });
+        // Guardar para resumen CON PRECIO
+        productosParaResumen.push({ nombre: nombre, precio: precio });
         totalVenta += precio;
       }
     }
@@ -686,8 +694,8 @@ window.registrarVenta = async function() {
       if (devolucion.id) {
         productosVinculados.push(devolucion.id);
       }
-      // Guardar para resumen
-      productosParaResumen.push({ nombre: devolucion.nombre });
+      // Guardar para resumen SIN PRECIO (devoluciones)
+      productosParaResumen.push({ nombre: devolucion.nombre, precio: 0 });
     }
     
     console.log("📦 IDs totales:", productosVinculados);
