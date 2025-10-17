@@ -13,337 +13,273 @@
 
       body {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-        background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 50%, #c8e6c9 100%);
-        min-height: 100vh;
-        padding: 0;
-        overflow-x: hidden;
+        background: #f8faf9;
+        height: 100vh;
+        overflow: hidden;
       }
 
-      .container {
-        max-width: 1600px;
-        margin: 0 auto;
-        background: white;
-        min-height: 100vh;
-        box-shadow: 0 0 60px rgba(46, 125, 50, 0.1);
-      }
-
+      /* Header minimalista */
       .header {
-        background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
-        color: white;
-        padding: 40px 60px;
+        background: white;
+        border-bottom: 1px solid #e8f5e9;
+        padding: 16px 40px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        box-shadow: 0 4px 20px rgba(46, 125, 50, 0.2);
+        gap: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
       }
 
-      .header-content h1 {
-        font-size: 3em;
-        margin-bottom: 5px;
+      .logo {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+
+      .header h1 {
+        font-size: 1.5em;
+        color: #059669;
         font-weight: 700;
         letter-spacing: -0.5px;
       }
 
-      .header-content p {
-        font-size: 1.3em;
-        opacity: 0.95;
-        font-weight: 300;
-      }
-
-      .header-stats {
-        display: flex;
-        gap: 30px;
-      }
-
-      .stat-card {
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        padding: 15px 25px;
-        border-radius: 12px;
-        text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-
-      .stat-card .label {
-        font-size: 0.85em;
-        opacity: 0.9;
-        margin-bottom: 5px;
-      }
-
-      .stat-card .value {
-        font-size: 1.8em;
-        font-weight: 700;
-      }
-
-      .main-content {
+      /* Layout principal */
+      .workspace {
+        max-width: 1800px;
+        margin: 0 auto;
+        padding: 24px 40px;
         display: grid;
-        grid-template-columns: 1fr 450px;
-        gap: 40px;
-        padding: 40px 60px;
-        min-height: calc(100vh - 140px);
+        grid-template-columns: 580px 1fr;
+        gap: 24px;
+        height: calc(100vh - 73px);
       }
 
-      .left-panel {
+      /* Panel izquierdo - Formulario principal */
+      .main-panel {
         display: flex;
         flex-direction: column;
-        gap: 30px;
+        gap: 16px;
+        overflow-y: auto;
+        padding-right: 8px;
       }
 
-      .right-panel {
-        background: #f8fdf9;
-        border-radius: 20px;
-        padding: 30px;
-        border: 2px solid #e8f5e9;
-        position: sticky;
-        top: 20px;
-        height: fit-content;
-        box-shadow: 0 8px 24px rgba(46, 125, 50, 0.08);
+      .main-panel::-webkit-scrollbar {
+        width: 6px;
       }
 
+      .main-panel::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      .main-panel::-webkit-scrollbar-thumb {
+        background: #10b981;
+        border-radius: 10px;
+      }
+
+      /* Panel derecho - Productos y resumen */
+      .side-panel {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Tarjetas limpias */
       .card {
         background: white;
-        border-radius: 20px;
-        padding: 30px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e8f5e9;
-        transition: all 0.3s ease;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
       }
 
       .card:hover {
-        box-shadow: 0 8px 24px rgba(46, 125, 50, 0.12);
-        transform: translateY(-2px);
+        border-color: #d1fae5;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
       }
 
-      .card-title {
-        font-size: 1.5em;
+      .section-title {
+        font-size: 1.1em;
         font-weight: 700;
-        color: #1b5e20;
-        margin-bottom: 20px;
+        color: #047857;
+        margin-bottom: 16px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
       }
 
-      .card-title::before {
-        content: '';
-        width: 4px;
-        height: 28px;
-        background: linear-gradient(180deg, #2e7d32 0%, #43a047 100%);
-        border-radius: 4px;
+      /* Formularios */
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: end;
       }
 
       .form-group {
-        margin-bottom: 24px;
+        margin-bottom: 14px;
       }
 
       .form-group label {
         display: block;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
         font-weight: 600;
-        color: #2e7d32;
-        font-size: 15px;
-        letter-spacing: 0.3px;
+        color: #047857;
+        font-size: 13px;
       }
 
       .form-group input,
       .form-group select,
       .form-group textarea {
         width: 100%;
-        padding: 14px 18px;
-        border: 2px solid #e0e0e0;
-        border-radius: 12px;
-        font-size: 16px;
-        transition: all 0.3s;
-        background: #fafafa;
+        padding: 10px 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+        background: white;
+        color: #1f2937;
       }
 
       .form-group input:focus,
       .form-group select:focus,
       .form-group textarea:focus {
         outline: none;
-        border-color: #43a047;
-        background: white;
-        box-shadow: 0 0 0 4px rgba(67, 160, 71, 0.1);
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
       }
 
+      /* Botones modernos */
       .btn {
-        padding: 14px 28px;
+        padding: 10px 20px;
         border: none;
-        border-radius: 12px;
-        font-size: 16px;
+        border-radius: 8px;
+        font-size: 14px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.2s;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         justify-content: center;
+        font-family: inherit;
       }
 
       .btn-primary {
-        background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
-        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
       }
 
       .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
       }
 
       .btn-primary:active {
         transform: translateY(0);
       }
 
-      .btn-success {
-        background: linear-gradient(135deg, #388e3c 0%, #4caf50 100%);
-        color: white;
-        width: 100%;
-        padding: 18px;
-        font-size: 18px;
-        box-shadow: 0 4px 12px rgba(56, 142, 60, 0.3);
-      }
-
-      .btn-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(56, 142, 60, 0.4);
-      }
-
       .btn-secondary {
         background: white;
-        color: #2e7d32;
-        border: 2px solid #2e7d32;
+        color: #059669;
+        border: 2px solid #d1fae5;
       }
 
       .btn-secondary:hover {
-        background: #f1f8f4;
+        background: #f0fdf4;
+        border-color: #10b981;
+      }
+
+      .btn-success {
+        background: #10b981;
+        color: white;
+        width: 100%;
+        padding: 14px;
+        font-size: 15px;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
       }
 
       .btn-danger {
-        background: #ef5350;
+        background: #ef4444;
         color: white;
-        padding: 10px 20px;
+        padding: 8px 14px;
+        font-size: 13px;
       }
 
       .btn-danger:hover {
-        background: #e53935;
+        background: #dc2626;
       }
 
       .btn-registrar-cliente {
+        background: #3b82f6;
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        background: linear-gradient(135deg, #1976d2 0%, #2196f3 100%);
-        color: white;
-        padding: 14px 28px;
-        text-decoration: none;
-        border-radius: 12px;
-        font-weight: 600;
-        transition: all 0.3s;
-        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+        gap: 6px;
+        transition: all 0.2s;
+        font-size: 14px;
       }
 
       .btn-registrar-cliente:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
+        background: #2563eb;
+        transform: translateY(-1px);
       }
 
+      /* Alertas */
       .alert {
-        padding: 18px 24px;
-        border-radius: 12px;
-        margin-bottom: 24px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
         display: none;
-        animation: slideIn 0.3s ease;
+        font-size: 13px;
         font-weight: 500;
       }
 
       .alert.show {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: slideDown 0.3s ease;
       }
 
       .alert-success {
-        background: #e8f5e9;
-        color: #2e7d32;
-        border: 2px solid #81c784;
+        background: #d1fae5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
       }
 
       .alert-error {
-        background: #ffebee;
-        color: #c62828;
-        border: 2px solid #ef5350;
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
       }
 
       .alert-info {
-        background: #e3f2fd;
-        color: #1565c0;
-        border: 2px solid #64b5f6;
+        background: #dbeafe;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
       }
 
-      .cliente-info,
-      .cliente-no-encontrado {
-        background: linear-gradient(135deg, #f1f8f4 0%, #e8f5e9 100%);
-        padding: 24px;
-        border-radius: 16px;
-        margin: 24px 0;
-        display: none;
-        animation: slideIn 0.3s ease;
-        border: 2px solid #a5d6a7;
-      }
-
-      .cliente-info.show,
-      .cliente-no-encontrado.show {
-        display: block;
-      }
-
-      .cliente-info h3 {
-        color: #2e7d32;
-        margin-bottom: 16px;
-        font-size: 1.3em;
-      }
-
-      .cliente-no-encontrado {
-        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-        border: 2px solid #ffb74d;
-      }
-
-      .cliente-no-encontrado h3 {
-        color: #e65100;
-        margin-bottom: 16px;
-      }
-
-      .cliente-info p,
-      .cliente-no-encontrado p {
-        margin: 12px 0;
-        font-size: 16px;
-        color: #424242;
-      }
-
-      .loading {
-        display: none;
-        text-align: center;
-        padding: 40px;
-      }
-
-      .loading.show {
-        display: block;
-      }
-
-      .spinner {
-        border: 4px solid #e8f5e9;
-        border-top: 4px solid #43a047;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto;
-      }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-
-      @keyframes slideIn {
+      @keyframes slideDown {
         from {
           opacity: 0;
           transform: translateY(-10px);
@@ -354,390 +290,517 @@
         }
       }
 
-      .producto-item {
+      /* Info de cliente */
+      .cliente-info,
+      .cliente-no-encontrado {
+        background: #f0fdf4;
+        padding: 16px;
+        border-radius: 10px;
+        margin: 16px 0;
+        display: none;
+        border: 1px solid #d1fae5;
+      }
+
+      .cliente-info.show,
+      .cliente-no-encontrado.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+      }
+
+      .cliente-info h3 {
+        color: #047857;
+        margin-bottom: 12px;
+        font-size: 1em;
+      }
+
+      .cliente-no-encontrado {
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+      }
+
+      .cliente-no-encontrado h3 {
+        color: #d97706;
+      }
+
+      .cliente-info p,
+      .cliente-no-encontrado p {
+        margin: 8px 0;
+        font-size: 14px;
+        color: #374151;
+      }
+
+      /* Loading */
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .loading.show {
+        display: block;
+      }
+
+      .spinner {
+        border: 3px solid #e5e7eb;
+        border-top: 3px solid #10b981;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Selector de tipo de transacción */
+      .transaction-selector {
         display: grid;
-        grid-template-columns: 2fr 1fr auto;
-        gap: 15px;
-        padding: 16px;
-        background: #fafafa;
-        border-radius: 12px;
-        margin-bottom: 15px;
-        align-items: end;
-        border: 2px solid #f0f0f0;
-        transition: all 0.3s;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 16px;
       }
 
-      .producto-item:hover {
-        border-color: #c8e6c9;
-        background: #f8fdf9;
+      .transaction-option {
+        position: relative;
       }
 
-      .resumen {
-        background: linear-gradient(135deg, #f1f8f4 0%, #e8f5e9 100%);
-        padding: 28px;
-        border-radius: 16px;
-        margin: 20px 0;
-        border: 2px solid #a5d6a7;
+      .transaction-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
       }
 
-      .resumen h3 {
-        color: #1b5e20;
-        font-size: 1.4em;
-        margin-bottom: 20px;
-      }
-
-      .resumen-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 0;
-        font-size: 17px;
-        color: #424242;
-      }
-
-      .resumen-item.total {
-        border-top: 3px solid #43a047;
-        margin-top: 16px;
-        padding-top: 20px;
-        font-size: 24px;
-        font-weight: 700;
-        color: #2e7d32;
-      }
-
-      .form-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        margin-top: 24px;
-      }
-
-      .devolucion-item {
-        padding: 16px;
-        border: 2px solid #ff9800;
-        border-radius: 12px;
-        margin: 12px 0;
-        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-      }
-
-      .transaction-type-selector {
-        display: flex;
-        gap: 15px;
-        margin: 20px 0;
-      }
-
-      .transaction-type-selector label {
-        flex: 1;
+      .transaction-option label {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 18px;
+        padding: 12px;
         background: white;
-        border: 2px solid #e0e0e0;
-        border-radius: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.2s;
         font-weight: 600;
-        gap: 10px;
-      }
-
-      .transaction-type-selector input[type="radio"] {
-        width: 20px;
-        height: 20px;
-        accent-color: #43a047;
-      }
-
-      .transaction-type-selector label:hover {
-        border-color: #43a047;
-        background: #f8fdf9;
-      }
-
-      .transaction-type-selector input[type="radio"]:checked + span {
-        color: #2e7d32;
-      }
-
-      .search-container {
-        display: flex;
-        gap: 12px;
-        align-items: end;
-      }
-
-      .search-container .form-group {
-        flex: 1;
-        margin: 0;
-      }
-
-      .search-container .btn {
-        margin-bottom: 0;
-      }
-
-      small {
-        color: #757575;
+        gap: 6px;
+        color: #6b7280;
         font-size: 14px;
       }
 
-      @media (max-width: 1600px) {
-        .main-content {
-          grid-template-columns: 1fr 400px;
-        }
+      .transaction-option input[type="radio"]:checked + label {
+        border-color: #10b981;
+        background: #f0fdf4;
+        color: #047857;
+      }
+
+      .transaction-option label:hover {
+        border-color: #10b981;
+      }
+
+      /* Lista de productos con scroll */
+      .productos-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 14px 0;
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 6px;
+      }
+
+      .productos-lista::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .productos-lista::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      .productos-lista::-webkit-scrollbar-thumb {
+        background: #10b981;
+        border-radius: 10px;
+      }
+
+      .producto-item {
+        display: grid;
+        grid-template-columns: 2fr 1fr auto;
+        gap: 10px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+        align-items: center;
+        border: 1px solid #e5e7eb;
+      }
+
+      .producto-item:hover {
+        border-color: #d1fae5;
+        background: #f0fdf4;
+      }
+
+      .producto-item .form-group {
+        margin: 0;
+      }
+
+      .producto-item .form-group label {
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+
+      .producto-item .form-group input {
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+
+      /* Resumen de venta */
+      .summary {
+        background: #f0fdf4;
+        padding: 16px;
+        border-radius: 10px;
+        margin-top: auto;
+        border: 1px solid #d1fae5;
+      }
+
+      .summary-title {
+        font-size: 1.1em;
+        font-weight: 700;
+        color: #047857;
+        margin-bottom: 12px;
+      }
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+        color: #374151;
+      }
+
+      .summary-row.total {
+        border-top: 2px solid #10b981;
+        margin-top: 10px;
+        padding-top: 12px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #047857;
+      }
+
+      /* Actions */
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .devolucion-item {
+        padding: 12px;
+        border: 2px solid #fb923c;
+        border-radius: 8px;
+        margin: 8px 0;
+        background: #fff7ed;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      small {
+        color: #6b7280;
+        font-size: 12px;
+        display: block;
+        margin-top: 4px;
+      }
+
+      #devolucionesList {
+        max-height: 150px;
+        overflow-y: auto;
+      }
+
+      #devolucionesList::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #devolucionesList::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      #devolucionesList::-webkit-scrollbar-thumb {
+        background: #fb923c;
+        border-radius: 10px;
+      }
+
+      .productos-scroll-container {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding-right: 6px;
+      }
+
+      .productos-scroll-container::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .productos-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      .productos-scroll-container::-webkit-scrollbar-thumb {
+        background: #10b981;
+        border-radius: 10px;
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <div class="header">
-        <div class="header-content">
-          <h1>🌿 Punto Secreto</h1>
-          <p>Sistema de Registro de Ventas</p>
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">🌿</div>
+      <h1>Punto Secreto</h1>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace">
+      <!-- Panel izquierdo: Cliente y configuración -->
+      <div class="main-panel">
+        <div class="alert alert-error" id="alertError">
+          ❌ Error al registrar la venta
         </div>
-        <div class="header-stats">
-          <div class="stat-card">
-            <div class="label">Ventas Hoy</div>
-            <div class="value">0</div>
+        <div class="alert alert-info" id="alertInfo"></div>
+
+        <!-- Buscar Cliente -->
+        <div class="card">
+          <div class="section-title">🔍 Buscar Cliente</div>
+          <div class="form-row">
+            <div class="form-group" style="margin: 0;">
+              <label for="rutCliente">RUT del Cliente</label>
+              <input
+                type="text"
+                id="rutCliente"
+                placeholder="12.345.678-9"
+                onkeypress="buscarClienteEnter(event)"
+                oninput="formatearRUT(this)"
+              />
+            </div>
+            <button class="btn btn-primary" onclick="buscarCliente()">
+              Buscar
+            </button>
           </div>
-          <div class="stat-card">
-            <div class="label">Total Hoy</div>
-            <div class="value">$0</div>
+
+          <div class="cliente-info" id="clienteInfo">
+            <h3>✅ Cliente Encontrado</h3>
+            <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
+            <p><strong>Teléfono:</strong> <span id="clienteTelefono"></span></p>
+            <p><strong>RUT:</strong> <span id="clienteRUT"></span></p>
+          </div>
+
+          <div class="cliente-no-encontrado" id="clienteNoEncontrado">
+            <h3>⚠️ Cliente No Registrado</h3>
+            <p>El RUT no está en la base de datos.</p>
+            <a
+              href="https://admnistracionpsecreto233-spec.github.io/formulario-clientes/"
+              target="_blank"
+              class="btn-registrar-cliente"
+            >
+              ➕ Registrar Cliente
+            </a>
+          </div>
+
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #047857; font-weight: 600; font-size: 13px;">Buscando...</p>
+          </div>
+        </div>
+
+        <!-- Vendedor -->
+        <div id="anfitrionContainer" style="display: none;">
+          <div class="card">
+            <div class="section-title">👤 Vendedor</div>
+            <div class="form-group" style="margin: 0;">
+              <label for="anfitrionSelect">Seleccionar Anfitrión</label>
+              <select id="anfitrionSelect">
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tipo de transacción -->
+        <div id="transactionTypeContainer" style="display: none;">
+          <div class="card">
+            <div class="section-title">📋 Tipo de Transacción</div>
+            <div class="transaction-selector">
+              <div class="transaction-option">
+                <input type="radio" id="ventaRadio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')">
+                <label for="ventaRadio">📤 Venta</label>
+              </div>
+              <div class="transaction-option">
+                <input type="radio" id="devolucionRadio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')">
+                <label for="devolucionRadio">📥 Devolución</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notas -->
+        <div id="notasContainer" style="display: none;">
+          <div class="card">
+            <div class="section-title">📝 Observaciones</div>
+            <div class="form-group" style="margin: 0;">
+              <label for="notas">Notas u observaciones</label>
+              <textarea
+                id="notas"
+                placeholder="Detalles adicionales de la transacción..."
+                rows="2"
+              ></textarea>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="main-content">
-        <!-- Panel Izquierdo -->
-        <div class="left-panel">
-          <div class="alert alert-error" id="alertError">
-            ❌ Error al registrar la venta. Por favor, intenta nuevamente.
-          </div>
-          <div class="alert alert-info" id="alertInfo"></div>
+      <!-- Panel derecho: Productos y resumen -->
+      <div class="side-panel" id="productosContainer" style="display: none;">
+        <div class="section-title">🛍️ Productos</div>
 
-          <!-- Búsqueda de Cliente -->
-          <div class="card">
-            <div class="card-title">🔍 Buscar Cliente</div>
-            <div class="search-container">
-              <div class="form-group">
-                <label for="rutCliente">RUT del Cliente</label>
-                <input
-                  type="text"
-                  id="rutCliente"
-                  placeholder="Ej: 12.345.678-9"
-                  onkeypress="buscarClienteEnter(event)"
-                  oninput="formatearRUT(this)"
-                />
-              </div>
-              <button class="btn btn-primary" onclick="buscarCliente()">
-                🔍 Buscar
-              </button>
+        <div class="productos-scroll-container">
+          <!-- Ventas -->
+          <div id="ventasSection">
+            <div class="form-group">
+              <label for="codigoProducto">Código de Barras</label>
+              <input
+                type="text"
+                id="codigoProducto"
+                placeholder="Escanear código..."
+                autofocus
+                onkeypress="procesarCodigoProducto(event)"
+              />
+              <small>💡 Escanea o escribe el código y presiona Enter</small>
             </div>
 
-            <div class="cliente-info" id="clienteInfo">
-              <h3>✅ Cliente Encontrado</h3>
-              <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
-              <p><strong>Teléfono:</strong> <span id="clienteTelefono"></span></p>
-              <p><strong>RUT:</strong> <span id="clienteRUT"></span></p>
+            <div class="form-group">
+              <label for="selectProductoManual">O seleccionar manualmente</label>
+              <select id="selectProductoManual" onchange="agregarProductoManual()">
+                <option value="">Seleccionar producto...</option>
+                <option value="Polera">Polera</option>
+                <option value="Polerón">Polerón</option>
+                <option value="Parka">Parka</option>
+                <option value="Falda">Falda</option>
+                <option value="Bluza">Bluza</option>
+                <option value="Pantalón">Pantalón</option>
+                <option value="Jean">Jean</option>
+                <option value="Buzo">Buzo</option>
+                <option value="Abrigo">Abrigo</option>
+                <option value="Polar">Polar</option>
+                <option value="Suéter">Suéter</option>
+                <option value="Chaleco">Chaleco</option>
+                <option value="Vestido">Vestido</option>
+                <option value="Short">Short</option>
+                <option value="Ropa de cama">Ropa de cama</option>
+                <option value="Otro">Otro</option>
+              </select>
             </div>
 
-            <div class="cliente-no-encontrado" id="clienteNoEncontrado">
-              <h3>⚠️ Cliente No Encontrado</h3>
-              <p>El RUT ingresado no está registrado en la base de datos.</p>
-              <p>¿Deseas registrar este nuevo cliente?</p>
-              <a
-                href="https://admnistracionpsecreto233-spec.github.io/formulario-clientes/"
-                target="_blank"
-                class="btn btn-registrar-cliente"
-              >
-                ➕ Registrar Nuevo Cliente
-              </a>
-              <p style="margin-top: 15px; font-size: 0.9em;">
-                Después de registrar, vuelve aquí y busca nuevamente el RUT.
-              </p>
-            </div>
-
-            <div class="loading" id="loading">
-              <div class="spinner"></div>
-              <p style="margin-top: 15px; color: #2e7d32; font-weight: 600;">Procesando...</p>
-            </div>
-          </div>
-
-          <!-- Selector de Anfitrión -->
-          <div id="anfitrionContainer" style="display: none;">
-            <div class="card">
-              <div class="card-title">👤 Seleccionar Vendedor</div>
-              <div class="form-group">
-                <label for="anfitrionSelect">Anfitrión (Vendedor)</label>
-                <select id="anfitrionSelect">
-                  <option value="">Seleccionar anfitrión...</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Productos -->
-          <div id="productosContainer" style="display: none;">
-            <div class="card">
-              <div class="card-title">🛍️ Transacción</div>
-              
-              <!-- Tipo de Transacción -->
-              <div class="transaction-type-selector">
-                <label>
-                  <input type="radio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')">
-                  <span>📤 Venta</span>
-                </label>
-                <label>
-                  <input type="radio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')">
-                  <span>📥 Devolución</span>
-                </label>
-              </div>
-
-              <!-- Sección de Ventas -->
-              <div id="ventasSection">
+            <div class="productos-lista" id="productosLista">
+              <div class="producto-item">
                 <div class="form-group">
-                  <label for="codigoProducto">📱 Código de Barras / Código Producto</label>
+                  <label>Producto</label>
+                  <input type="text" class="producto-nombre" placeholder="Nombre del producto">
+                </div>
+                <div class="form-group">
+                  <label>Precio</label>
                   <input
-                    type="text"
-                    id="codigoProducto"
-                    placeholder="Escanear o escribir código y presionar Enter..."
-                    autofocus
-                    onkeypress="procesarCodigoProducto(event)"
+                    type="number"
+                    class="producto-precio"
+                    placeholder="0"
+                    min="0"
+                    onchange="calcularTotal()"
                   />
-                  <small>💡 Escanea con la pistola o escribe el código y presiona Enter</small>
-                </div>
-
-                <div class="form-group">
-                  <label for="selectProductoManual">O seleccionar manualmente:</label>
-                  <select id="selectProductoManual" onchange="agregarProductoManual()">
-                    <option value="">Seleccionar...</option>
-                    <option value="Polera">Polera</option>
-                    <option value="Polerón">Polerón</option>
-                    <option value="Parka">Parka</option>
-                    <option value="Falda">Falda</option>
-                    <option value="Bluza">Bluza</option>
-                    <option value="Pantalón">Pantalón</option>
-                    <option value="Jean">Jean</option>
-                    <option value="Buzo">Buzo</option>
-                    <option value="Abrigo">Abrigo</option>
-                    <option value="Polar">Polar</option>
-                    <option value="Suéter">Suéter</option>
-                    <option value="Chaleco">Chaleco</option>
-                    <option value="Vestido">Vestido</option>
-                    <option value="Short">Short</option>
-                    <option value="Ropa de cama">Ropa de cama</option>
-                    <option value="Otro">Otro</option>
-                  </select>
-                </div>
-
-                <div id="productosLista">
-                  <div class="producto-item">
-                    <div class="form-group" style="margin: 0;">
-                      <label>Producto</label>
-                      <input type="text" class="producto-nombre" placeholder="Escanea código o ingresa nombre">
-                    </div>
-                    <div class="form-group" style="margin: 0;">
-                      <label>Precio ($)</label>
-                      <input
-                        type="number"
-                        class="producto-precio"
-                        placeholder="0"
-                        min="0"
-                        onchange="calcularTotal()"
-                      />
-                    </div>
-                    <div>
-                      <button
-                        class="btn btn-danger"
-                        onclick="eliminarProducto(this)"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
                 </div>
                 <button
-                  class="btn btn-secondary"
-                  onclick="agregarProducto()"
-                  style="width: 100%;"
+                  class="btn btn-danger"
+                  onclick="eliminarProducto(this)"
                 >
-                  ➕ Agregar Producto Manual
+                  🗑️
                 </button>
               </div>
-
-              <!-- Sección de Devoluciones -->
-              <div id="devolucionesSection" style="display: none;">
-                <div class="form-group">
-                  <label for="codigoDevolucion">📱 Escanear Código de Producto a Devolver</label>
-                  <input
-                    type="text"
-                    id="codigoDevolucion"
-                    placeholder="Escanear o escribir código y presionar Enter..."
-                    autofocus
-                    onkeypress="procesarCodigoDevolucion(event)"
-                    style="border-color: #ff9800;"
-                  />
-                  <small style="color: #e65100;">💡 Escanea cada producto que el cliente devuelve</small>
-                </div>
-
-                <div id="devolucionesList">
-                  <!-- Se llenarán dinámicamente los productos devueltos -->
-                </div>
-              </div>
-
-              <!-- Descuento -->
-              <div class="form-group" style="margin-top: 30px;">
-                <label for="descuento">💸 Descuento (%)</label>
-                <input
-                  type="number"
-                  id="descuento"
-                  placeholder="0"
-                  min="0"
-                  max="100"
-                  value="0"
-                  onchange="calcularTotal()"
-                />
-              </div>
-
-              <!-- Notas -->
-              <div class="form-group">
-                <label for="notas">📝 Notas u Observaciones</label>
-                <textarea
-                  id="notas"
-                  placeholder="Escribir notas o observaciones sobre la transacción..."
-                  rows="3"
-                ></textarea>
-              </div>
             </div>
+
+            <button
+              class="btn btn-secondary"
+              onclick="agregarProducto()"
+              style="width: 100%;"
+            >
+              ➕ Agregar Producto
+            </button>
+          </div>
+
+          <!-- Devoluciones -->
+          <div id="devolucionesSection" style="display: none;">
+            <div class="form-group">
+              <label for="codigoDevolucion">Escanear Producto a Devolver</label>
+              <input
+                type="text"
+                id="codigoDevolucion"
+                placeholder="Escanear código..."
+                onkeypress="procesarCodigoDevolucion(event)"
+                style="border-color: #fb923c;"
+              />
+              <small style="color: #ea580c;">💡 Escanea cada producto devuelto</small>
+            </div>
+            <div id="devolucionesList"></div>
+          </div>
+
+          <!-- Descuento -->
+          <div class="form-group">
+            <label for="descuento">💸 Descuento (%)</label>
+            <input
+              type="number"
+              id="descuento"
+              placeholder="0"
+              min="0"
+              max="100"
+              value="0"
+              onchange="calcularTotal()"
+            />
           </div>
         </div>
 
-        <!-- Panel Derecho - Resumen -->
-        <div class="right-panel" id="resumenPanel" style="display: none;">
-          <div class="resumen">
-            <h3>💰 Resumen de Venta</h3>
-            <div class="resumen-item">
-              <span>Subtotal:</span>
-              <span id="subtotal">$0</span>
-            </div>
-            <div class="resumen-item">
-              <span>Descuento:</span>
-              <span id="descuentoMonto">$0</span>
-            </div>
-            <div class="resumen-item total">
-              <span>TOTAL:</span>
-              <span id="total">$0</span>
-            </div>
+        <!-- Resumen -->
+        <div class="summary">
+          <div class="summary-title">Resumen</div>
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span id="subtotal">$0</span>
           </div>
+          <div class="summary-row">
+            <span>Descuento</span>
+            <span id="descuentoMonto">$0</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total</span>
+            <span id="total">$0</span>
+          </div>
+        </div>
 
-          <div class="form-actions">
-            <button class="btn btn-success" onclick="registrarVenta()">
-              ✅ Registrar Transacción
-            </button>
-            <button class="btn btn-secondary" onclick="limpiarFormulario()">
-              🔄 Nueva Transacción
-            </button>
-          </div>
+        <!-- Acciones -->
+        <div class="actions">
+          <button class="btn btn-success" onclick="registrarVenta()">
+            ✅ Registrar Transacción
+          </button>
+          <button class="btn btn-secondary" onclick="limpiarFormulario()">
+            🔄 Nueva Transacción
+          </button>
+        </div>
 
-          <div class="alert alert-success" id="alertSuccess" style="margin-top: 20px;">
-            ✅ ¡Transacción registrada exitosamente!
-          </div>
+        <div class="alert alert-success" id="alertSuccess" style="margin-top: 12px;">
+          ✅ Transacción registrada exitosamente
         </div>
       </div>
     </div>
+
     <script src="./main.js"></script>
   </body>
 </html>
