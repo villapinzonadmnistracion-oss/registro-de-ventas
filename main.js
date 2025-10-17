@@ -562,6 +562,31 @@ window.calcularTotal = function() {
   document.getElementById("total").textContent = "$" + total.toLocaleString("es-CL");
 }
 
+// FUNCIÓN: Generar resumen de conteo de items para campo Items
+function generarResumenItems(productosItems) {
+  const conteo = {};
+  
+  productosItems.forEach(item => {
+    const nombre = item.nombre;
+    if (nombre) {
+      conteo[nombre] = (conteo[nombre] || 0) + 1;
+    }
+  });
+  
+  // Genera string: "Parka (x2), Chaqueta (x1)" o "Parka" si solo hay 1
+  const resumen = Object.entries(conteo)
+    .map(([nombre, cantidad]) => {
+      if (cantidad > 1) {
+        return `${nombre} (x${cantidad})`;
+      }
+      return nombre;
+    })
+    .join(", ");
+  
+  console.log("📊 Resumen para campo Items:", resumen);
+  return resumen;
+}
+
 window.registrarVenta = async function() {
   console.log("🔘 Registrar - Tipo:", tipoTransaccionActual);
   
@@ -584,7 +609,7 @@ window.registrarVenta = async function() {
 
   let totalVenta = 0;
   let productosVinculados = [];
-  let itemsTexto = "";
+  let productosParaResumen = [];
 
   if (tipoTransaccionActual === 'venta') {
     const productosItems = document.querySelectorAll(".producto-item");
@@ -599,13 +624,13 @@ window.registrarVenta = async function() {
         if (productoId) {
           productosVinculados.push(productoId);
         }
-        // Agregar cada producto individualmente con su precio
-        itemsTexto += `${nombre}($${precio.toLocaleString('es-CL')}), `;
+        // Guardar para resumen
+        productosParaResumen.push({ nombre: nombre });
         totalVenta += precio;
       }
     }
 
-    if (productosVinculados.length === 0 && itemsTexto === "") {
+    if (productosVinculados.length === 0 && productosParaResumen.length === 0) {
       mostrarAlerta("error", "❌ Debes agregar al menos un producto con precio");
       return;
     }
@@ -620,18 +645,20 @@ window.registrarVenta = async function() {
       if (devolucion.id) {
         productosVinculados.push(devolucion.id);
       }
-      // Agregar cada devolución individualmente
-      itemsTexto += `${devolucion.nombre}, `;
+      // Guardar para resumen
+      productosParaResumen.push({ nombre: devolucion.nombre });
     }
     
     console.log("📦 IDs totales:", productosVinculados);
   }
 
+  // Generar resumen de conteo para campo Items
+  const resumenItems = generarResumenItems(productosParaResumen);
+
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
   const descuentoMonto = Math.round((totalVenta * descuentoPorcentaje) / 100);
   totalVenta = totalVenta - descuentoMonto;
   const notas = document.getElementById("notas").value || "";
-  itemsTexto = itemsTexto.replace(/,\s*$/, "");
 
   mostrarLoading(true);
   ocultarAlertas();
@@ -642,19 +669,19 @@ window.registrarVenta = async function() {
         fields: {
           Cliente: [clienteSeleccionado.id],
           Anfitrión: [anfitrionSeleccionado],
-          Items: itemsTexto,
+          Items: resumenItems,
           "Total de venta": Math.round(totalVenta),
           Descuento: descuentoPorcentaje,
         },
       };
 
-      // Eliminar duplicados para Airtable, pero mantener conteo en Items
+      // Eliminar duplicados para Airtable
       if (productosVinculados.length > 0) {
         const idsUnicos = [...new Set(productosVinculados)];
         ventaData.fields["producto"] = idsUnicos;
         console.log("📦 Total productos escaneados:", productosVinculados.length);
         console.log("📦 Productos únicos vinculados:", idsUnicos);
-        console.log("📦 Detalle en campo Items:", itemsTexto);
+        console.log("📊 Resumen en campo Items:", resumenItems);
       }
       
       if (notas.trim()) ventaData.fields["Box Observaciones"] = notas;
@@ -688,18 +715,18 @@ window.registrarVenta = async function() {
         fields: {
           Cliente: [clienteSeleccionado.id],
           Anfitrión: [anfitrionSeleccionado],
-          Items: itemsTexto,
+          Items: resumenItems,
           "Total de venta": 0,
         },
       };
 
-      // Eliminar duplicados para Airtable, pero mantener conteo en Items
+      // Eliminar duplicados para Airtable
       if (productosVinculados.length > 0) {
         const idsUnicos = [...new Set(productosVinculados)];
         devolucionData.fields["Devolución"] = idsUnicos;
         console.log("📦 Total devoluciones escaneadas:", productosVinculados.length);
         console.log("📦 Productos únicos vinculados:", idsUnicos);
-        console.log("📦 Detalle en campo Items:", itemsTexto);
+        console.log("📊 Resumen en campo Items:", resumenItems);
       }
 
       if (notas.trim()) {
