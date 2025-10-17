@@ -601,7 +601,7 @@ function generarResumenYConteoIndividual(productosItems) {
     "Chaqueta": "Chaqueta_Cantidad",
     "Camisa": "Camisa_Cantidad",
     "Polera": "Polera_Cantidad",
-    "Pantalón": "Pantalon_Cantidad",
+    "Pantalon": "Pantalon_Cantidad",
     "Vestido": "Vestido_Cantidad",
     "Falda": "Falda_Cantidad",
     "Short": "Short_Cantidad",
@@ -629,6 +629,7 @@ function generarResumenYConteoIndividual(productosItems) {
     "BuzoDeportivo": "BuzoDeportivo_Cantidad",
     "PantalonDeVestir": "PantalonDeVestir_Cantidad",
     "RopaDeNiño": "RopaDeNiño_Cantidad",
+    "Polar": "Polar_Cantidad",
   };
   
   // Crear objeto con campos individuales para Airtable
