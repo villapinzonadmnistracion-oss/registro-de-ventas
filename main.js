@@ -587,6 +587,7 @@ window.registrarVenta = async function() {
   let totalVenta = 0;
   let productosVinculados = [];
   let itemsTexto = "";
+  let contadorProductos = {};
 
   if (tipoTransaccionActual === 'venta') {
     const productosItems = document.querySelectorAll(".producto-item");
@@ -600,9 +601,23 @@ window.registrarVenta = async function() {
       if (precio > 0) {
         if (productoId) {
           productosVinculados.push(productoId);
+          // Contar productos para mostrar cantidad
+          if (!contadorProductos[nombre]) {
+            contadorProductos[nombre] = { cantidad: 0, precio: precio };
+          }
+          contadorProductos[nombre].cantidad += 1;
         }
-        itemsTexto += `${nombre} ($${precio.toLocaleString('es-CL')}), `;
         totalVenta += precio;
+      }
+    }
+
+    // Crear texto de items con cantidades
+    for (let nombre in contadorProductos) {
+      const info = contadorProductos[nombre];
+      if (info.cantidad > 1) {
+        itemsTexto += `${nombre} x${info.cantidad} (${info.precio.toLocaleString('es-CL')} c/u), `;
+      } else {
+        itemsTexto += `${nombre} (${info.precio.toLocaleString('es-CL')}), `;
       }
     }
 
@@ -621,10 +636,24 @@ window.registrarVenta = async function() {
       if (devolucion.id) {
         productosVinculados.push(devolucion.id);
       }
-      itemsTexto += `${devolucion.nombre}, `;
+      // Contar devoluciones
+      if (!contadorProductos[devolucion.nombre]) {
+        contadorProductos[devolucion.nombre] = 0;
+      }
+      contadorProductos[devolucion.nombre] += 1;
+    }
+
+    // Crear texto con cantidades
+    for (let nombre in contadorProductos) {
+      const cantidad = contadorProductos[nombre];
+      if (cantidad > 1) {
+        itemsTexto += `${nombre} x${cantidad}, `;
+      } else {
+        itemsTexto += `${nombre}, `;
+      }
     }
     
-    console.log("📦 IDs con duplicados permitidos:", productosVinculados);
+    console.log("📦 IDs totales:", productosVinculados);
   }
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
@@ -648,9 +677,13 @@ window.registrarVenta = async function() {
         },
       };
 
+      // Eliminar duplicados para Airtable, pero mantener conteo en Items
       if (productosVinculados.length > 0) {
-        ventaData.fields["producto"] = productosVinculados;
-        console.log("📦 Productos vinculados (con duplicados):", productosVinculados);
+        const idsUnicos = [...new Set(productosVinculados)];
+        ventaData.fields["producto"] = idsUnicos;
+        console.log("📦 Total productos escaneados:", productosVinculados.length);
+        console.log("📦 Productos únicos vinculados:", idsUnicos);
+        console.log("📦 Detalle en campo Items:", itemsTexto);
       }
       
       if (notas.trim()) ventaData.fields["Box Observaciones"] = notas;
@@ -689,9 +722,13 @@ window.registrarVenta = async function() {
         },
       };
 
+      // Eliminar duplicados para Airtable, pero mantener conteo en Items
       if (productosVinculados.length > 0) {
-        devolucionData.fields["Devolución"] = productosVinculados;
-        console.log("📦 Devoluciones vinculadas (con duplicados):", productosVinculados);
+        const idsUnicos = [...new Set(productosVinculados)];
+        devolucionData.fields["Devolución"] = idsUnicos;
+        console.log("📦 Total devoluciones escaneadas:", productosVinculados.length);
+        console.log("📦 Productos únicos vinculados:", idsUnicos);
+        console.log("📦 Detalle en campo Items:", itemsTexto);
       }
 
       if (notas.trim()) {
