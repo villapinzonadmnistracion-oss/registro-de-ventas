@@ -12,146 +12,249 @@
       }
 
       body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 50%, #c8e6c9 100%);
         min-height: 100vh;
-        padding: 20px;
+        padding: 0;
+        overflow-x: hidden;
       }
 
       .container {
-        max-width: 800px;
+        max-width: 1600px;
         margin: 0 auto;
         background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        overflow: hidden;
+        min-height: 100vh;
+        box-shadow: 0 0 60px rgba(46, 125, 50, 0.1);
       }
 
       .header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
         color: white;
-        padding: 30px;
+        padding: 40px 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 20px rgba(46, 125, 50, 0.2);
+      }
+
+      .header-content h1 {
+        font-size: 3em;
+        margin-bottom: 5px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+
+      .header-content p {
+        font-size: 1.3em;
+        opacity: 0.95;
+        font-weight: 300;
+      }
+
+      .header-stats {
+        display: flex;
+        gap: 30px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 12px;
         text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
       }
 
-      .header h1 {
-        font-size: 2.5em;
-        margin-bottom: 10px;
-      }
-
-      .header p {
-        font-size: 1.1em;
+      .stat-card .label {
+        font-size: 0.85em;
         opacity: 0.9;
+        margin-bottom: 5px;
       }
 
-      .form-section {
+      .stat-card .value {
+        font-size: 1.8em;
+        font-weight: 700;
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 1fr 450px;
+        gap: 40px;
+        padding: 40px 60px;
+        min-height: calc(100vh - 140px);
+      }
+
+      .left-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+
+      .right-panel {
+        background: #f8fdf9;
+        border-radius: 20px;
         padding: 30px;
+        border: 2px solid #e8f5e9;
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+        box-shadow: 0 8px 24px rgba(46, 125, 50, 0.08);
+      }
+
+      .card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e8f5e9;
+        transition: all 0.3s ease;
+      }
+
+      .card:hover {
+        box-shadow: 0 8px 24px rgba(46, 125, 50, 0.12);
+        transform: translateY(-2px);
+      }
+
+      .card-title {
+        font-size: 1.5em;
+        font-weight: 700;
+        color: #1b5e20;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .card-title::before {
+        content: '';
+        width: 4px;
+        height: 28px;
+        background: linear-gradient(180deg, #2e7d32 0%, #43a047 100%);
+        border-radius: 4px;
       }
 
       .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 24px;
       }
 
       .form-group label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         font-weight: 600;
-        color: #333;
-        font-size: 14px;
+        color: #2e7d32;
+        font-size: 15px;
+        letter-spacing: 0.3px;
       }
 
       .form-group input,
       .form-group select,
       .form-group textarea {
         width: 100%;
-        padding: 12px;
-        border: 2px solid #ddd;
-        border-radius: 8px;
+        padding: 14px 18px;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
         font-size: 16px;
-        transition: border-color 0.3s;
+        transition: all 0.3s;
+        background: #fafafa;
       }
 
       .form-group input:focus,
       .form-group select:focus,
       .form-group textarea:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: #43a047;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(67, 160, 71, 0.1);
       }
 
       .btn {
-        padding: 12px 24px;
+        padding: 14px 28px;
         border: none;
-        border-radius: 8px;
+        border-radius: 12px;
         font-size: 16px;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
       }
 
       .btn-primary {
-        background: #667eea;
+        background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
         color: white;
+        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
       }
 
       .btn-primary:hover {
-        background: #5568d3;
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0);
       }
 
       .btn-success {
-        background: #4caf50;
+        background: linear-gradient(135deg, #388e3c 0%, #4caf50 100%);
         color: white;
+        width: 100%;
+        padding: 18px;
+        font-size: 18px;
+        box-shadow: 0 4px 12px rgba(56, 142, 60, 0.3);
       }
 
       .btn-success:hover {
-        background: #45a049;
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        box-shadow: 0 6px 20px rgba(56, 142, 60, 0.4);
       }
 
       .btn-secondary {
-        background: #6c757d;
-        color: white;
+        background: white;
+        color: #2e7d32;
+        border: 2px solid #2e7d32;
       }
 
       .btn-secondary:hover {
-        background: #5a6268;
+        background: #f1f8f4;
       }
 
       .btn-danger {
-        background: #f44336;
+        background: #ef5350;
         color: white;
-        padding: 8px 16px;
+        padding: 10px 20px;
       }
 
       .btn-danger:hover {
-        background: #da190b;
+        background: #e53935;
       }
 
       .btn-registrar-cliente {
-        display: inline-block;
-        background: #2196F3;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #1976d2 0%, #2196f3 100%);
         color: white;
-        padding: 12px 24px;
+        padding: 14px 28px;
         text-decoration: none;
-        border-radius: 8px;
+        border-radius: 12px;
         font-weight: 600;
         transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
       }
 
       .btn-registrar-cliente:hover {
-        background: #0b7dda;
         transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
       }
 
       .alert {
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
+        padding: 18px 24px;
+        border-radius: 12px;
+        margin-bottom: 24px;
         display: none;
         animation: slideIn 0.3s ease;
+        font-weight: 500;
       }
 
       .alert.show {
@@ -159,31 +262,32 @@
       }
 
       .alert-success {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 2px solid #81c784;
       }
 
       .alert-error {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
+        background: #ffebee;
+        color: #c62828;
+        border: 2px solid #ef5350;
       }
 
       .alert-info {
-        background: #d1ecf1;
-        color: #0c5460;
-        border: 1px solid #bee5eb;
+        background: #e3f2fd;
+        color: #1565c0;
+        border: 2px solid #64b5f6;
       }
 
       .cliente-info,
       .cliente-no-encontrado {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin: 20px 0;
+        background: linear-gradient(135deg, #f1f8f4 0%, #e8f5e9 100%);
+        padding: 24px;
+        border-radius: 16px;
+        margin: 24px 0;
         display: none;
         animation: slideIn 0.3s ease;
+        border: 2px solid #a5d6a7;
       }
 
       .cliente-info.show,
@@ -192,25 +296,32 @@
       }
 
       .cliente-info h3 {
-        color: #667eea;
-        margin-bottom: 15px;
+        color: #2e7d32;
+        margin-bottom: 16px;
+        font-size: 1.3em;
+      }
+
+      .cliente-no-encontrado {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border: 2px solid #ffb74d;
       }
 
       .cliente-no-encontrado h3 {
-        color: #f44336;
-        margin-bottom: 15px;
+        color: #e65100;
+        margin-bottom: 16px;
       }
 
       .cliente-info p,
       .cliente-no-encontrado p {
-        margin: 10px 0;
+        margin: 12px 0;
         font-size: 16px;
+        color: #424242;
       }
 
       .loading {
         display: none;
         text-align: center;
-        padding: 20px;
+        padding: 40px;
       }
 
       .loading.show {
@@ -218,11 +329,11 @@
       }
 
       .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #667eea;
+        border: 4px solid #e8f5e9;
+        border-top: 4px solid #43a047;
         border-radius: 50%;
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         animation: spin 1s linear infinite;
         margin: 0 auto;
       }
@@ -243,74 +354,129 @@
         }
       }
 
-      .productos-section {
-        margin: 20px 0;
-      }
-
       .producto-item {
         display: grid;
         grid-template-columns: 2fr 1fr auto;
         gap: 15px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
+        padding: 16px;
+        background: #fafafa;
+        border-radius: 12px;
         margin-bottom: 15px;
         align-items: end;
+        border: 2px solid #f0f0f0;
+        transition: all 0.3s;
+      }
+
+      .producto-item:hover {
+        border-color: #c8e6c9;
+        background: #f8fdf9;
       }
 
       .resumen {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin: 30px 0;
+        background: linear-gradient(135deg, #f1f8f4 0%, #e8f5e9 100%);
+        padding: 28px;
+        border-radius: 16px;
+        margin: 20px 0;
+        border: 2px solid #a5d6a7;
+      }
+
+      .resumen h3 {
+        color: #1b5e20;
+        font-size: 1.4em;
+        margin-bottom: 20px;
       }
 
       .resumen-item {
         display: flex;
         justify-content: space-between;
-        padding: 10px 0;
-        font-size: 16px;
+        padding: 12px 0;
+        font-size: 17px;
+        color: #424242;
       }
 
       .resumen-item.total {
-        border-top: 2px solid #667eea;
-        margin-top: 10px;
-        padding-top: 15px;
-        font-size: 20px;
-        font-weight: bold;
-        color: #667eea;
+        border-top: 3px solid #43a047;
+        margin-top: 16px;
+        padding-top: 20px;
+        font-size: 24px;
+        font-weight: 700;
+        color: #2e7d32;
       }
 
       .form-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
+        flex-direction: column;
         gap: 15px;
-        margin-top: 20px;
+        margin-top: 24px;
       }
 
       .devolucion-item {
-        padding: 10px;
+        padding: 16px;
         border: 2px solid #ff9800;
-        border-radius: 4px;
-        margin: 10px 0;
-        background-color: #fff3e0;
+        border-radius: 12px;
+        margin: 12px 0;
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
       }
 
-      @media (max-width: 768px) {
-        .container {
-          margin: 10px;
-        }
+      .transaction-type-selector {
+        display: flex;
+        gap: 15px;
+        margin: 20px 0;
+      }
 
-        .producto-item {
-          grid-template-columns: 1fr;
-        }
+      .transaction-type-selector label {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        gap: 10px;
+      }
 
-        .form-actions {
-          grid-template-columns: 1fr;
-        }
+      .transaction-type-selector input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        accent-color: #43a047;
+      }
 
-        .header h1 {
-          font-size: 1.8em;
+      .transaction-type-selector label:hover {
+        border-color: #43a047;
+        background: #f8fdf9;
+      }
+
+      .transaction-type-selector input[type="radio"]:checked + span {
+        color: #2e7d32;
+      }
+
+      .search-container {
+        display: flex;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .search-container .form-group {
+        flex: 1;
+        margin: 0;
+      }
+
+      .search-container .btn {
+        margin-bottom: 0;
+      }
+
+      small {
+        color: #757575;
+        font-size: 14px;
+      }
+
+      @media (max-width: 1600px) {
+        .main-content {
+          grid-template-columns: 1fr 400px;
         }
       }
     </style>
@@ -318,221 +484,231 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1>Punto Secreto</h1>
-        <p>Sistema de Registro de Ventas</p>
+        <div class="header-content">
+          <h1>🌿 Punto Secreto</h1>
+          <p>Sistema de Registro de Ventas</p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-card">
+            <div class="label">Ventas Hoy</div>
+            <div class="value">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Total Hoy</div>
+            <div class="value">$0</div>
+          </div>
+        </div>
       </div>
 
-      <div class="form-section">
-        <div class="alert alert-error" id="alertError">
-          ❌ Error al registrar la venta. Por favor, intenta nuevamente.
-        </div>
-        <div class="alert alert-info" id="alertInfo"></div>
-
-        <!-- Búsqueda de Cliente -->
-        <div class="form-group">
-          <label for="rutCliente">RUT del Cliente</label>
-          <input
-            type="text"
-            id="rutCliente"
-            placeholder="Ej: 12.345.678-9"
-            onkeypress="buscarClienteEnter(event)"
-            oninput="formatearRUT(this)"
-          />
-          <button
-            class="btn btn-primary"
-            onclick="buscarCliente()"
-            style="margin-top: 10px; width: 100%;"
-          >
-            🔍 Buscar Cliente
-          </button>
-        </div>
-
-        <div class="cliente-info" id="clienteInfo">
-          <h3>📋 Información del Cliente</h3>
-          <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
-          <p><strong>Teléfono:</strong> <span id="clienteTelefono"></span></p>
-          <p><strong>RUT:</strong> <span id="clienteRUT"></span></p>
-        </div>
-
-        <div class="cliente-no-encontrado" id="clienteNoEncontrado">
-          <h3>⚠️ Cliente No Encontrado</h3>
-          <p>El RUT ingresado no está registrado en la base de datos.</p>
-          <p>¿Deseas registrar este nuevo cliente?</p>
-          <a
-            href="https://admnistracionpsecreto233-spec.github.io/formulario-clientes/"
-            target="_blank"
-            class="btn btn-registrar-cliente"
-          >
-            ➕ Registrar Nuevo Cliente
-          </a>
-          <p style="margin-top: 15px; font-size: 0.9em;">
-            Después de registrar, vuelve aquí y busca nuevamente el RUT.
-          </p>
-        </div>
-
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <p style="margin-top: 10px;">Procesando...</p>
-        </div>
-
-        <!-- Selector de Anfitrión -->
-        <div id="anfitrionContainer" style="display: none;">
-          <div class="form-group">
-            <label for="anfitrionSelect">👤 Anfitrión (Vendedor)</label>
-            <select id="anfitrionSelect">
-              <option value="">Seleccionar anfitrión...</option>
-            </select>
+      <div class="main-content">
+        <!-- Panel Izquierdo -->
+        <div class="left-panel">
+          <div class="alert alert-error" id="alertError">
+            ❌ Error al registrar la venta. Por favor, intenta nuevamente.
           </div>
-        </div>
+          <div class="alert alert-info" id="alertInfo"></div>
 
-        <!-- Productos -->
-        <div id="productosContainer" style="display: none;">
-          <h3 style="margin: 30px 0 15px 0;">🛍️ Productos</h3>
-          
-          <!-- Opción: Venta o Devolución -->
-          <div class="form-group">
-            <label>Tipo de Transacción</label>
-            <div style="display: flex; gap: 20px; margin-top: 10px;">
-              <label style="display: flex; align-items: center; margin: 0; cursor: pointer;">
-                <input type="radio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')" style="margin-right: 8px;">
-                <span style="font-size: 16px;">📤 Venta</span>
-              </label>
-              <label style="display: flex; align-items: center; margin: 0; cursor: pointer;">
-                <input type="radio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')" style="margin-right: 8px;">
-                <span style="font-size: 16px;">📥 Devolución</span>
-              </label>
+          <!-- Búsqueda de Cliente -->
+          <div class="card">
+            <div class="card-title">🔍 Buscar Cliente</div>
+            <div class="search-container">
+              <div class="form-group">
+                <label for="rutCliente">RUT del Cliente</label>
+                <input
+                  type="text"
+                  id="rutCliente"
+                  placeholder="Ej: 12.345.678-9"
+                  onkeypress="buscarClienteEnter(event)"
+                  oninput="formatearRUT(this)"
+                />
+              </div>
+              <button class="btn btn-primary" onclick="buscarCliente()">
+                🔍 Buscar
+              </button>
+            </div>
+
+            <div class="cliente-info" id="clienteInfo">
+              <h3>✅ Cliente Encontrado</h3>
+              <p><strong>Nombre:</strong> <span id="clienteNombre"></span></p>
+              <p><strong>Teléfono:</strong> <span id="clienteTelefono"></span></p>
+              <p><strong>RUT:</strong> <span id="clienteRUT"></span></p>
+            </div>
+
+            <div class="cliente-no-encontrado" id="clienteNoEncontrado">
+              <h3>⚠️ Cliente No Encontrado</h3>
+              <p>El RUT ingresado no está registrado en la base de datos.</p>
+              <p>¿Deseas registrar este nuevo cliente?</p>
+              <a
+                href="https://admnistracionpsecreto233-spec.github.io/formulario-clientes/"
+                target="_blank"
+                class="btn btn-registrar-cliente"
+              >
+                ➕ Registrar Nuevo Cliente
+              </a>
+              <p style="margin-top: 15px; font-size: 0.9em;">
+                Después de registrar, vuelve aquí y busca nuevamente el RUT.
+              </p>
+            </div>
+
+            <div class="loading" id="loading">
+              <div class="spinner"></div>
+              <p style="margin-top: 15px; color: #2e7d32; font-weight: 600;">Procesando...</p>
             </div>
           </div>
 
-          <!-- Sección de Ventas -->
-          <div id="ventasSection">
-            <h4 style="margin-top: 25px; color: #2e7d32;">Agregar Productos</h4>
-            <div class="form-group">
-              <label for="codigoProducto">📱 Código de Barras / Código Producto</label>
-              <input
-                type="text"
-                id="codigoProducto"
-                placeholder="Escanear o escribir código y presionar Enter..."
-                autofocus
-                onkeypress="procesarCodigoProducto(event)"
-                style="font-size: 16px; padding: 12px;"
-              />
-              <small style="color: #666; display: block; margin-top: 5px;">
-                💡 Escanea con la pistola o escribe el código y presiona Enter
-              </small>
-            </div>
-
-            <div class="form-group">
-              <label for="selectProductoManual">O seleccionar manualmente:</label>
-              <select id="selectProductoManual" onchange="agregarProductoManual()">
-                <option value="">Seleccionar...</option>
-                <option value="Polera">Polera</option>
-                <option value="Polerón">Polerón</option>
-                <option value="Parka">Parka</option>
-                <option value="Falda">Falda</option>
-                <option value="Bluza">Bluza</option>
-                <option value="Pantalón">Pantalón</option>
-                <option value="Jean">Jean</option>
-                <option value="Buzo">Buzo</option>
-                <option value="Abrigo">Abrigo</option>
-                <option value="Polar">Polar</option>
-                <option value="Suéter">Suéter</option>
-                <option value="Chaleco">Chaleco</option>
-                <option value="Vestido">Vestido</option>
-                <option value="Short">Short</option>
-                <option value="Ropa de cama">Ropa de cama</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
-
-            <div class="productos-section" id="productosLista">
-              <div class="producto-item">
-                <div class="form-group" style="margin: 0;">
-                  <label>Producto</label>
-                  <input type="text" class="producto-nombre" placeholder="Escanea código o ingresa nombre">
-                </div>
-                <div class="form-group" style="margin: 0;">
-                  <label>Precio ($)</label>
-                  <input
-                    type="number"
-                    class="producto-precio"
-                    placeholder="0"
-                    min="0"
-                    onchange="calcularTotal()"
-                  />
-                </div>
-                <div>
-                  <button
-                    class="btn btn-danger"
-                    onclick="eliminarProducto(this)"
-                    style="margin-top: 24px;"
-                  >
-                    🗑️
-                  </button>
-                </div>
+          <!-- Selector de Anfitrión -->
+          <div id="anfitrionContainer" style="display: none;">
+            <div class="card">
+              <div class="card-title">👤 Seleccionar Vendedor</div>
+              <div class="form-group">
+                <label for="anfitrionSelect">Anfitrión (Vendedor)</label>
+                <select id="anfitrionSelect">
+                  <option value="">Seleccionar anfitrión...</option>
+                </select>
               </div>
             </div>
-            <button
-              class="btn btn-secondary"
-              onclick="agregarProducto()"
-              style="margin-top: 10px;"
-            >
-              ➕ Agregar Producto Manual
-            </button>
           </div>
 
-          <!-- Sección de Devoluciones SIMPLIFICADA -->
-          <div id="devolucionesSection" style="display: none;">
-            <h4 style="margin-top: 25px; color: #e65100;">📥 Productos en Devolución</h4>
-            
-            <div class="form-group">
-              <label for="codigoDevolucion">📱 Escanear Código de Producto a Devolver</label>
-              <input
-                type="text"
-                id="codigoDevolucion"
-                placeholder="Escanear o escribir código y presionar Enter..."
-                autofocus
-                onkeypress="procesarCodigoDevolucion(event)"
-                style="font-size: 16px; padding: 12px; border: 2px solid #ff9800;"
-              />
-              <small style="color: #e65100; display: block; margin-top: 5px;">
-                💡 Escanea cada producto que el cliente devuelve
-              </small>
+          <!-- Productos -->
+          <div id="productosContainer" style="display: none;">
+            <div class="card">
+              <div class="card-title">🛍️ Transacción</div>
+              
+              <!-- Tipo de Transacción -->
+              <div class="transaction-type-selector">
+                <label>
+                  <input type="radio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')">
+                  <span>📤 Venta</span>
+                </label>
+                <label>
+                  <input type="radio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')">
+                  <span>📥 Devolución</span>
+                </label>
+              </div>
+
+              <!-- Sección de Ventas -->
+              <div id="ventasSection">
+                <div class="form-group">
+                  <label for="codigoProducto">📱 Código de Barras / Código Producto</label>
+                  <input
+                    type="text"
+                    id="codigoProducto"
+                    placeholder="Escanear o escribir código y presionar Enter..."
+                    autofocus
+                    onkeypress="procesarCodigoProducto(event)"
+                  />
+                  <small>💡 Escanea con la pistola o escribe el código y presiona Enter</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="selectProductoManual">O seleccionar manualmente:</label>
+                  <select id="selectProductoManual" onchange="agregarProductoManual()">
+                    <option value="">Seleccionar...</option>
+                    <option value="Polera">Polera</option>
+                    <option value="Polerón">Polerón</option>
+                    <option value="Parka">Parka</option>
+                    <option value="Falda">Falda</option>
+                    <option value="Bluza">Bluza</option>
+                    <option value="Pantalón">Pantalón</option>
+                    <option value="Jean">Jean</option>
+                    <option value="Buzo">Buzo</option>
+                    <option value="Abrigo">Abrigo</option>
+                    <option value="Polar">Polar</option>
+                    <option value="Suéter">Suéter</option>
+                    <option value="Chaleco">Chaleco</option>
+                    <option value="Vestido">Vestido</option>
+                    <option value="Short">Short</option>
+                    <option value="Ropa de cama">Ropa de cama</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+
+                <div id="productosLista">
+                  <div class="producto-item">
+                    <div class="form-group" style="margin: 0;">
+                      <label>Producto</label>
+                      <input type="text" class="producto-nombre" placeholder="Escanea código o ingresa nombre">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                      <label>Precio ($)</label>
+                      <input
+                        type="number"
+                        class="producto-precio"
+                        placeholder="0"
+                        min="0"
+                        onchange="calcularTotal()"
+                      />
+                    </div>
+                    <div>
+                      <button
+                        class="btn btn-danger"
+                        onclick="eliminarProducto(this)"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  class="btn btn-secondary"
+                  onclick="agregarProducto()"
+                  style="width: 100%;"
+                >
+                  ➕ Agregar Producto Manual
+                </button>
+              </div>
+
+              <!-- Sección de Devoluciones -->
+              <div id="devolucionesSection" style="display: none;">
+                <div class="form-group">
+                  <label for="codigoDevolucion">📱 Escanear Código de Producto a Devolver</label>
+                  <input
+                    type="text"
+                    id="codigoDevolucion"
+                    placeholder="Escanear o escribir código y presionar Enter..."
+                    autofocus
+                    onkeypress="procesarCodigoDevolucion(event)"
+                    style="border-color: #ff9800;"
+                  />
+                  <small style="color: #e65100;">💡 Escanea cada producto que el cliente devuelve</small>
+                </div>
+
+                <div id="devolucionesList">
+                  <!-- Se llenarán dinámicamente los productos devueltos -->
+                </div>
+              </div>
+
+              <!-- Descuento -->
+              <div class="form-group" style="margin-top: 30px;">
+                <label for="descuento">💸 Descuento (%)</label>
+                <input
+                  type="number"
+                  id="descuento"
+                  placeholder="0"
+                  min="0"
+                  max="100"
+                  value="0"
+                  onchange="calcularTotal()"
+                />
+              </div>
+
+              <!-- Notas -->
+              <div class="form-group">
+                <label for="notas">📝 Notas u Observaciones</label>
+                <textarea
+                  id="notas"
+                  placeholder="Escribir notas o observaciones sobre la transacción..."
+                  rows="3"
+                ></textarea>
+              </div>
             </div>
-
-            <div id="devolucionesList" style="margin-top: 20px;">
-              <!-- Se llenarán dinámicamente los productos devueltos -->
-            </div>
           </div>
+        </div>
 
-          <!-- Descuento -->
-          <div class="form-group" style="margin-top: 30px;">
-            <label for="descuento">💸 Descuento (%)</label>
-            <input
-              type="number"
-              id="descuento"
-              placeholder="0"
-              min="0"
-              max="100"
-              value="0"
-              onchange="calcularTotal()"
-            />
-          </div>
-
-          <!-- Notas u Observaciones -->
-          <div class="form-group">
-            <label for="notas">📝 Notas u Observaciones</label>
-            <textarea
-              id="notas"
-              placeholder="Escribir notas o observaciones sobre la transacción..."
-              rows="3"
-              style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: Arial, sans-serif;"
-            ></textarea>
-          </div>
-
-          <!-- Resumen -->
+        <!-- Panel Derecho - Resumen -->
+        <div class="right-panel" id="resumenPanel" style="display: none;">
           <div class="resumen">
-            <h3 style="margin-bottom: 15px;">💰 Resumen de Venta</h3>
+            <h3>💰 Resumen de Venta</h3>
             <div class="resumen-item">
               <span>Subtotal:</span>
               <span id="subtotal">$0</span>
@@ -547,7 +723,6 @@
             </div>
           </div>
 
-          <!-- Botones de acción -->
           <div class="form-actions">
             <button class="btn btn-success" onclick="registrarVenta()">
               ✅ Registrar Transacción
@@ -557,12 +732,7 @@
             </button>
           </div>
 
-          <!-- Alerta de éxito después de los botones -->
-          <div
-            class="alert alert-success"
-            id="alertSuccess"
-            style="margin-top: 20px;"
-          >
+          <div class="alert alert-success" id="alertSuccess" style="margin-top: 20px;">
             ✅ ¡Transacción registrada exitosamente!
           </div>
         </div>
