@@ -404,8 +404,7 @@
         flex-direction: column;
         gap: 10px;
         margin: 14px 0;
-        max-height: 280px;
-        overflow-y: auto;
+        overflow-y: visible;
         padding-right: 6px;
       }
 
@@ -541,11 +540,12 @@
         display: flex;
         flex-direction: column;
         gap: 14px;
-        padding-right: 6px;
+        padding-right: 8px;
+        min-height: 0;
       }
 
       .productos-scroll-container::-webkit-scrollbar {
-        width: 6px;
+        width: 8px;
       }
 
       .productos-scroll-container::-webkit-scrollbar-track {
@@ -556,6 +556,10 @@
       .productos-scroll-container::-webkit-scrollbar-thumb {
         background: #10b981;
         border-radius: 10px;
+      }
+
+      .productos-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #059669;
       }
     </style>
   </head>
