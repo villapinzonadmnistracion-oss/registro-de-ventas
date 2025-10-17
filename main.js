@@ -573,13 +573,10 @@ function generarResumenItems(productosItems) {
     }
   });
   
-  // Genera string: "Parka (x2), Chaqueta (x1)" o "Parka" si solo hay 1
+  // Genera string: "Parka (x3), Chaqueta (x1)" - SIEMPRE muestra la cantidad
   const resumen = Object.entries(conteo)
     .map(([nombre, cantidad]) => {
-      if (cantidad > 1) {
-        return `${nombre} (x${cantidad})`;
-      }
-      return nombre;
+      return `${nombre} (x${cantidad})`;
     })
     .join(", ");
   
