@@ -14,8 +14,7 @@
       body {
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
         background: #f8faf9;
-        height: 100vh;
-        overflow: hidden;
+        min-height: 100vh;
       }
 
       /* Header minimalista */
@@ -55,7 +54,6 @@
         display: grid;
         grid-template-columns: 580px 1fr;
         gap: 24px;
-        height: calc(100vh - 73px);
       }
 
       /* Panel izquierdo - Formulario principal */
@@ -63,22 +61,6 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
-        overflow-y: auto;
-        padding-right: 8px;
-      }
-
-      .main-panel::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      .main-panel::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-      }
-
-      .main-panel::-webkit-scrollbar-thumb {
-        background: #10b981;
-        border-radius: 10px;
       }
 
       /* Panel derecho - Productos y resumen */
@@ -90,7 +72,6 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         display: flex;
         flex-direction: column;
-        overflow: hidden;
       }
 
       /* Tarjetas limpias */
@@ -536,30 +517,9 @@
 
       .productos-scroll-container {
         flex: 1;
-        overflow-y: auto;
         display: flex;
         flex-direction: column;
         gap: 14px;
-        padding-right: 8px;
-        min-height: 0;
-      }
-
-      .productos-scroll-container::-webkit-scrollbar {
-        width: 8px;
-      }
-
-      .productos-scroll-container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-      }
-
-      .productos-scroll-container::-webkit-scrollbar-thumb {
-        background: #10b981;
-        border-radius: 10px;
-      }
-
-      .productos-scroll-container::-webkit-scrollbar-thumb:hover {
-        background: #059669;
       }
     </style>
   </head>
