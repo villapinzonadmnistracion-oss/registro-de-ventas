@@ -581,13 +581,42 @@ function generarResumenYConteoIndividual(productosItems) {
     .map(([nombre, cantidad]) => `${nombre} (x${cantidad})`)
     .join(", ");
   
+  // ========================================
+  // MAPEO DE PRODUCTOS A CAMPOS DE AIRTABLE
+  // ========================================
+  // ⚠️ IMPORTANTE: Agrega aquí los campos que crees en Airtable
+  // Formato: "Nombre del Producto": "Nombre_del_Campo_en_Airtable"
+  
+  const mapeoProductos = {
+    // Ejemplo de uso:
+    "Parka": "Parka_Cantidad",
+    "Chaqueta": "Chaqueta_Cantidad",
+    "Camisa": "Camisa_Cantidad",
+    "Polera": "Polera_Cantidad",
+    "Pantalón": "Pantalon_Cantidad",
+    "Vestido": "Vestido_Cantidad",
+    "Falda": "Falda_Cantidad",
+    "Short": "Short_Cantidad",
+    "Sweater": "Sweater_Cantidad",
+    "Abrigo": "Abrigo_Cantidad",
+    // ⬇️ AGREGA MÁS PRODUCTOS AQUÍ ⬇️
+    // "Nombre Producto": "Campo_Airtable_Cantidad",
+  };
+  
   // Crear objeto con campos individuales para Airtable
-  // Normaliza nombres para crear campos válidos: "Parka" → "Cantidad_Parka"
   const camposIndividuales = {};
   Object.entries(conteo).forEach(([nombre, cantidad]) => {
-    // Limpia el nombre y crea el campo (ej: "Cantidad_Parka", "Cantidad_Chaqueta")
-    const nombreCampo = `Cantidad_${nombre.replace(/\s+/g, '_')}`;
-    camposIndividuales[nombreCampo] = cantidad;
+    // Buscar el campo correspondiente en el mapeo
+    const nombreCampo = mapeoProductos[nombre];
+    
+    if (nombreCampo) {
+      // ✅ Si existe en el mapeo, usar ese nombre de campo
+      camposIndividuales[nombreCampo] = cantidad;
+      console.log(`✅ ${nombre} → ${nombreCampo}: ${cantidad}`);
+    } else {
+      // ⚠️ Si NO existe en el mapeo, mostrar advertencia
+      console.warn(`⚠️ "${nombre}" no tiene campo mapeado. Agrégalo al mapeoProductos.`);
+    }
   });
   
   console.log("📊 Resumen Items:", resumenItems);
