@@ -562,26 +562,41 @@ window.calcularTotal = function() {
   document.getElementById("total").textContent = "$" + total.toLocaleString("es-CL");
 }
 
-// FUNCIÓN: Generar resumen de conteo de items para campo Items
-function generarResumenItems(productosItems) {
+// ========================================
+// FUNCIÓN MEJORADA: Generar resumen con conteo individual por categoría
+// ========================================
+function generarResumenYConteoIndividual(productosItems) {
   const conteo = {};
   
+  // Contar cuántos productos de cada categoría
   productosItems.forEach(item => {
-    const nombre = item.nombre;
+    const nombre = item.nombre.trim();
     if (nombre) {
       conteo[nombre] = (conteo[nombre] || 0) + 1;
     }
   });
   
-  // Genera string: "Parka (x3), Chaqueta (x1)" - SIEMPRE muestra la cantidad
-  const resumen = Object.entries(conteo)
-    .map(([nombre, cantidad]) => {
-      return `${nombre} (x${cantidad})`;
-    })
+  // Crear string resumen: "Parka (x3), Chaqueta (x1), Camisa (x2)"
+  const resumenItems = Object.entries(conteo)
+    .map(([nombre, cantidad]) => `${nombre} (x${cantidad})`)
     .join(", ");
   
-  console.log("📊 Resumen para campo Items:", resumen);
-  return resumen;
+  // Crear objeto con campos individuales para Airtable
+  // Normaliza nombres para crear campos válidos: "Parka" → "Cantidad_Parka"
+  const camposIndividuales = {};
+  Object.entries(conteo).forEach(([nombre, cantidad]) => {
+    // Limpia el nombre y crea el campo (ej: "Cantidad_Parka", "Cantidad_Chaqueta")
+    const nombreCampo = `Cantidad_${nombre.replace(/\s+/g, '_')}`;
+    camposIndividuales[nombreCampo] = cantidad;
+  });
+  
+  console.log("📊 Resumen Items:", resumenItems);
+  console.log("🔢 Campos individuales:", camposIndividuales);
+  
+  return {
+    resumen: resumenItems,
+    camposIndividuales: camposIndividuales
+  };
 }
 
 window.registrarVenta = async function() {
@@ -649,8 +664,8 @@ window.registrarVenta = async function() {
     console.log("📦 IDs totales:", productosVinculados);
   }
 
-  // Generar resumen de conteo para campo Items
-  const resumenItems = generarResumenItems(productosParaResumen);
+  // ✅ NUEVA LÓGICA: Generar resumen + campos individuales
+  const { resumen, camposIndividuales } = generarResumenYConteoIndividual(productosParaResumen);
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
   const descuentoMonto = Math.round((totalVenta * descuentoPorcentaje) / 100);
@@ -666,9 +681,11 @@ window.registrarVenta = async function() {
         fields: {
           Cliente: [clienteSeleccionado.id],
           Anfitrión: [anfitrionSeleccionado],
-          Items: resumenItems,
+          Items: resumen, // ✅ Campo Items con resumen: "Parka (x3), Chaqueta (x1)"
           "Total de venta": Math.round(totalVenta),
           Descuento: descuentoPorcentaje,
+          // ✅ AGREGAR CAMPOS INDIVIDUALES (Cantidad_Parka, Cantidad_Chaqueta, etc.)
+          ...camposIndividuales
         },
       };
 
@@ -678,7 +695,8 @@ window.registrarVenta = async function() {
         ventaData.fields["producto"] = idsUnicos;
         console.log("📦 Total productos escaneados:", productosVinculados.length);
         console.log("📦 Productos únicos vinculados:", idsUnicos);
-        console.log("📊 Resumen en campo Items:", resumenItems);
+        console.log("📊 Resumen en campo Items:", resumen);
+        console.log("🔢 Campos individuales de cantidad:", camposIndividuales);
       }
       
       if (notas.trim()) ventaData.fields["Box Observaciones"] = notas;
@@ -708,12 +726,15 @@ window.registrarVenta = async function() {
         mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
       }
     } else {
+      // DEVOLUCIONES
       const devolucionData = {
         fields: {
           Cliente: [clienteSeleccionado.id],
           Anfitrión: [anfitrionSeleccionado],
-          Items: resumenItems,
+          Items: resumen, // ✅ Campo Items con resumen
           "Total de venta": 0,
+          // ✅ AGREGAR CAMPOS INDIVIDUALES para devoluciones también
+          ...camposIndividuales
         },
       };
 
@@ -723,7 +744,8 @@ window.registrarVenta = async function() {
         devolucionData.fields["Devolución"] = idsUnicos;
         console.log("📦 Total devoluciones escaneadas:", productosVinculados.length);
         console.log("📦 Productos únicos vinculados:", idsUnicos);
-        console.log("📊 Resumen en campo Items:", resumenItems);
+        console.log("📊 Resumen en campo Items:", resumen);
+        console.log("🔢 Campos individuales de cantidad:", camposIndividuales);
       }
 
       if (notas.trim()) {
