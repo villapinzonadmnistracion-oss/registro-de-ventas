@@ -359,12 +359,6 @@ async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
 }
 
 function agregarProductoDevolucion(producto) {
-  const yaExiste = devolucionesAgregadas.find(d => d.id === producto.id);
-  if (yaExiste) {
-    setTimeout(() => document.getElementById("codigoDevolucion").focus(), 100);
-    return;
-  }
-
   const devolucion = {
     id: producto.id,
     nombre: producto.categoria,
@@ -376,13 +370,14 @@ function agregarProductoDevolucion(producto) {
   console.log("✅ Producto agregado a lista:", devolucion);
 
   const container = document.getElementById("devolucionesList");
+  const timestamp = Date.now();
   const itemHTML = `
-    <div class="devolucion-item" data-devolucion-id="${producto.id}" style="background: #e8f5e9; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #4caf50; display: flex; justify-content: space-between; align-items: center;">
+    <div class="devolucion-item" data-devolucion-timestamp="${timestamp}" style="background: #e8f5e9; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #4caf50; display: flex; justify-content: space-between; align-items: center;">
       <div>
         <strong style="font-size: 16px; color: #2e7d32;">📦 ${producto.categoria}</strong>
         <div style="color: #666; margin-top: 4px; font-size: 14px;">Código: ${producto.codigo}</div>
       </div>
-      <button class="btn btn-danger" onclick="eliminarDevolucion('${producto.id}')" style="padding: 8px 12px; font-size: 14px;">🗑️</button>
+      <button class="btn btn-danger" onclick="eliminarDevolucion('${timestamp}')" style="padding: 8px 12px; font-size: 14px;">🗑️</button>
     </div>
   `;
   container.insertAdjacentHTML("beforeend", itemHTML);
@@ -417,50 +412,23 @@ window.agregarProductoManual = function() {
   }
 }
 
-window.eliminarDevolucion = function(id) {
-  devolucionesAgregadas = devolucionesAgregadas.filter(d => d.id !== id);
+window.eliminarDevolucion = function(timestamp) {
   const items = document.querySelectorAll(".devolucion-item");
-  items.forEach(item => {
-    if (item.dataset.devolucionId === id) item.remove();
-  });
-}
-
-// FUNCIÓN: Verificar cumpleaños buscando en todos los campos
-function verificarCumpleanos(cliente) {
-  try {
-    console.log("🎂 === BUSCANDO CAMPO DE CUMPLEAÑOS ===");
-    console.log("🔍 Campos disponibles:", Object.keys(cliente.fields));
-    
-    // Buscar cualquier campo que contenga "cumple" en su nombre
-    for (let nombreCampo in cliente.fields) {
-      if (nombreCampo.toLowerCase().includes('cumple') || nombreCampo.toLowerCase().includes('birthday')) {
-        let valorCampo = cliente.fields[nombreCampo];
-        console.log(`🎂 Campo encontrado: "${nombreCampo}" =`, valorCampo);
-        
-        // Si es array (Lookup), tomar primer elemento
-        if (Array.isArray(valorCampo) && valorCampo.length > 0) {
-          valorCampo = valorCampo[0];
-          console.log("🎂 Valor extraído del array:", valorCampo);
-        }
-        
-        // Convertir a texto y verificar
-        const valorTexto = String(valorCampo || "").trim();
-        console.log("🎂 Valor como texto:", valorTexto);
-        
-        if (valorTexto.length > 0 && valorTexto !== "undefined" && valorTexto !== "null") {
-          console.log("✅ ¡CUMPLEAÑOS DETECTADO! Aplicando 10%");
-          return 10;
-        }
-      }
+  let indexToRemove = -1;
+  
+  items.forEach((item, index) => {
+    if (item.dataset.devolucionTimestamp === timestamp) {
+      indexToRemove = index;
+      item.remove();
     }
-    
-    console.log("ℹ️ No se encontró descuento de cumpleaños");
-    return 0;
-  } catch (error) {
-    console.error("❌ Error:", error);
-    return 0;
+  });
+  
+  if (indexToRemove !== -1 && indexToRemove < devolucionesAgregadas.length) {
+    devolucionesAgregadas.splice(indexToRemove, 1);
   }
 }
+
+
 
 window.buscarCliente = async function() {
   const input = document.getElementById("rutCliente");
@@ -509,18 +477,6 @@ window.buscarCliente = async function() {
     if (data.records && data.records.length > 0) {
       clienteSeleccionado = data.records[0];
       
-      // VERIFICAR CUMPLEAÑOS
-      const descuentoCumple = verificarCumpleanos(clienteSeleccionado);
-      
-      if (descuentoCumple > 0) {
-        const campoDescuento = document.getElementById("descuento");
-        campoDescuento.value = descuentoCumple;
-        mostrarAlerta("success", `🎉 ¡FELIZ CUMPLEAÑOS! Se ha aplicado ${descuentoCumple}% de descuento automáticamente`);
-        campoDescuento.style.backgroundColor = "#fff3cd";
-        campoDescuento.style.border = "2px solid #ffc107";
-        campoDescuento.style.fontWeight = "bold";
-      }
-      
       mostrarInfoCliente(clienteSeleccionado);
       document.getElementById("productosContainer").style.display = "block";
       document.getElementById("anfitrionContainer").style.display = "block";
@@ -528,10 +484,8 @@ window.buscarCliente = async function() {
       
       setTimeout(() => {
         document.getElementById("codigoProducto").focus();
-        if (descuentoCumple === 0) {
-          mostrarAlerta("info", "📱 Escanea el código de barras");
-        }
-      }, descuentoCumple > 0 ? 3000 : 100);
+        mostrarAlerta("info", "📱 Escanea el código de barras");
+      }, 100);
       
       calcularTotal();
       
@@ -644,11 +598,10 @@ window.registrarVenta = async function() {
       const productoId = item.dataset.productoId;
 
       if (precio > 0) {
-        // Agregar ID solo si existe y aún no está en el array (evitar duplicados)
-        if (productoId && !productosVinculados.includes(productoId)) {
+        if (productoId) {
           productosVinculados.push(productoId);
         }
-        itemsTexto += `${nombre} (${precio}), `;
+        itemsTexto += `${nombre} ($${precio.toLocaleString('es-CL')}), `;
         totalVenta += precio;
       }
     }
@@ -664,19 +617,14 @@ window.registrarVenta = async function() {
       return;
     }
     
-    // Usar Set para eliminar duplicados automáticamente
-    const idsUnicos = new Set();
-    
     for (let devolucion of devolucionesAgregadas) {
       if (devolucion.id) {
-        idsUnicos.add(devolucion.id);
+        productosVinculados.push(devolucion.id);
       }
       itemsTexto += `${devolucion.nombre}, `;
     }
     
-    // Convertir Set a Array
-    productosVinculados = Array.from(idsUnicos);
-    console.log("📦 IDs únicos:", productosVinculados);
+    console.log("📦 IDs con duplicados permitidos:", productosVinculados);
   }
 
   const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
@@ -700,11 +648,9 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Asegurar que no haya duplicados usando Set
       if (productosVinculados.length > 0) {
-        const idsUnicos = [...new Set(productosVinculados)];
-        ventaData.fields["producto"] = idsUnicos;
-        console.log("📦 Productos vinculados (sin duplicados):", idsUnicos);
+        ventaData.fields["producto"] = productosVinculados;
+        console.log("📦 Productos vinculados (con duplicados):", productosVinculados);
       }
       
       if (notas.trim()) ventaData.fields["Box Observaciones"] = notas;
@@ -743,11 +689,9 @@ window.registrarVenta = async function() {
         },
       };
 
-      // Asegurar que no haya duplicados usando Set
       if (productosVinculados.length > 0) {
-        const idsUnicos = [...new Set(productosVinculados)];
-        devolucionData.fields["Devolución"] = idsUnicos;
-        console.log("📦 Devoluciones vinculadas (sin duplicados):", idsUnicos);
+        devolucionData.fields["Devolución"] = productosVinculados;
+        console.log("📦 Devoluciones vinculadas (con duplicados):", productosVinculados);
       }
 
       if (notas.trim()) {
