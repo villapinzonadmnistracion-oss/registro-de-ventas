@@ -608,7 +608,27 @@ function generarResumenYConteoIndividual(productosItems) {
     "Sweater": "Sweater_Cantidad",
     "Abrigo": "Abrigo_Cantidad",
     // ⬇️ AGREGA MÁS PRODUCTOS AQUÍ ⬇️
-    // "Nombre Producto": "Campo_Airtable_Cantidad",
+    "Poleron": "Poleron_Cantidad",
+    "Calza": "Calza_Cantidad",
+    "Jeans": "Jeans_Cantidad",
+    "Blusa": "Blusa_Cantidad",
+    "Camiseta": "Camiseta_Cantidad",
+    "Chaleco": "Chaleco_Cantidad",
+    "Enterito": "Enterito_Cantidad",
+    "Jardinera": "Jardinera_Cantidad",
+    "Buzo": "Buzo_Cantidad",
+    "Traje": "Traje_Cantidad",
+    "Blazer": "Blazer_Cantidad",
+    "Body": "Body_Cantidad",
+    "Sudadera": "Sudadera_Cantidad",
+    "CortaViento": "CortaViento_Cantidad",
+    "Cartera": "Cartera_Cantidad",
+    "Pañuelo": "Pañuelo_Cantidad",
+    "Medias": "Medias_Cantidad",
+    "PoleraDeportiva": "PoleraDeportiva_Cantidad",
+    "BuzoDeportivo": "BuzoDeportivo_Cantidad",
+    "PantalonDeVestir": "PantalonDeVestir_Cantidad",
+    "RopaDeNiño": "RopaDeNiño_Cantidad",
   };
   
   // Crear objeto con campos individuales para Airtable
