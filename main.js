@@ -191,6 +191,191 @@ function calcularEstadisticas(ventas) {
   const promedioVenta = numVentas > 0 ? totalVentas / numVentas : 0;
   const tasaDevolucion = ventas.length > 0 ? (devoluciones.length / ventas.length * 100) : 0;
 
+  // Mostrar KPIs en tab Resumen
+  document.getElementById('kpisContainer').innerHTML = `
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
+      <div style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); border: 2px solid #10b981; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 6px;">💰</div>
+        <div style="font-size: 20px; font-weight: 700; color: #047857; margin-bottom: 4px;">${Math.round(totalVentas).toLocaleString('es-CL')}</div>
+        <div style="font-size: 11px; color: #065f46; font-weight: 600;">Total Ventas</div>
+      </div>
+      <div style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); border: 2px solid #3b82f6; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 6px;">📈</div>
+        <div style="font-size: 20px; font-weight: 700; color: #1e40af; margin-bottom: 4px;">${Math.round(promedioVenta).toLocaleString('es-CL')}</div>
+        <div style="font-size: 11px; color: #1e3a8a; font-weight: 600;">Promedio</div>
+      </div>
+      <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #fbbf24; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 6px;">🛍️</div>
+        <div style="font-size: 20px; font-weight: 700; color: #b45309; margin-bottom: 4px;">${ventas.length}</div>
+        <div style="font-size: 11px; color: #92400e; font-weight: 600;">Transacciones</div>
+      </div>
+      <div style="background: linear-gradient(135deg, #fee2e2, #fecaca); border: 2px solid #ef4444; border-radius: 12px; padding: 16px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 6px;">↩️</div>
+        <div style="font-size: 20px; font-weight: 700; color: #991b1b; margin-bottom: 4px;">${tasaDevolucion.toFixed(1)}%</div>
+        <div style="font-size: 11px; color: #7f1d1d; font-weight: 600;">Devoluciones</div>
+      </div>
+    </div>
+  `;
+
+  // Análisis de tendencias
+  analizarTendencias(ventasReales);
+  
+  // Análisis predictivo
+  analisisPredictivo(ventasReales);
+  
+  // Recomendaciones inteligentes
+  recomendacionesInteligentes(ventasReales);
+  
+  // Análisis de horarios pico
+  analisisHorariosPico(ventasReales);
+
+  // Rankings y clasificaciones
+  mostrarTopAnfitriones(ventasReales);
+  mostrarTopProductos(ventasReales);
+  mostrarGraficoProductos(ventasReales);
+  mostrarTopClientes(ventasReales);
+  mostrarClasificacionClientes(ventasReales);
+  analisisComportamientoClientes(ventasReales);
+  
+  // NUEVO: Inicializar asistente virtual
+  inicializarAsistenteVirtual(ventasReales);
+  
+  // Últimas transacciones en tab Resumen
+  todasLasTransacciones = ventas.slice(0, 50);
+  mostrarTransaccionesResumen();
+}
+
+function mostrarTransaccionesResumen() {
+  const html = `
+    <div class="section">
+      <div class="section-title">🕐 Últimas Transacciones</div>
+      <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+        <button onclick="filtrarTransaccionesResumen('todas')" id="btnTodas" style="flex: 1; padding: 8px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
+          Todas
+        </button>
+        <button onclick="filtrarTransaccionesResumen('ventas')" id="btnVentas" style="flex: 1; padding: 8px; background: #f3f4f6; color: #6b7280; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
+          🛍️ Ventas
+        </button>
+        <button onclick="filtrarTransaccionesResumen('devoluciones')" id="btnDevoluciones" style="flex: 1; padding: 8px; background: #f3f4f6; color: #6b7280; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;">
+          ↩️ Devol.
+        </button>
+      </div>
+      <div id="listaTransacciones"></div>
+    </div>
+  `;
+  
+  document.getElementById('ultimasTransaccionesContainer').innerHTML = html;
+  filtrarTransaccionesResumen('todas');
+}
+
+function filtrarTransaccionesResumen(tipo) {
+  filtroTransaccionActual = tipo;
+  
+  // Actualizar botones
+  ['btnTodas', 'btnVentas', 'btnDevoluciones'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.style.background = '#f3f4f6';
+      btn.style.color = '#6b7280';
+      btn.style.border = '2px solid #e5e7eb';
+    }
+  });
+  
+  const activeBtn = tipo === 'todas' ? 'btnTodas' : tipo === 'ventas' ? 'btnVentas' : 'btnDevoluciones';
+  const btn = document.getElementById(activeBtn);
+  if (btn) {
+    btn.style.background = '#10b981';
+    btn.style.color = 'white';
+    btn.style.border = 'none';
+  }
+
+  let transaccionesFiltradas = [...todasLasTransacciones];
+
+  if (tipo === 'ventas') {
+    transaccionesFiltradas = todasLasTransacciones.filter(v => 
+      !v.fields['Devolución'] || v.fields['Devolución'].length === 0
+    );
+  } else if (tipo === 'devoluciones') {
+    transaccionesFiltradas = todasLasTransacciones.filter(v => 
+      v.fields['Devolución'] && v.fields['Devolución'].length > 0
+    );
+  }
+
+  mostrarListaTransacciones(transaccionesFiltradas.slice(0, 10));
+}
+
+function mostrarListaTransacciones(ventas) {
+  const container = document.getElementById('listaTransacciones');
+  if (!container) return;
+  
+  if (ventas.length === 0) {
+    container.innerHTML = '<div style="text-align: center; padding: 40px 20px; color: #9ca3af;"><div style="font-size: 48px; margin-bottom: 15px;">📭</div><p>No hay transacciones</p></div>';
+    return;
+  }
+
+  container.innerHTML = ventas.map(venta => {
+    const nombreCliente = venta.fields['Nombre'] || 'Sin cliente';
+    const total = venta.fields['Total Neto Numerico'] || venta.fields['Total de venta'] || 0;
+    const items = venta.fields['Items'] || 'Sin items';
+    
+    let fechaHoraTexto = 'Sin fecha';
+    if (venta.fields['Fecha de compra']) {
+      const fechaCompleta = new Date(venta.fields['Fecha de compra']);
+      const fecha = fechaCompleta.toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      const hora = fechaCompleta.toLocaleTimeString('es-CL', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      fechaHoraTexto = `${fecha} - ${hora}`;
+    }
+    
+    const esDevolucion = venta.fields['Devolución'] && venta.fields['Devolución'].length > 0;
+    
+    let autorizadoPor = '';
+    if (esDevolucion && venta.fields['Box Observaciones']) {
+      autorizadoPor = `<div style="margin-top: 8px; padding: 8px; background: #fff3cd; border-radius: 6px; font-size: 11px; color: #856404;">
+        <strong>✓ Autorizado por:</strong> ${venta.fields['Box Observaciones']}
+      </div>`;
+    }
+
+    return `
+      <div style="background: #f9fafb; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 3px solid ${esDevolucion ? '#ef4444' : '#10b981'};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 600; font-size: 13px;">
+          <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px;">${nombreCliente}</span>
+          <span style="padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; flex-shrink: 0; background: ${esDevolucion ? '#ef4444' : '#10b981'}; color: white;">
+            ${esDevolucion ? 'Devolución' : 'Venta'}
+          </span>
+        </div>
+        <div style="font-size: 12px; color: #6b7280; line-height: 1.5;">
+          <div style="margin-bottom: 3px;">📦 ${items}</div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>📅 ${fechaHoraTexto}</span>
+            <span style="font-weight: 600; color: #10b981;">${Math.round(total).toLocaleString('es-CL')}</span>
+          </div>
+          ${autorizadoPor}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Continuar con el código existente sin cambios
+// (mantener todas las funciones de análisis, tendencias, predictivo, etc.)
+
+// Inicializar al cargar la página
+inicializarFechas();
+cargarDatos();
+
+// Auto-refresh cada 5 minutos
+setInterval(cargarDatos, 300000);length;
+  const promedioVenta = numVentas > 0 ? totalVentas / numVentas : 0;
+  const tasaDevolucion = ventas.length > 0 ? (devoluciones.length / ventas.length * 100) : 0;
+
   document.getElementById('kpiTotalVentas').textContent = `${Math.round(totalVentas).toLocaleString('es-CL')}`;
   document.getElementById('kpiPromedioVenta').textContent = `${Math.round(promedioVenta).toLocaleString('es-CL')}`;
   document.getElementById('kpiNumVentas').textContent = ventas.length;
@@ -222,7 +407,7 @@ function calcularEstadisticas(ventas) {
   
   todasLasTransacciones = ventas.slice(0, 50);
   filtrarTransacciones(filtroTransaccionActual);
-}
+
 
 function analizarTendencias(ventasActuales) {
   // Obtener período actual
