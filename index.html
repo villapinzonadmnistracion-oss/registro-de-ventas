@@ -15,7 +15,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      padding: 0;
+      padding: 12px;
       min-height: 100vh;
     }
 
@@ -193,130 +193,188 @@
       color: #9ca3af;
     }
 
-    /* Dashboard */
+    /* Dashboard (oculto inicialmente) */
     #dashboardApp {
       display: none;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      min-height: 100vh;
-      padding-bottom: 80px;
     }
 
-    /* Header con Menú */
-    .dashboard-header {
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .header {
       background: white;
       padding: 16px;
+      border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       margin-bottom: 12px;
-    }
-
-    .header-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #10b981;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .header-btn {
-      background: white;
-      border: 2px solid #10b981;
-      color: #10b981;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .header-btn:active {
-      background: #10b981;
-      color: white;
-    }
-
-    .header-btn.danger {
-      border-color: #ef4444;
-      color: #ef4444;
-    }
-
-    .header-btn.danger:active {
-      background: #ef4444;
-      color: white;
-    }
-
-    #lastUpdate {
-      font-size: 11px;
-      color: #6b7280;
       text-align: center;
     }
 
-    /* Navegación por Pestañas */
-    .nav-tabs {
-      display: flex;
-      overflow-x: auto;
-      gap: 8px;
+    .logout-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #ef4444;
+      color: white;
+      border: none;
       padding: 12px 16px;
-      background: white;
-      border-bottom: 2px solid #e5e7eb;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .nav-tabs::-webkit-scrollbar {
-      display: none;
-    }
-
-    .nav-tab {
-      flex-shrink: 0;
-      padding: 8px 16px;
-      background: #f9fafb;
-      border: 2px solid #e5e7eb;
-      border-radius: 20px;
-      font-size: 13px;
+      border-radius: 50%;
+      font-size: 20px;
       font-weight: 600;
-      color: #6b7280;
       cursor: pointer;
       transition: all 0.3s;
-      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+      z-index: 1000;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .nav-tab.active {
-      background: #10b981;
-      border-color: #059669;
-      color: white;
+    .logout-btn:active {
+      background: #dc2626;
+      transform: scale(0.95);
     }
 
-    /* Contenedor Principal */
-    .dashboard-content {
-      padding: 12px;
+    .header h1 {
+      color: #10b981;
+      font-size: 20px;
+      margin-bottom: 6px;
+      font-weight: 700;
     }
 
-    .tab-content {
-      display: none;
+    #lastUpdate {
+      color: #6b7280;
+      font-size: 11px;
     }
 
-    .tab-content.active {
+    .filters {
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 12px;
+    }
+
+    .filters label {
       display: block;
-      animation: fadeInContent 0.3s;
+      color: #10b981;
+      font-weight: 600;
+      margin-bottom: 6px;
+      margin-top: 10px;
+      font-size: 13px;
     }
 
-    @keyframes fadeInContent {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .filters label:first-child {
+      margin-top: 0;
     }
 
-    /* Secciones */
+    .date-range {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 10px 8px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+
+    input[type="date"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 11px;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    button:active {
+      background: #059669;
+      transform: scale(0.98);
+    }
+
+    .loading {
+      background: white;
+      padding: 40px 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #e5e7eb;
+      border-top-color: #10b981;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    .loading p {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .kpi-card {
+      background: white;
+      padding: 16px 12px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .kpi-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #10b981;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+
+    .kpi-label {
+      color: #6b7280;
+      font-size: 11px;
+    }
+
     .section {
       background: white;
       padding: 14px;
@@ -334,182 +392,1301 @@
       border-bottom: 2px solid #10b981;
     }
 
-    /* Botón Flotante Asistente IA */
-    .ai-assistant-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-      color: white;
-      border: none;
-      padding: 0;
-      border-radius: 50%;
-      font-size: 28px;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
-      z-index: 1000;
-      width: 60px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: pulse-ai 2s infinite;
-    }
-
-    @keyframes pulse-ai {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); box-shadow: 0 8px 25px rgba(139, 92, 246, 0.8); }
-    }
-
-    .ai-assistant-btn:active {
-      background: linear-gradient(135deg, #7c3aed, #6d28d9);
-      transform: scale(0.95);
-    }
-
-    /* Modal del Asistente IA */
-    .ai-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 2000;
-      padding: 20px;
-      animation: fadeIn 0.3s;
-    }
-
-    .ai-modal.active {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .ai-modal-content {
-      background: white;
-      border-radius: 20px;
-      max-width: 500px;
-      width: 100%;
-      max-height: 80vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .ai-modal-header {
-      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-      color: white;
-      padding: 16px 20px;
-      border-radius: 20px 20px 0 0;
+    .ranking-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 10px 8px;
+      border-bottom: 1px solid #f3f4f6;
     }
 
-    .ai-modal-title {
-      font-size: 18px;
+    .ranking-item:last-child {
+      border-bottom: none;
+    }
+
+    .ranking-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .ranking-medal {
+      font-size: 20px;
+    }
+
+    .ranking-value {
+      font-size: 14px;
       font-weight: 700;
+      color: #10b981;
+    }
+
+    .product-bar {
+      margin-bottom: 14px;
+    }
+
+    .product-name {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 13px;
     }
 
-    .ai-close-btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      font-size: 24px;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-      padding: 0;
-      margin: 0;
+    .bar-container {
+      width: 100%;
+      height: 10px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      overflow: hidden;
     }
 
-    .ai-close-btn:active {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(0.9);
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+      border-radius: 8px;
+      transition: width 0.5s ease;
     }
 
-    .ai-modal-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0;
+    .clasificacion-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
     }
 
-    .ai-mode-selector {
-      display: flex;
-      gap: 8px;
+    .clasificacion-card {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
       padding: 12px;
-      background: #f9fafb;
-      border-bottom: 1px solid #e5e7eb;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px solid #10b981;
     }
 
-    .mode-btn {
+    .clasificacion-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .clasificacion-count {
+      font-size: 24px;
+      font-weight: 700;
+      color: #10b981;
+      margin-bottom: 3px;
+    }
+
+    .clasificacion-label {
+      color: #059669;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .clasificacion-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .clasificacion-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 8px;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 13px;
+    }
+
+    .clasificacion-nombre {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
       flex: 1;
-      padding: 8px 12px;
-      background: white;
-      border: 2px solid #e5e7eb;
+      min-width: 0;
+    }
+
+    .clasificacion-nombre span:first-child {
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    .clasificacion-nombre span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .clasificacion-badge {
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .badge-premium {
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      color: white;
+    }
+
+    .badge-gold {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: white;
+    }
+
+    .badge-frecuente {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .badge-normal {
+      background: #e5e7eb;
+      color: #6b7280;
+    }
+
+    .transaction-filter {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .filter-btn {
+      padding: 8px 6px;
+      background: #f3f4f6;
+      color: #6b7280;
+      border: 2px solid transparent;
       border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
-      margin: 0;
+      transition: all 0.2s;
+      margin-top: 0;
     }
 
-    .mode-btn.active {
-      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    .filter-btn:active {
+      transform: scale(0.95);
+    }
+
+    .filter-btn.active {
+      background: #10b981;
       color: white;
-      border-color: #7c3aed;
+      border-color: #059669;
     }
 
-    .mode-btn:active {
-      transform: scale(0.98);
+    .transaction-item {
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border-left: 3px solid #10b981;
     }
 
-    .ai-indicator {
-      padding: 8px 12px;
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      border-bottom: 2px solid #fbbf24;
-      font-size: 11px;
-      color: #92400e;
-      text-align: center;
+    .transaction-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
       font-weight: 600;
-      display: none;
+      font-size: 13px;
     }
 
-    .ai-indicator.active {
+    .transaction-header span:first-child {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 8px;
+    }
+
+    .transaction-details {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    .badge {
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .badge-venta {
+      background: #10b981;
+      color: white;
+    }
+
+    .badge-devolucion {
+      background: #ef4444;
+      color: white;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 15px;
+      color: #9ca3af;
+    }
+
+    .empty-state-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+    }
+
+    .refresh-time {
+      text-align: center;
+      color: white;
+      font-size: 11px;
+      margin-top: 12px;
+      opacity: 0.9;
+      padding-bottom: 8px;
+    }
+
+    /* Nota Inteligente */
+    .nota-inteligente {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #fbbf24;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 10px;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .nota-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .nota-content {
+      flex: 1;
+    }
+
+    .nota-title {
+      font-weight: 700;
+      color: #92400e;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .nota-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #78350f;
+    }
+
+    /* Gráfico Circular */
+    #chartCanvas {
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
       display: block;
     }
 
-    /* Chat */
+    /* Leyenda */
+    .leyenda-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .leyenda-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      background: #f9fafb;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .leyenda-item:active {
+      background: #f0fdf4;
+    }
+
+    .leyenda-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .leyenda-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .leyenda-nombre {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .leyenda-valor {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    /* Scrollbar personalizado */
+    .clasificacion-list::-webkit-scrollbar,
+    .leyenda-container::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .clasificacion-list::-webkit-scrollbar-track,
+    .leyenda-container::-webkit-scrollbar-track {
+      background: #f3f4f6;
+      border-radius: 10px;
+    }
+
+    .clasificacion-list::-webkit-scrollbar-thumb,
+    .leyenda-container::-webkit-scrollbar-thumb {
+      background: #10b981;
+      border-radius: 10px;
+    }
+
+    /* Análisis de Tendencias */
+    .tendencias-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .tendencia-card {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 2px solid #10b981;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .tendencia-card:active {
+      transform: scale(0.98);
+    }
+
+    .tendencia-card.proyeccion {
+      background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+      border-color: #8b5cf6;
+    }
+
+    .tendencia-card-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .tendencia-card-valor {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .tendencia-card-label {
+      font-size: 11px;
+      color: #059669;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .tendencia-card.proyeccion .tendencia-card-label {
+      color: #7c3aed;
+    }
+
+    .tendencia-card-detalle {
+      font-size: 10px;
+      color: #6b7280;
+      line-height: 1.3;
+    }
+
+    .tendencia-insight {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #fbbf24;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      align-items: flex-start;
+    }
+
+    .tendencia-insight-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .tendencia-insight-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #78350f;
+    }
+
+    .tendencia-periodos {
+      background: #f9fafb;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 11px;
+    }
+
+    .periodo-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .periodo-info:last-child {
+      margin-bottom: 0;
+    }
+
+    .periodo-label {
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .periodo-valor {
+      color: #1f2937;
+      font-weight: 600;
+    }
+
+    .tendencia-info {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .tendencia-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .tendencia-text {
+      font-size: 12px;
+      color: #1e40af;
+      line-height: 1.4;
+    }
+
+    /* Análisis Predictivo */
+    .prediccion-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .prediccion-card {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #fbbf24;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .prediccion-card.trimestral {
+      background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+      border-color: #8b5cf6;
+    }
+
+    .prediccion-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .prediccion-label {
+      font-size: 11px;
+      color: #92400e;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .prediccion-card.trimestral .prediccion-label {
+      color: #5b21b6;
+    }
+
+    .prediccion-valor {
+      font-size: 20px;
+      font-weight: 700;
+      color: #b45309;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .prediccion-card.trimestral .prediccion-valor {
+      color: #6d28d9;
+    }
+
+    .prediccion-detalle {
+      font-size: 10px;
+      color: #78350f;
+    }
+
+    .prediccion-card.trimestral .prediccion-detalle {
+      color: #5b21b6;
+    }
+
+    .prediccion-insight {
+      background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+      border: 2px solid #6366f1;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .prediccion-insight-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #312e81;
+    }
+
+    .stock-alertas {
+      background: #fef2f2;
+      border: 2px solid #ef4444;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .stock-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #991b1b;
+      margin-bottom: 10px;
+    }
+
+    .stock-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+
+    .stock-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .stock-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .stock-nombre {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+
+    .stock-detalle {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .stock-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .prediccion-nota {
+      background: #f9fafb;
+      border-left: 3px solid #10b981;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #4b5563;
+      line-height: 1.4;
+    }
+
+    .prediccion-nota strong {
+      color: #1f2937;
+    }
+
+    /* Recomendaciones Inteligentes */
+    .recomendacion-card {
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 12px;
+      border: 2px solid;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .recomendacion-card.success {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      border-color: #10b981;
+    }
+
+    .recomendacion-card.warning {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-color: #f59e0b;
+    }
+
+    .recomendacion-card.info {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      border-color: #3b82f6;
+    }
+
+    .recomendacion-card.excelente {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border-color: #10b981;
+    }
+
+    .recomendacion-icono {
+      font-size: 32px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .recomendacion-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recomendacion-titulo {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .recomendacion-card.success .recomendacion-titulo {
+      color: #065f46;
+    }
+
+    .recomendacion-card.warning .recomendacion-titulo {
+      color: #92400e;
+    }
+
+    .recomendacion-card.info .recomendacion-titulo {
+      color: #1e40af;
+    }
+
+    .recomendacion-card.excelente .recomendacion-titulo {
+      color: #065f46;
+    }
+
+    .recomendacion-mensaje {
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .recomendacion-card.success .recomendacion-mensaje {
+      color: #047857;
+    }
+
+    .recomendacion-card.warning .recomendacion-mensaje {
+      color: #78350f;
+    }
+
+    .recomendacion-card.info .recomendacion-mensaje {
+      color: #1e40af;
+    }
+
+    .recomendacion-card.excelente .recomendacion-mensaje {
+      color: #047857;
+    }
+
+    .recomendacion-accion {
+      font-size: 11px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 6px;
+      line-height: 1.4;
+    }
+
+    .recomendacion-card.success .recomendacion-accion {
+      color: #065f46;
+    }
+
+    .recomendacion-card.warning .recomendacion-accion {
+      color: #92400e;
+    }
+
+    .recomendacion-card.info .recomendacion-accion {
+      color: #1e3a8a;
+    }
+
+    /* Análisis de Horarios Pico */
+    .horarios-resumen {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .horario-card {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .horario-card.best {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      border-color: #10b981;
+    }
+
+    .horario-card-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .horario-card-label {
+      font-size: 11px;
+      color: #1e40af;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .horario-card.best .horario-card-label {
+      color: #065f46;
+    }
+
+    .horario-card-valor {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 4px;
+    }
+
+    .horario-card.best .horario-card-valor {
+      color: #047857;
+    }
+
+    .horario-card-detalle {
+      font-size: 10px;
+      color: #1e40af;
+      line-height: 1.3;
+    }
+
+    .horario-card.best .horario-card-detalle {
+      color: #059669;
+    }
+
+    .top-horarios {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .top-horarios-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 10px;
+    }
+
+    .top-horario-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .top-horario-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .horario-medalla {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .horario-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .horario-nombre {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+
+    .horario-stats {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .heatmap-container {
+      margin-bottom: 16px;
+    }
+
+    .heatmap-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 10px;
+    }
+
+    .heatmap-dias {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .dia-bar {
+      display: grid;
+      grid-template-columns: 35px 1fr 45px;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .dia-bar:last-child {
+      margin-bottom: 0;
+    }
+
+    .dia-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .dia-bar-container {
+      height: 24px;
+      background: #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dia-bar-fill {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: width 0.5s ease;
+      position: relative;
+    }
+
+    .dia-bar-text {
+      font-size: 10px;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .dia-monto {
+      font-size: 11px;
+      font-weight: 600;
+      color: #10b981;
+      text-align: right;
+    }
+
+    .franjas-container {
+      margin-bottom: 16px;
+    }
+
+    .franjas-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 10px;
+    }
+
+    .franjas-bars {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .franja-item {
+      margin-bottom: 12px;
+    }
+
+    .franja-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .franja-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 6px;
+    }
+
+    .franja-bar-container {
+      height: 20px;
+      background: #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .franja-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+      border-radius: 6px;
+      transition: width 0.5s ease;
+    }
+
+    .franja-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .franja-monto {
+      font-weight: 600;
+      color: #10b981;
+    }
+
+    .horarios-insight {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #fbbf24;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .horarios-insight-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .horarios-insight-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #78350f;
+    }
+
+    /* Análisis de Comportamiento de Clientes */
+    .clientes-kpis {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .cliente-kpi {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .cliente-kpi.success {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      border-color: #10b981;
+    }
+
+    .cliente-kpi-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .cliente-kpi-valor {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .cliente-kpi.success .cliente-kpi-valor {
+      color: #047857;
+    }
+
+    .cliente-kpi-label {
+      font-size: 11px;
+      color: #1e40af;
+      font-weight: 600;
+    }
+
+    .cliente-kpi.success .cliente-kpi-label {
+      color: #065f46;
+    }
+
+    .valor-clasificacion {
+      margin-bottom: 16px;
+    }
+
+    .valor-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 10px;
+    }
+
+    .valor-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .valor-card {
+      background: white;
+      border: 2px solid;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .valor-card-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .valor-card-tipo {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .valor-card-valor {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+
+    .valor-card-cantidad {
+      font-size: 10px;
+      color: #6b7280;
+    }
+
+    .top-clientes-vip {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #fbbf24;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .vip-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #92400e;
+      margin-bottom: 10px;
+    }
+
+    .vip-cliente {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .vip-cliente:last-child {
+      margin-bottom: 0;
+    }
+
+    .vip-ranking {
+      font-size: 18px;
+      font-weight: 700;
+      color: #b45309;
+      flex-shrink: 0;
+      width: 32px;
+      text-align: center;
+    }
+
+    .vip-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .vip-nombre {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .vip-stats {
+      font-size: 10px;
+      color: #6b7280;
+    }
+
+    .vip-valor {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .vip-total {
+      font-size: 14px;
+      font-weight: 700;
+      color: #10b981;
+      margin-bottom: 2px;
+    }
+
+    .vip-promedio {
+      font-size: 10px;
+      color: #6b7280;
+    }
+
+    .patrones-compra {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .patrones-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 10px;
+    }
+
+    .patron-item {
+      margin-bottom: 12px;
+    }
+
+    .patron-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .patron-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 6px;
+    }
+
+    .patron-icon {
+      font-size: 16px;
+    }
+
+    .patron-bar-container {
+      height: 20px;
+      background: #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .patron-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.5s ease;
+    }
+
+    .patron-bar-fill.unico {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+
+    .patron-bar-fill.recurrente {
+      background: linear-gradient(90deg, #10b981, #059669);
+    }
+
+    .patron-bar-fill.bajo {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+
+    .patron-bar-fill.alto {
+      background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+    }
+
+    .patron-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .patron-porcentaje {
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .clientes-insight {
+      background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+      border: 2px solid #6366f1;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .clientes-insight-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .clientes-insight-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #312e81;
+    }
+
+    /* Asistente Virtual */
     .chat-messages {
       background: #f9fafb;
-      border-radius: 0;
+      border-radius: 10px;
       padding: 12px;
       min-height: 250px;
       max-height: 400px;
       overflow-y: auto;
+      margin-bottom: 12px;
     }
 
     .chat-message {
@@ -563,7 +1740,7 @@
 
     .chat-message.asistente .chat-bubble {
       background: white;
-      border: 2px solid #8b5cf6;
+      border: 2px solid #10b981;
       color: #1f2937;
       border-radius: 12px 12px 12px 4px;
     }
@@ -587,7 +1764,7 @@
     .chat-input {
       flex: 1;
       padding: 12px;
-      border: 2px solid #8b5cf6;
+      border: 2px solid #10b981;
       border-radius: 10px;
       font-size: 14px;
       transition: all 0.3s;
@@ -595,13 +1772,13 @@
 
     .chat-input:focus {
       outline: none;
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
     }
 
     .chat-send-btn {
       width: 48px;
       height: 48px;
-      background: #8b5cf6;
+      background: #10b981;
       color: white;
       border: none;
       border-radius: 10px;
@@ -617,7 +1794,7 @@
     }
 
     .chat-send-btn:active {
-      background: #7c3aed;
+      background: #059669;
       transform: scale(0.95);
     }
 
@@ -630,11 +1807,11 @@
     .suggestion-btn {
       padding: 8px 12px;
       background: white;
-      border: 2px solid #8b5cf6;
+      border: 2px solid #10b981;
       border-radius: 20px;
       font-size: 11px;
       font-weight: 600;
-      color: #8b5cf6;
+      color: #10b981;
       cursor: pointer;
       transition: all 0.3s;
       flex: 1;
@@ -646,7 +1823,7 @@
     }
 
     .suggestion-btn:active {
-      background: #8b5cf6;
+      background: #10b981;
       color: white;
       transform: scale(0.98);
     }
@@ -661,40 +1838,9 @@
     }
 
     .chat-messages::-webkit-scrollbar-thumb {
-      background: #8b5cf6;
+      background: #10b981;
       border-radius: 10px;
     }
-
-    /* Loading */
-    .loading {
-      background: white;
-      padding: 40px 20px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      margin: 20px;
-    }
-
-    .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid #e5e7eb;
-      border-top-color: #10b981;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 15px;
-    }
-
-    .loading p {
-      font-size: 14px;
-      color: #6b7280;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Estilos reutilizables incluidos en main.js */
   </style>
 </head>
 <body>
@@ -743,66 +1889,14 @@
     </div>
   </div>
 
-  <!-- Dashboard -->
+  <!-- Dashboard (oculto hasta login exitoso) -->
   <div id="dashboardApp">
-    <!-- Header -->
-    <div class="dashboard-header">
-      <div class="header-top">
-        <div class="header-title">📊 Punto Secreto</div>
-        <div class="header-actions">
-          <button class="header-btn" onclick="cargarDatos()">🔄</button>
-          <button class="header-btn danger" onclick="cerrarSesion()">🚪</button>
-        </div>
-      </div>
-      <div id="lastUpdate">Cargando datos...</div>
-    </div>
-
-    <!-- Navegación por Pestañas -->
-    <div class="nav-tabs">
-      <button class="nav-tab active" onclick="cambiarTab('resumen')">📊 Resumen</button>
-      <button class="nav-tab" onclick="cambiarTab('analisis')">📈 Análisis</button>
-      <button class="nav-tab" onclick="cambiarTab('clientes')">👥 Clientes</button>
-      <button class="nav-tab" onclick="cambiarTab('productos')">📦 Productos</button>
-      <button class="nav-tab" onclick="cambiarTab('anfitriones')">🏆 Anfitriones</button>
-    </div>
-
-    <div id="loading" class="loading">
-      <div class="loading-spinner"></div>
-      <p>Cargando estadísticas...</p>
-    </div>
-
-    <div id="content" class="dashboard-content" style="display: none;">
-      <!-- Tab: Resumen -->
-      <div id="tab-resumen" class="tab-content active">
-        <!-- Filtros y KPIs se cargarán aquí desde main.js -->
-      </div>
-
-      <!-- Tab: Análisis -->
-      <div id="tab-analisis" class="tab-content">
-        <!-- Análisis de tendencias, predictivo, horarios -->
-      </div>
-
-      <!-- Tab: Clientes -->
-      <div id="tab-clientes" class="tab-content">
-        <!-- Comportamiento, clasificación, top clientes -->
-      </div>
-
-      <!-- Tab: Productos -->
-      <div id="tab-productos" class="tab-content">
-        <!-- Gráfico circular, top productos -->
-      </div>
-
-      <!-- Tab: Anfitriones -->
-      <div id="tab-anfitriones" class="tab-content">
-        <!-- Ranking anfitriones, transacciones -->
-      </div>
-    </div>
-
-    <!-- Botón Flotante Asistente IA -->
-    <button class="ai-assistant-btn" onclick="toggleAIModal()" title="Asistente IA">
-      🤖
-    </button>
-
+    <!-- Botón flotante de salir -->
+    <button class="logout-btn" onclick="cerrarSesion()" title="Cerrar sesión">🚪</button>
+    
+    <!-- Botón flotante Asistente IA -->
+    <button class="ai-assistant-btn" onclick="toggleAIModal()" title="Asistente IA con ChatGPT">🤖</button>
+    
     <!-- Modal del Asistente IA -->
     <div id="aiModal" class="ai-modal">
       <div class="ai-modal-content">
@@ -837,24 +1931,185 @@
               type="text" 
               id="chatInput" 
               class="chat-input" 
-              placeholder="Pregúntame sobre ventas, productos..."
+              placeholder="Pregúntame sobre ventas, productos, anfitriones..."
             >
             <button id="sendBtn" class="chat-send-btn">📤</button>
           </div>
           <div class="chat-suggestions">
             <button class="suggestion-btn" onclick="enviarPreguntaRapida('¿Cuánto vendimos?')">
-              💰 Ventas
+              💰 ¿Cuánto vendimos?
             </button>
-            <button class="suggestion-btn" onclick="enviarPreguntaRapida('¿Producto más vendido?')">
-              📦 Productos
+            <button class="suggestion-btn" onclick="enviarPreguntaRapida('¿Cuál es el producto más vendido?')">
+              📦 Producto más vendido
             </button>
-            <button class="suggestion-btn" onclick="enviarPreguntaRapida('¿Mejor anfitrión?')">
-              🏆 Anfitrión
+            <button class="suggestion-btn" onclick="enviarPreguntaRapida('¿Quién es el mejor anfitrión?')">
+              🏆 Mejor anfitrión
             </button>
           </div>
         </div>
       </div>
     </div>
+    
+    <div class="container">
+      <div class="header">
+        <h1>📊 Dashboard Punto Secreto</h1>
+        <p id="lastUpdate">Cargando datos...</p>
+      </div>
+
+    <div class="filters">
+      <label>📅 Rango de Fechas</label>
+      <div class="date-range">
+        <div>
+          <input type="date" id="fechaDesde" onchange="aplicarFiltros()">
+          <small style="color: #666; font-size: 10px;">Desde</small>
+        </div>
+        <div>
+          <input type="date" id="fechaHasta" onchange="aplicarFiltros()">
+          <small style="color: #666; font-size: 10px;">Hasta</small>
+        </div>
+      </div>
+
+      <label>⚡ Accesos Rápidos</label>
+      <select id="filterPeriodo" onchange="cambiarPeriodoRapido()">
+        <option value="">Selecciona período...</option>
+        <option value="hoy">Hoy</option>
+        <option value="7dias">Últimos 7 días</option>
+        <option value="30dias">Últimos 30 días</option>
+        <option value="mes">Este mes</option>
+        <option value="year">Este año</option>
+        <option value="all">Todo el tiempo</option>
+      </select>
+
+      <label>👤 Anfitrión</label>
+      <select id="filterAnfitrion" onchange="aplicarFiltros()">
+        <option value="">Todos los anfitriones</option>
+      </select>
+
+      <button onclick="cargarDatos()">🔄 Actualizar Datos</button>
+    </div>
+
+    <div id="loading" class="loading">
+      <div class="loading-spinner"></div>
+      <p>Cargando estadísticas...</p>
+    </div>
+
+    <div id="content" style="display: none;">
+      <!-- KPIs Principales -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-value" id="kpiTotalVentas">$0</div>
+          <div class="kpi-label">Total Ventas</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">📈</div>
+          <div class="kpi-value" id="kpiPromedioVenta">$0</div>
+          <div class="kpi-label">Promedio</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🛍️</div>
+          <div class="kpi-value" id="kpiNumVentas">0</div>
+          <div class="kpi-label">Transacciones</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">↩️</div>
+          <div class="kpi-value" id="kpiTasaDevolucion">0%</div>
+          <div class="kpi-label">Devoluciones</div>
+        </div>
+      </div>
+
+      <!-- NUEVO: Análisis de Tendencias -->
+      <div class="section">
+        <div class="section-title">📊 Análisis de Tendencias</div>
+        <div id="analisisTendencias"></div>
+      </div>
+
+      <!-- NUEVO: Análisis Predictivo -->
+      <div class="section">
+        <div class="section-title">🔮 Análisis Predictivo</div>
+        <div id="analisisPredictivo"></div>
+      </div>
+
+      <!-- NUEVO: Recomendaciones Inteligentes -->
+      <div class="section">
+        <div class="section-title">💡 Recomendaciones Inteligentes</div>
+        <div id="recomendacionesInteligentes"></div>
+      </div>
+
+      <!-- NUEVO: Análisis de Horarios Pico -->
+      <div class="section">
+        <div class="section-title">⏰ Análisis de Horarios Pico</div>
+        <div id="analisisHorarios"></div>
+      </div>
+
+      <!-- NUEVO: Análisis de Comportamiento de Clientes -->
+      <div class="section">
+        <div class="section-title">🎯 Comportamiento de Clientes</div>
+        <div id="comportamientoClientes"></div>
+      </div>
+
+      <!-- Top Anfitriones -->
+      <div class="section">
+        <div class="section-title">🏆 Top Anfitriones</div>
+        <div id="rankingAnfitriones"></div>
+      </div>
+
+      <!-- Top Productos -->
+      <div class="section">
+        <div class="section-title">📦 Productos Más Vendidos</div>
+        <div id="topProductos"></div>
+      </div>
+
+      <!-- NUEVO: Gráfico Circular de Productos -->
+      <div class="section">
+        <div class="section-title">🎯 Distribución de Ventas por Producto</div>
+        
+        <!-- Nota Inteligente -->
+        <div id="notaInteligente"></div>
+        
+        <!-- Gráfico -->
+        <div id="graficoProductos" style="text-align: center; margin: 20px 0;">
+          <canvas id="chartCanvas"></canvas>
+        </div>
+        
+        <!-- Leyenda -->
+        <div id="leyendaProductos" class="leyenda-container"></div>
+      </div>
+
+      <!-- Top Clientes -->
+      <div class="section">
+        <div class="section-title">👥 Top Clientes</div>
+        <div id="topClientes"></div>
+      </div>
+
+      <!-- Clasificación de Clientes -->
+      <div class="section">
+        <div class="section-title">⭐ Clasificación de Clientes</div>
+        <div id="clasificacionClientes"></div>
+      </div>
+
+      <!-- Últimas Transacciones -->
+      <div class="section">
+        <div class="section-title">🕐 Últimas Transacciones</div>
+        
+        <div class="transaction-filter">
+          <button class="filter-btn active" data-filter="todas" onclick="filtrarTransacciones('todas')">
+            Todas
+          </button>
+          <button class="filter-btn" data-filter="ventas" onclick="filtrarTransacciones('ventas')">
+            🛍️ Ventas
+          </button>
+          <button class="filter-btn" data-filter="devoluciones" onclick="filtrarTransacciones('devoluciones')">
+            ↩️ Devol.
+          </button>
+        </div>
+        
+        <div id="ultimasTransacciones"></div>
+      </div>
+    </div>
+
+    <div class="refresh-time" id="refreshTime"></div>
+  </div>
   </div>
 
   <script src="main.js"></script>
@@ -864,13 +2119,17 @@
     const CORRECT_PASSWORD = 'PuntoSecreto01';
     let passwordVisible = false;
 
+    // Verificar si ya está autenticado
     window.addEventListener('DOMContentLoaded', () => {
       const isAuthenticated = sessionStorage.getItem('ps_authenticated');
       if (isAuthenticated === 'true') {
         mostrarDashboard();
       }
       
+      // Verificar requisitos en tiempo real
       document.getElementById('passwordInput').addEventListener('input', verificarRequisitos);
+      
+      // Enter para login
       document.getElementById('passwordInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           verificarPassword();
@@ -881,13 +2140,16 @@
     function verificarRequisitos() {
       const password = document.getElementById('passwordInput').value;
       
+      // Verificar longitud (14 caracteres)
       const hasLength = password.length >= 14;
       actualizarRequisito('req-length', hasLength);
       
+      // Verificar 2 mayúsculas
       const uppercaseCount = (password.match(/[A-Z]/g) || []).length;
       const hasUppercase = uppercaseCount >= 2;
       actualizarRequisito('req-uppercase', hasUppercase);
       
+      // Verificar 2 números
       const numberCount = (password.match(/[0-9]/g) || []).length;
       const hasNumbers = numberCount >= 2;
       actualizarRequisito('req-numbers', hasNumbers);
@@ -924,6 +2186,7 @@
       const errorMsg = document.getElementById('errorMessage');
       const input = document.getElementById('passwordInput');
       
+      // Verificar requisitos
       if (!verificarRequisitos()) {
         errorMsg.textContent = '❌ La contraseña no cumple los requisitos.';
         errorMsg.style.display = 'block';
@@ -932,6 +2195,7 @@
         return;
       }
       
+      // Verificar contraseña correcta
       if (password === CORRECT_PASSWORD) {
         sessionStorage.setItem('ps_authenticated', 'true');
         errorMsg.style.display = 'none';
@@ -960,20 +2224,6 @@
       }
     }
 
-    // Navegación por tabs
-    function cambiarTab(tabName) {
-      // Desactivar todos los tabs
-      document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      
-      // Activar el tab seleccionado
-      event.target.classList.add('active');
-      document.getElementById(`tab-${tabName}`).classList.add('active');
-      
-      // Scroll al top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
     // Funciones del Asistente IA
     let modoActual = 'local';
 
@@ -981,6 +2231,7 @@
       const modal = document.getElementById('aiModal');
       modal.classList.toggle('active');
       
+      // Focus en input cuando se abre
       if (modal.classList.contains('active')) {
         setTimeout(() => document.getElementById('chatInput').focus(), 300);
       }
