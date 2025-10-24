@@ -233,6 +233,7 @@ function mostrarLoading(mostrar) {
 // GESTIÓN DE CLIENTES
 // ============================================
 
+
 window.buscarClienteEnter = function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
@@ -290,7 +291,9 @@ window.buscarCliente = async function() {
       
       const workArea = document.getElementById("workArea");
       if (workArea) workArea.classList.add("show");
-      
+      // Ocultar el mensaje de empty state
+  const emptyState = document.getElementById("emptyState");
+  if (emptyState) emptyState.style.display = "none";
       const anfitrionContainer = document.getElementById("anfitrionContainer");
       if (anfitrionContainer) anfitrionContainer.style.display = "block";
       
@@ -905,7 +908,8 @@ function generarResumenYConteoIndividual(productosItems) {
 // ============================================
 // LIMPIAR FORMULARIO
 // ============================================
-
+const workArea = document.getElementById("workArea");
+if (workArea) workArea.classList.remove("show");
 window.limpiarFormulario = function() {
   document.getElementById("rutCliente").value = "";
   document.getElementById("clienteInfo").classList.remove("show");
