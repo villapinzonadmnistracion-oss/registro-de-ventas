@@ -810,7 +810,7 @@ window.registrarVenta = async function() {
       
       // Agregar notas si existen
       if (notas) {
-        ventaData.fields["Notas"] = notas;
+        ventaData.fields["Box Observaciones"] = notas;
       }
     }
     
@@ -852,7 +852,7 @@ window.registrarVenta = async function() {
       const autorizacionInput = document.getElementById("autorizacionDevolucion");
       const autorizacion = autorizacionInput ? autorizacionInput.value.trim() : "";
       if (autorizacion) {
-        ventaData.fields["Notas"] = `Autorizado por: ${autorizacion}${notas ? '\n' + notas : ''}`;
+        ventaData.fields["Box Observaciones"] = `Autorizado por: ${autorizacion}${notas ? '\n' + notas : ''}`;
       }
     }
 
