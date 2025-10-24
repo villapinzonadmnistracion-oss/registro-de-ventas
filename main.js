@@ -483,7 +483,7 @@ function agregarProductoDesdeInventario(producto) {
       <td>
         <input type="text" class="producto-nombre" value="${producto.categoria}" readonly 
                style="background-color: #e8f5e9; font-weight: 600; border: 2px solid #10b981; color: #065f46;">
-                       <div style="font-size: 0.85em; color: #6b7280; margin-top: 4px;">
+        <div style="font-size: 0.85em; color: #6b7280; margin-top: 4px;">
         </div>
       </td>
       <td>
