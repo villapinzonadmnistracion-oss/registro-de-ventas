@@ -597,8 +597,8 @@ body {
 .btn-primary {
   background: white;
   color: #10b981;
-  padding: 10px;
-  font-size: 0.95em;
+  padding: 14px;
+  font-size: 1.05em;
   width: 100%;
 }
 
@@ -611,8 +611,8 @@ body {
 .btn-secondary {
   background: rgba(255, 255, 255, 0.2);
   color: white;
-  padding: 10px;
-  font-size: 0.95em;
+  padding: 14px;
+  font-size: 1.05em;
   width: 100%;
   border: 2px solid rgba(255, 255, 255, 0.4);
 }
