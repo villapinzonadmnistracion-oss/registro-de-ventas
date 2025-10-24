@@ -276,7 +276,6 @@ window.buscarCliente = async function() {
       
       mostrarInfoCliente(clienteSeleccionado);
       
-      // Mostrar el área de trabajo
       const workArea = document.getElementById("workArea");
       if (workArea) workArea.classList.add("show");
       
@@ -455,7 +454,6 @@ function agregarProductoDesdeInventario(producto) {
   const tbody = document.querySelector("#productosLista tbody");
   if (!tbody) return;
 
-  // Limpiar filas vacías
   const filasVacias = tbody.querySelectorAll('tr');
   filasVacias.forEach(fila => {
     const nombre = fila.querySelector('.producto-nombre')?.value;
@@ -467,7 +465,7 @@ function agregarProductoDesdeInventario(producto) {
   const stockTexto = String(producto.stock || 0);
 
   const filaHTML = `
-    <tr data-producto-id="${producto.id}">
+    <tr data-producto-id="${producto.id}" data-categoria="${producto.categoria}">
       <td>
         <input type="text" class="producto-nombre" value="${producto.categoria}" readonly 
                style="background-color: #e8f5e9; font-weight: 600; border: 2px solid #10b981; color: #065f46;">
@@ -507,7 +505,7 @@ window.agregarProductoConCodigo = function(codigo) {
   if (!tbody) return;
   
   const filaHTML = `
-    <tr>
+    <tr data-categoria="${codigo}">
       <td>
         <input type="text" class="producto-nombre" value="${codigo}">
         <div style="font-size: 0.85em; color: #6b7280; margin-top: 4px;">📝 Manual</div>
@@ -714,12 +712,17 @@ window.registrarVenta = async function() {
     
     filas.forEach(fila => {
       const nombre = fila.querySelector(".producto-nombre")?.value.trim();
+      const categoria = fila.dataset.categoria || nombre;
       const precioInput = fila.querySelector(".producto-precio");
       const precioTexto = precioInput?.value.replace(/\./g, '').replace(/\D/g, '') || "0";
       const precio = parseInt(precioTexto);
       
       if (nombre && precio > 0) {
-        productos.push({ nombre, precio });
+        productos.push({ 
+          nombre, 
+          categoria: categoria,
+          precio 
+        });
       }
     });
 
@@ -748,10 +751,14 @@ window.registrarVenta = async function() {
         "Productos": resumen,
         "Total": totalFinal,
         "Descuento (%)": descuentoPorcentaje,
-        "Fecha": new Date().toISOString().split('T')[0],
-        ...camposIndividuales
+        "Fecha": new Date().toISOString().split('T')[0]
       }
     };
+
+    // Solo agregar campos de cantidad si existen
+    if (Object.keys(camposIndividuales).length > 0) {
+      Object.assign(ventaData.fields, camposIndividuales);
+    }
 
     if (notas) {
       ventaData.fields["Notas"] = notas;
@@ -787,7 +794,14 @@ window.registrarVenta = async function() {
       setTimeout(() => limpiarFormulario(), 2000);
     } else {
       console.error("❌ Error en respuesta:", result);
-      mostrarAlerta("error", `❌ Error: ${result.error?.message || 'Error desconocido'}`);
+      console.error("❌ Detalles del error:", JSON.stringify(result, null, 2));
+      
+      let mensajeError = "Error al registrar la venta";
+      if (result.error && result.error.message) {
+        mensajeError = result.error.message;
+      }
+      
+      mostrarAlerta("error", `❌ ${mensajeError}`);
     }
   } catch (error) {
     mostrarLoading(false);
@@ -801,57 +815,46 @@ window.registrarVenta = async function() {
 // ============================================
 
 window.limpiarFormulario = function() {
-  // Limpiar cliente
   document.getElementById("rutCliente").value = "";
   document.getElementById("clienteInfo").classList.remove("show");
   document.getElementById("clienteNoEncontrado").classList.remove("show");
   clienteSeleccionado = null;
 
-  // Ocultar área de trabajo
   const workArea = document.getElementById("workArea");
   if (workArea) workArea.classList.remove("show");
 
-  // Reset anfitrión
   const anfitrionSelect = document.getElementById("anfitrionSelect");
   if (anfitrionSelect) anfitrionSelect.value = "";
 
-  // Limpiar productos
   const tbody = document.querySelector("#productosLista tbody");
   if (tbody) {
     tbody.innerHTML = `
       <tr>
         <td><input type="text" class="producto-nombre" placeholder="Nombre del producto"></td>
-        <td><input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()"></td>
+        <td><input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();"></td>
         <td><button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button></td>
       </tr>
     `;
   }
 
-  // Limpiar devoluciones
   devolucionesAgregadas = [];
   const devList = document.getElementById("devolucionesList");
   if (devList) devList.innerHTML = "";
 
-  // Reset descuento y notas
   const descuentoInput = document.getElementById("descuento");
   if (descuentoInput) descuentoInput.value = "0";
   
   const notasInput = document.getElementById("notas");
   if (notasInput) notasInput.value = "";
 
-  // Reset tipo de transacción
   const radioVenta = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
   if (radioVenta) radioVenta.checked = true;
   tipoTransaccionActual = 'venta';
   cambiarTipoTransaccion('venta');
 
-  // Recalcular totales
   calcularTotal();
-
-  // Ocultar alertas
   ocultarAlertas();
 
-  // Focus en RUT
   setTimeout(() => {
     const rutInput = document.getElementById("rutCliente");
     if (rutInput) rutInput.focus();
@@ -867,14 +870,13 @@ function generarResumenYConteoIndividual(productosItems) {
   
   // Contar cuántos productos de cada categoría
   productosItems.forEach(item => {
-    const nombre = item.nombre.trim();
-    if (nombre) {
-      conteo[nombre] = (conteo[nombre] || 0) + 1;
+    const categoria = item.categoria || item.nombre;
+    if (categoria) {
+      conteo[categoria] = (conteo[categoria] || 0) + 1;
     }
   });
 
   // Crear resumen detallado con precios
-  // Formato: "Parka($33.333), Parka($33.333), Chaqueta($25.000)"
   const resumenItems = productosItems
     .map(item => {
       const nombre = item.nombre || "Sin nombre";
@@ -886,14 +888,14 @@ function generarResumenYConteoIndividual(productosItems) {
   
   // Crear objeto con campos individuales para Airtable
   const camposIndividuales = {};
-  Object.entries(conteo).forEach(([nombre, cantidad]) => {
-    const nombreCampo = MAPEO_PRODUCTOS[nombre];
+  Object.entries(conteo).forEach(([categoria, cantidad]) => {
+    const nombreCampo = MAPEO_PRODUCTOS[categoria];
 
     if (nombreCampo) {
       camposIndividuales[nombreCampo] = cantidad;
-      console.log(`✅ ${nombre} → ${nombreCampo}: ${cantidad}`);
+      console.log(`✅ ${categoria} → ${nombreCampo}: ${cantidad}`);
     } else {
-      console.warn(`⚠️ "${nombre}" no tiene campo mapeado. Agrégalo al MAPEO_PRODUCTOS.`);
+      console.warn(`⚠️ "${categoria}" no tiene campo mapeado en MAPEO_PRODUCTOS.`);
     }
   });
   
