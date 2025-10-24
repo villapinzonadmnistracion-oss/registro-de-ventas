@@ -233,7 +233,6 @@ function mostrarLoading(mostrar) {
 // GESTIÓN DE CLIENTES
 // ============================================
 
-
 window.buscarClienteEnter = function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
@@ -291,9 +290,10 @@ window.buscarCliente = async function() {
       
       const workArea = document.getElementById("workArea");
       if (workArea) workArea.classList.add("show");
-      // Ocultar el mensaje de empty state
-  const emptyState = document.getElementById("emptyState");
-  if (emptyState) emptyState.style.display = "none";
+      
+      const emptyState = document.getElementById("emptyState");
+      if (emptyState) emptyState.style.display = "none";
+      
       const anfitrionContainer = document.getElementById("anfitrionContainer");
       if (anfitrionContainer) anfitrionContainer.style.display = "block";
       
@@ -475,9 +475,6 @@ function agregarProductoDesdeInventario(producto) {
     if (!nombre && !precio) fila.remove();
   });
 
-  const codigoTexto = String(producto.codigo || 'N/A');
-  const stockTexto = String(producto.stock || 0);
-
   const filaHTML = `
     <tr data-producto-id="${producto.id}" data-categoria="${producto.categoria}">
       <td>
@@ -611,12 +608,17 @@ async function buscarYMostrarProductoDevolucion(codigoEscaneado) {
         stock: record.fields["Inventario"] || 0,
       };
       agregarProductoDevolucion(producto);
+      mostrarAlerta("success", `✅ ${producto.categoria} agregado a devolución`);
     } else {
       const productoLocal = productosInventario.find(p => 
         p.codigo.replace(/\s+/g, '').toLowerCase() === codigoLimpio.toLowerCase()
       );
-      if (productoLocal) agregarProductoDevolucion(productoLocal);
-      else mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado`);
+      if (productoLocal) {
+        agregarProductoDevolucion(productoLocal);
+        mostrarAlerta("success", `✅ ${productoLocal.categoria} agregado a devolución`);
+      } else {
+        mostrarAlerta("error", `❌ Código "${codigoLimpio}" no encontrado`);
+      }
     }
   } catch (error) {
     console.error("❌ Error al buscar producto:", error);
@@ -633,7 +635,7 @@ function agregarProductoDevolucion(producto) {
   };
 
   devolucionesAgregadas.push(devolucion);
-  console.log("✅ Producto agregado a lista:", devolucion);
+  console.log("✅ Producto agregado a devolución:", devolucion);
 
   const container = document.getElementById("devolucionesList");
   if (!container) return;
@@ -721,13 +723,13 @@ window.registrarVenta = async function() {
 
   try {
     const productos = [];
-    const productosIds = []; // Array para guardar los IDs de productos vinculados
+    const productosIds = [];
     const filas = document.querySelectorAll("#productosLista tbody tr");
     
     filas.forEach(fila => {
       const nombre = fila.querySelector(".producto-nombre")?.value.trim();
       const categoria = fila.dataset.categoria || nombre;
-      const productoId = fila.dataset.productoId; // Obtener el ID del producto de inventario
+      const productoId = fila.dataset.productoId;
       const precioInput = fila.querySelector(".producto-precio");
       const precioTexto = precioInput?.value.replace(/\./g, '').replace(/\D/g, '') || "0";
       const precio = parseInt(precioTexto);
@@ -739,20 +741,23 @@ window.registrarVenta = async function() {
           precio 
         });
         
-        // Si tiene ID de producto del inventario, agregarlo al array de vinculación
         if (productoId) {
           productosIds.push(productoId);
         }
       }
     });
     
-    // ✅ SOLUCIÓN: Eliminar duplicados del array de IDs usando Set
     const productosIdsUnicos = [...new Set(productosIds)];
-    console.log("🔗 IDs originales:", productosIds);
-    console.log("🔗 IDs únicos:", productosIdsUnicos);
 
-    if (productos.length === 0) {
-      mostrarAlerta("error", "❌ Debe agregar al menos un producto con precio");
+    // ✅ CORRECCIÓN: Validar según tipo de transacción
+    if (tipoTransaccionActual === 'venta' && productos.length === 0) {
+      mostrarAlerta("error", "❌ Debe agregar al menos un producto con precio para una venta");
+      mostrarLoading(false);
+      return;
+    }
+    
+    if (tipoTransaccionActual === 'devolucion' && devolucionesAgregadas.length === 0) {
+      mostrarAlerta("error", "❌ Debe escanear al menos un producto para devolución");
       mostrarLoading(false);
       return;
     }
@@ -772,6 +777,7 @@ window.registrarVenta = async function() {
     // Preparar datos para devoluciones si aplica
     let devolucionesResumen = "";
     const camposDevolucion = {};
+    const devolucionesIdsUnicos = [];
     
     if (tipoTransaccionActual === 'devolucion' && devolucionesAgregadas.length > 0) {
       const conteoDevolucion = {};
@@ -779,6 +785,9 @@ window.registrarVenta = async function() {
       devolucionesAgregadas.forEach(dev => {
         const categoria = dev.nombre;
         conteoDevolucion[categoria] = (conteoDevolucion[categoria] || 0) + 1;
+        if (dev.id) {
+          devolucionesIdsUnicos.push(dev.id);
+        }
       });
       
       devolucionesResumen = devolucionesAgregadas.map(d => d.nombre).join(", ");
@@ -796,23 +805,32 @@ window.registrarVenta = async function() {
       fields: {
         "Cliente": [clienteSeleccionado.id],
         "Anfitrión": [anfitrionId],
-        "Items": resumen,
+        "Items": resumen || "Devolución",
         "Total de venta": subtotal,
         "Descuento": descuentoPorcentaje,
         ...camposIndividuales
       }
     };
     
-    // ✅ Agregar vinculación de productos ÚNICOS si existen IDs
-    if (productosIdsUnicos.length > 0) {
+    // ✅ Agregar vinculación de productos ÚNICOS para VENTAS
+    if (tipoTransaccionActual === 'venta' && productosIdsUnicos.length > 0) {
       ventaData.fields["producto"] = productosIdsUnicos;
-      console.log("✅ Vinculando productos únicos:", productosIdsUnicos);
+      console.log("✅ Vinculando productos de venta:", productosIdsUnicos);
     }
 
     // Agregar devoluciones si existen
-    if (tipoTransaccionActual === 'devolucion' && devolucionesAgregadas.length > 0) {
-      ventaData.fields["Devolución"] = devolucionesResumen;
+    if (tipoTransaccionActual === 'devolucion') {
+      if (devolucionesResumen) {
+        ventaData.fields["Devolución"] = devolucionesResumen;
+      }
       Object.assign(ventaData.fields, camposDevolucion);
+      
+      // ✅ Agregar vinculación de productos ÚNICOS para DEVOLUCIONES
+      if (devolucionesIdsUnicos.length > 0) {
+        const idsUnicos = [...new Set(devolucionesIdsUnicos)];
+        ventaData.fields["producto"] = idsUnicos;
+        console.log("✅ Vinculando productos de devolución:", idsUnicos);
+      }
     }
 
     // Agregar notas si existen
@@ -838,7 +856,8 @@ window.registrarVenta = async function() {
     mostrarLoading(false);
 
     if (response.ok) {
-      mostrarAlerta("success", "✅ ¡Transacción registrada exitosamente!");
+      const tipoMensaje = tipoTransaccionActual === 'venta' ? 'Venta' : 'Devolución';
+      mostrarAlerta("success", `✅ ¡${tipoMensaje} registrada exitosamente!`);
       setTimeout(() => limpiarFormulario(), 2000);
     } else {
       console.error("❌ Error en respuesta:", result);
@@ -907,8 +926,7 @@ function generarResumenYConteoIndividual(productosItems) {
 // ============================================
 // LIMPIAR FORMULARIO
 // ============================================
-const workArea = document.getElementById("workArea");
-if (workArea) workArea.classList.remove("show");
+
 window.limpiarFormulario = function() {
   document.getElementById("rutCliente").value = "";
   document.getElementById("clienteInfo").classList.remove("show");
@@ -917,6 +935,9 @@ window.limpiarFormulario = function() {
   
   const workArea = document.getElementById("workArea");
   if (workArea) workArea.classList.remove("show");
+  
+  const emptyState = document.getElementById("emptyState");
+  if (emptyState) emptyState.style.display = "block";
   
   const anfitrionSelect = document.getElementById("anfitrionSelect");
   if (anfitrionSelect) anfitrionSelect.value = "";
