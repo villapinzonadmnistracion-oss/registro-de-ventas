@@ -55,6 +55,70 @@
         <div class="spinner"></div>
         <p>Procesando...</p>
       </div>
+
+      <!-- Anfitrión Movido -->
+      <div class="section-card sidebar-section" id="anfitrionContainer">
+        <h3>👤 Anfitrión (Vendedor)</h3>
+        <div class="form-field">
+          <select id="anfitrionSelect" class="form-select">
+            <option value="">Seleccionar anfitrión...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Detalles Adicionales Movido -->
+      <div class="section-card sidebar-section">
+        <h3>💰 Detalles Adicionales</h3>
+        <div class="form-field">
+          <label>💸 Descuento (%)</label>
+          <input
+            type="number"
+            id="descuento"
+            class="form-input"
+            placeholder="0"
+            min="0"
+            max="100"
+            value="0"
+            onchange="calcularTotal()"
+          />
+        </div>
+        <div class="form-field" style="margin-top: 12px;">
+          <label>📝 Notas u Observaciones</label>
+          <textarea
+            id="notas"
+            class="form-textarea"
+            placeholder="Escribir notas sobre la transacción..."
+            rows="2"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Resumen Movido -->
+      <div class="resumen-box sidebar-resumen">
+        <h3>💰 Resumen de Transacción</h3>
+        <div class="resumen-item">
+          <span>Subtotal:</span>
+          <span id="subtotal">$0</span>
+        </div>
+        <div class="resumen-item">
+          <span>Descuento:</span>
+          <span id="descuentoMonto">$0</span>
+        </div>
+        <div class="resumen-item total">
+          <span>TOTAL:</span>
+          <span id="total">$0</span>
+        </div>
+      </div>
+
+      <!-- Botones de Acción Movidos -->
+      <div class="action-buttons sidebar-actions">
+        <button class="btn btn-primary" onclick="registrarVenta()">
+          ✅ Registrar Transacción
+        </button>
+        <button class="btn btn-secondary" onclick="limpiarFormulario()">
+          🔄 Nueva Transacción
+        </button>
+      </div>
     </div>
 
     <!-- Área Principal -->
@@ -94,16 +158,6 @@
           </div>
         </div>
 
-        <!-- Anfitrión -->
-        <div class="section-card" id="anfitrionContainer">
-          <h3>👤 Anfitrión (Vendedor)</h3>
-          <div class="form-field">
-            <select id="anfitrionSelect" class="form-select">
-              <option value="">Seleccionar anfitrión...</option>
-            </select>
-          </div>
-        </div>
-
         <!-- Productos (Ventas) -->
         <div class="section-card" id="ventasSection">
           <h3>🛒 Agregar Productos</h3>
@@ -119,6 +173,7 @@
                 onkeypress="procesarCodigoProducto(event)"
               />
               <small class="field-hint">💡 Presiona Enter después de escanear</small>
+            </div>
           </div>
 
           <div class="table-container">
@@ -149,7 +204,7 @@
         <div class="section-card devolucion-section" id="devolucionesSection" style="display: none;">
           <h3>📥 Productos en Devolución</h3>
           <div class="form-field">
-            <label> Escanear Código de Producto a Devolver</label>
+            <label>Escanear Código de Producto a Devolver</label>
             <input
               type="text"
               id="codigoDevolucion"
@@ -159,62 +214,6 @@
             />
           </div>
           <div id="devolucionesList" class="devoluciones-container"></div>
-        </div>
-
-        <!-- Descuento y Notas -->
-        <div class="section-card">
-          <h3>💰 Detalles Adicionales</h3>
-          <div class="form-grid">
-            <div class="form-field">
-              <label>💸 Descuento (%)</label>
-              <input
-                type="number"
-                id="descuento"
-                class="form-input"
-                placeholder="0"
-                min="0"
-                max="100"
-                value="0"
-                onchange="calcularTotal()"
-              />
-            </div>
-            <div class="form-field">
-              <label>📝 Notas u Observaciones</label>
-              <textarea
-                id="notas"
-                class="form-textarea"
-                placeholder="Escribir notas sobre la transacción..."
-                rows="2"
-              ></textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- Resumen -->
-        <div class="resumen-box">
-          <h3>💰 Resumen de Transacción</h3>
-          <div class="resumen-item">
-            <span>Subtotal:</span>
-            <span id="subtotal">$0</span>
-          </div>
-          <div class="resumen-item">
-            <span>Descuento:</span>
-            <span id="descuentoMonto">$0</span>
-          </div>
-          <div class="resumen-item total">
-            <span>TOTAL:</span>
-            <span id="total">$0</span>
-          </div>
-        </div>
-
-        <!-- Botones de Acción -->
-        <div class="action-buttons">
-          <button class="btn btn-primary" onclick="registrarVenta()">
-            ✅ Registrar Transacción
-          </button>
-          <button class="btn btn-secondary" onclick="limpiarFormulario()">
-            🔄 Nueva Transacción
-          </button>
         </div>
       </div>
     </div>
