@@ -772,10 +772,10 @@ window.registrarVenta = async function() {
         "Cliente": [clienteSeleccionado.id],
         "Anfitrión": [anfitrionId],
         "Items": resumen,
-        "Total": totalFinal,
-        "Subtotal": subtotal,
-        "Descuento %": descuentoPorcentaje,
-        "Descuento Monto": descuentoMonto,
+        "Total de venta": subtotal,
+        "Descuento": descuentoPorcentaje,
+        "Total Neto": `${totalFinal.toLocaleString('es-CL')}`,
+        "Total neto numerico": totalFinal,
         ...camposIndividuales
       }
     };
