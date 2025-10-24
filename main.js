@@ -188,6 +188,35 @@ window.formatearPrecio = function(input) {
 }
 
 // ============================================
+// UTILIDADES - ALERTAS Y LOADING
+// ============================================
+
+function mostrarAlerta(tipo, mensaje) {
+  ocultarAlertas();
+  const alertId = tipo === "success" ? "alertSuccess" : tipo === "error" ? "alertError" : "alertInfo";
+  const alert = document.getElementById(alertId);
+  if (alert) {
+    alert.textContent = mensaje;
+    alert.classList.add("show");
+    setTimeout(() => alert.classList.remove("show"), 5000);
+  }
+}
+
+function ocultarAlertas() {
+  ["alertSuccess", "alertError", "alertInfo"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("show");
+  });
+}
+
+function mostrarLoading(mostrar) {
+  const loading = document.getElementById("loading");
+  if (loading) {
+    loading.classList.toggle("show", mostrar);
+  }
+}
+
+// ============================================
 // GESTIÓN DE CLIENTES
 // ============================================
 
@@ -246,12 +275,19 @@ window.buscarCliente = async function() {
       clienteSeleccionado = data.records[0];
       
       mostrarInfoCliente(clienteSeleccionado);
-      document.getElementById("productosContainer").style.display = "block";
-      document.getElementById("anfitrionContainer").style.display = "block";
+      
+      // Mostrar el área de trabajo
+      const workArea = document.getElementById("workArea");
+      if (workArea) workArea.classList.add("show");
+      
+      const anfitrionContainer = document.getElementById("anfitrionContainer");
+      if (anfitrionContainer) anfitrionContainer.style.display = "block";
+      
       cargarAnfitriones();
       
       setTimeout(() => {
-        document.getElementById("codigoProducto").focus();
+        const codigoInput = document.getElementById("codigoProducto");
+        if (codigoInput) codigoInput.focus();
         mostrarAlerta("info", "📱 Escanea el código de barras");
       }, 100);
       
@@ -280,8 +316,9 @@ function mostrarClienteNoEncontrado() {
   clienteSeleccionado = null;
   document.getElementById("clienteInfo").classList.remove("show");
   document.getElementById("clienteNoEncontrado").classList.add("show");
-  document.getElementById("productosContainer").style.display = "none";
-  document.getElementById("anfitrionContainer").style.display = "none";
+  
+  const workArea = document.getElementById("workArea");
+  if (workArea) workArea.classList.remove("show");
 }
 
 // ============================================
@@ -297,6 +334,8 @@ async function cargarAnfitriones() {
 
     const data = await response.json();
     const select = document.getElementById("anfitrionSelect");
+
+    if (!select) return;
 
     while (select.options.length > 1) {
       select.remove(1);
@@ -326,17 +365,26 @@ window.cambiarTipoTransaccion = function(tipo) {
   const anfitrionContainer = document.getElementById("anfitrionContainer");
 
   if (tipo === 'venta') {
-    ventasSection.style.display = "block";
-    devolucionesSection.style.display = "none";
-    anfitrionContainer.style.display = "block";
-    setTimeout(() => document.getElementById("codigoProducto").focus(), 100);
+    if (ventasSection) ventasSection.style.display = "block";
+    if (devolucionesSection) devolucionesSection.style.display = "none";
+    if (anfitrionContainer) anfitrionContainer.style.display = "block";
+    setTimeout(() => {
+      const input = document.getElementById("codigoProducto");
+      if (input) input.focus();
+    }, 100);
   } else {
-    ventasSection.style.display = "none";
-    devolucionesSection.style.display = "block";
-    anfitrionContainer.style.display = "block";
-    document.getElementById("devolucionesList").innerHTML = "";
+    if (ventasSection) ventasSection.style.display = "none";
+    if (devolucionesSection) devolucionesSection.style.display = "block";
+    if (anfitrionContainer) anfitrionContainer.style.display = "block";
+    
+    const devList = document.getElementById("devolucionesList");
+    if (devList) devList.innerHTML = "";
     devolucionesAgregadas = [];
-    setTimeout(() => document.getElementById("codigoDevolucion").focus(), 100);
+    
+    setTimeout(() => {
+      const input = document.getElementById("codigoDevolucion");
+      if (input) input.focus();
+    }, 100);
   }
   calcularTotal();
 }
@@ -404,42 +452,50 @@ async function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
 }
 
 function agregarProductoDesdeInventario(producto) {
-  const container = document.getElementById("productosLista");
+  const tbody = document.querySelector("#productosLista tbody");
+  if (!tbody) return;
 
-  // Limpiar productos vacíos
-  const productosVacios = container.querySelectorAll('.producto-item');
-  productosVacios.forEach(item => {
-    const nombre = item.querySelector('.producto-nombre').value;
-    const precio = item.querySelector('.producto-precio').value;
-    if (!nombre && !precio) item.remove();
+  // Limpiar filas vacías
+  const filasVacias = tbody.querySelectorAll('tr');
+  filasVacias.forEach(fila => {
+    const nombre = fila.querySelector('.producto-nombre')?.value;
+    const precio = fila.querySelector('.producto-precio')?.value;
+    if (!nombre && !precio) fila.remove();
   });
 
   const codigoTexto = String(producto.codigo || 'N/A');
   const stockTexto = String(producto.stock || 0);
 
-  const productoHTML = `
-    <div class="producto-item" data-producto-id="${producto.id}">
-      <div class="form-group" style="margin: 0;">
-        <label>Producto (vinculado)</label>
-        <input type="text" class="producto-nombre" value="${producto.categoria}" readonly style="background-color: #e8f5e9; font-weight: 500; border: 2px solid #4caf50;">
-      </div>
-      <div class="form-group" style="margin: 0;">
-        <label>📦 Código: ${codigoTexto} | 📊 Stock: ${stockTexto}</label>
-        <input type="text" class="producto-precio" placeholder="Ingresa el precio" oninput="formatearPrecio(this); calcularTotal();" autofocus>
-      </div>
-      <div>
-        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
-      </div>
-    </div>
+  const filaHTML = `
+    <tr data-producto-id="${producto.id}">
+      <td>
+        <input type="text" class="producto-nombre" value="${producto.categoria}" readonly 
+               style="background-color: #e8f5e9; font-weight: 600; border: 2px solid #10b981; color: #065f46;">
+        <div style="font-size: 0.85em; color: #6b7280; margin-top: 4px;">
+          📦 Código: ${codigoTexto} | 📊 Stock: ${stockTexto}
+        </div>
+      </td>
+      <td>
+        <input type="text" class="producto-precio" placeholder="Ingresa precio" 
+               oninput="formatearPrecio(this); calcularTotal();" autofocus>
+      </td>
+      <td>
+        <button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button>
+      </td>
+    </tr>
   `;
-  container.insertAdjacentHTML("beforeend", productoHTML);
+  
+  tbody.insertAdjacentHTML("beforeend", filaHTML);
 
-  const ultimoPrecio = container.querySelector('.producto-item:last-child .producto-precio');
+  const ultimoPrecio = tbody.querySelector('tr:last-child .producto-precio');
   if (ultimoPrecio) {
     setTimeout(() => {
       ultimoPrecio.focus();
       ultimoPrecio.addEventListener('blur', () => {
-        setTimeout(() => document.getElementById("codigoProducto").focus(), 100);
+        setTimeout(() => {
+          const codigoInput = document.getElementById("codigoProducto");
+          if (codigoInput) codigoInput.focus();
+        }, 100);
       });
     }, 100);
   }
@@ -447,57 +503,57 @@ function agregarProductoDesdeInventario(producto) {
 }
 
 window.agregarProductoConCodigo = function(codigo) {
-  const container = document.getElementById("productosLista");
-  const productoHTML = `
-    <div class="producto-item">
-      <div class="form-group" style="margin: 0;">
-        <label>Producto (Manual)</label>
+  const tbody = document.querySelector("#productosLista tbody");
+  if (!tbody) return;
+  
+  const filaHTML = `
+    <tr>
+      <td>
         <input type="text" class="producto-nombre" value="${codigo}">
-      </div>
-      <div class="form-group" style="margin: 0;">
-        <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();" autofocus>
-      </div>
-      <div>
-        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
-      </div>
-    </div>
+        <div style="font-size: 0.85em; color: #6b7280; margin-top: 4px;">📝 Manual</div>
+      </td>
+      <td>
+        <input type="text" class="producto-precio" placeholder="Ingresa precio" 
+               oninput="formatearPrecio(this); calcularTotal();" autofocus>
+      </td>
+      <td>
+        <button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button>
+      </td>
+    </tr>
   `;
-  container.insertAdjacentHTML("beforeend", productoHTML);
+  tbody.insertAdjacentHTML("beforeend", filaHTML);
 }
 
 window.agregarProducto = function() {
-  const container = document.getElementById("productosLista");
-  const productoHTML = `
-    <div class="producto-item">
-      <div class="form-group" style="margin: 0;">
-        <label>Producto</label>
-        <input type="text" class="producto-nombre" placeholder="Nombre del producto">
-      </div>
-      <div class="form-group" style="margin: 0;">
-        <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();">
-      </div>
-      <div>
-        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
-      </div>
-    </div>
+  const tbody = document.querySelector("#productosLista tbody");
+  if (!tbody) return;
+  
+  const filaHTML = `
+    <tr>
+      <td><input type="text" class="producto-nombre" placeholder="Nombre del producto"></td>
+      <td><input type="text" class="producto-precio" placeholder="Ingresa precio" 
+                 oninput="formatearPrecio(this); calcularTotal();"></td>
+      <td><button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button></td>
+    </tr>
   `;
-  container.insertAdjacentHTML("beforeend", productoHTML);
+  tbody.insertAdjacentHTML("beforeend", filaHTML);
 }
 
 window.agregarProductoManual = function() {
   const select = document.getElementById("selectProductoManual");
-  if (select.value) {
+  if (select && select.value) {
     agregarProductoConCodigo(select.value);
     select.value = "";
   }
 }
 
 window.eliminarProducto = function(btn) {
-  const items = document.querySelectorAll(".producto-item");
-  if (items.length > 1) {
-    btn.closest(".producto-item").remove();
+  const tbody = document.querySelector("#productosLista tbody");
+  if (!tbody) return;
+  
+  const filas = tbody.querySelectorAll("tr");
+  if (filas.length > 1) {
+    btn.closest("tr").remove();
     calcularTotal();
   } else {
     mostrarAlerta("info", "⚠️ Debe haber al menos un producto");
@@ -511,10 +567,13 @@ window.eliminarProducto = function(btn) {
 window.procesarCodigoDevolucion = function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
-    const codigo = document.getElementById("codigoDevolucion").value.trim();
+    const input = document.getElementById("codigoDevolucion");
+    if (!input) return;
+    
+    const codigo = input.value.trim();
     if (codigo) {
       buscarYMostrarProductoDevolucion(codigo);
-      document.getElementById("codigoDevolucion").value = "";
+      input.value = "";
     }
   }
 }
@@ -566,18 +625,24 @@ function agregarProductoDevolucion(producto) {
   console.log("✅ Producto agregado a lista:", devolucion);
 
   const container = document.getElementById("devolucionesList");
+  if (!container) return;
+  
   const timestamp = Date.now();
   const itemHTML = `
-    <div class="devolucion-item" data-devolucion-timestamp="${timestamp}" style="background: #e8f5e9; padding: 12px; margin: 8px 0; border-radius: 8px; border-left: 4px solid #4caf50; display: flex; justify-content: space-between; align-items: center;">
+    <div class="devolucion-item" data-devolucion-timestamp="${timestamp}" 
+         style="background: #e8f5e9; padding: 15px; margin: 10px 0; border-radius: 8px; 
+                border-left: 4px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <strong style="font-size: 16px; color: #2e7d32;">📦 ${producto.categoria}</strong>
-        <div style="color: #666; margin-top: 4px; font-size: 14px;">Código: ${producto.codigo}</div>
+        <strong style="font-size: 16px; color: #065f46;">📦 ${producto.categoria}</strong>
+        <div style="color: #6b7280; margin-top: 4px; font-size: 14px;">Código: ${producto.codigo}</div>
       </div>
-      <button class="btn btn-danger" onclick="eliminarDevolucion('${timestamp}')" style="padding: 8px 12px; font-size: 14px;">🗑️</button>
+      <button class="btn btn-remove" onclick="eliminarDevolucion('${timestamp}')">🗑️</button>
     </div>
   `;
   container.insertAdjacentHTML("beforeend", itemHTML);
-  setTimeout(() => document.getElementById("codigoDevolucion").focus(), 100);
+  
+  const input = document.getElementById("codigoDevolucion");
+  if (input) setTimeout(() => input.focus(), 100);
 }
 
 window.eliminarDevolucion = function(timestamp) {
@@ -609,13 +674,188 @@ window.calcularTotal = function() {
     subtotal += precio;
   });
 
-  const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
+  const descuentoInput = document.getElementById("descuento");
+  const descuentoPorcentaje = descuentoInput ? parseFloat(descuentoInput.value) || 0 : 0;
   const descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
   const total = subtotal - descuentoMonto;
 
-  document.getElementById("subtotal").textContent = "$" + subtotal.toLocaleString("es-CL");
-  document.getElementById("descuentoMonto").textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
-  document.getElementById("total").textContent = "$" + total.toLocaleString("es-CL");
+  const subtotalEl = document.getElementById("subtotal");
+  const descuentoEl = document.getElementById("descuentoMonto");
+  const totalEl = document.getElementById("total");
+
+  if (subtotalEl) subtotalEl.textContent = "$" + subtotal.toLocaleString("es-CL");
+  if (descuentoEl) descuentoEl.textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
+  if (totalEl) totalEl.textContent = "$" + total.toLocaleString("es-CL");
+}
+
+// ============================================
+// REGISTRO DE VENTA
+// ============================================
+
+window.registrarVenta = async function() {
+  if (!clienteSeleccionado) {
+    mostrarAlerta("error", "❌ Debe buscar y seleccionar un cliente primero");
+    return;
+  }
+
+  const anfitrionSelect = document.getElementById("anfitrionSelect");
+  const anfitrionId = anfitrionSelect ? anfitrionSelect.value : null;
+  
+  if (!anfitrionId) {
+    mostrarAlerta("error", "❌ Debe seleccionar un anfitrión");
+    return;
+  }
+
+  mostrarLoading(true);
+
+  try {
+    const productos = [];
+    const filas = document.querySelectorAll("#productosLista tbody tr");
+    
+    filas.forEach(fila => {
+      const nombre = fila.querySelector(".producto-nombre")?.value.trim();
+      const precioInput = fila.querySelector(".producto-precio");
+      const precioTexto = precioInput?.value.replace(/\./g, '').replace(/\D/g, '') || "0";
+      const precio = parseInt(precioTexto);
+      
+      if (nombre && precio > 0) {
+        productos.push({ nombre, precio });
+      }
+    });
+
+    if (productos.length === 0) {
+      mostrarAlerta("error", "❌ Debe agregar al menos un producto con precio");
+      mostrarLoading(false);
+      return;
+    }
+
+    const { resumen, camposIndividuales } = generarResumenYConteoIndividual(productos);
+    
+    const descuentoInput = document.getElementById("descuento");
+    const descuentoPorcentaje = descuentoInput ? parseFloat(descuentoInput.value) || 0 : 0;
+    
+    const subtotal = productos.reduce((sum, p) => sum + p.precio, 0);
+    const descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
+    const totalFinal = subtotal - descuentoMonto;
+
+    const notasInput = document.getElementById("notas");
+    const notas = notasInput ? notasInput.value.trim() : "";
+
+    const ventaData = {
+      fields: {
+        "Cliente": [clienteSeleccionado.id],
+        "Anfitrión": [anfitrionId],
+        "Productos": resumen,
+        "Total": totalFinal,
+        "Descuento (%)": descuentoPorcentaje,
+        "Fecha": new Date().toISOString().split('T')[0],
+        ...camposIndividuales
+      }
+    };
+
+    if (notas) {
+      ventaData.fields["Notas"] = notas;
+    }
+
+    if (tipoTransaccionActual === 'devolucion') {
+      ventaData.fields["Tipo"] = "Devolución";
+      if (devolucionesAgregadas.length > 0) {
+        const productosDevueltos = devolucionesAgregadas.map(d => d.nombre).join(", ");
+        ventaData.fields["Productos Devueltos"] = productosDevueltos;
+      }
+    }
+
+    console.log("📤 Enviando venta:", ventaData);
+
+    const response = await fetch(
+      `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(ventaData),
+      }
+    );
+
+    const result = await response.json();
+    mostrarLoading(false);
+
+    if (response.ok) {
+      mostrarAlerta("success", "✅ ¡Transacción registrada exitosamente!");
+      setTimeout(() => limpiarFormulario(), 2000);
+    } else {
+      console.error("❌ Error en respuesta:", result);
+      mostrarAlerta("error", `❌ Error: ${result.error?.message || 'Error desconocido'}`);
+    }
+  } catch (error) {
+    mostrarLoading(false);
+    console.error("❌ Error al registrar venta:", error);
+    mostrarAlerta("error", "❌ Error al registrar la venta: " + error.message);
+  }
+}
+
+// ============================================
+// LIMPIAR FORMULARIO
+// ============================================
+
+window.limpiarFormulario = function() {
+  // Limpiar cliente
+  document.getElementById("rutCliente").value = "";
+  document.getElementById("clienteInfo").classList.remove("show");
+  document.getElementById("clienteNoEncontrado").classList.remove("show");
+  clienteSeleccionado = null;
+
+  // Ocultar área de trabajo
+  const workArea = document.getElementById("workArea");
+  if (workArea) workArea.classList.remove("show");
+
+  // Reset anfitrión
+  const anfitrionSelect = document.getElementById("anfitrionSelect");
+  if (anfitrionSelect) anfitrionSelect.value = "";
+
+  // Limpiar productos
+  const tbody = document.querySelector("#productosLista tbody");
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td><input type="text" class="producto-nombre" placeholder="Nombre del producto"></td>
+        <td><input type="number" class="producto-precio" placeholder="0" min="0" onchange="calcularTotal()"></td>
+        <td><button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button></td>
+      </tr>
+    `;
+  }
+
+  // Limpiar devoluciones
+  devolucionesAgregadas = [];
+  const devList = document.getElementById("devolucionesList");
+  if (devList) devList.innerHTML = "";
+
+  // Reset descuento y notas
+  const descuentoInput = document.getElementById("descuento");
+  if (descuentoInput) descuentoInput.value = "0";
+  
+  const notasInput = document.getElementById("notas");
+  if (notasInput) notasInput.value = "";
+
+  // Reset tipo de transacción
+  const radioVenta = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
+  if (radioVenta) radioVenta.checked = true;
+  tipoTransaccionActual = 'venta';
+  cambiarTipoTransaccion('venta');
+
+  // Recalcular totales
+  calcularTotal();
+
+  // Ocultar alertas
+  ocultarAlertas();
+
+  // Focus en RUT
+  setTimeout(() => {
+    const rutInput = document.getElementById("rutCliente");
+    if (rutInput) rutInput.focus();
+  }, 100);
 }
 
 // ============================================
@@ -667,280 +907,18 @@ function generarResumenYConteoIndividual(productosItems) {
 }
 
 // ============================================
-// REGISTRO DE VENTAS Y DEVOLUCIONES
+// INICIALIZAR AL CARGAR LA PÁGINA
 // ============================================
 
-window.registrarVenta = async function() {
-  console.log("🔘 Registrar - Tipo:", tipoTransaccionActual);
-
-  if (!clienteSeleccionado) {
-    mostrarAlerta("error", "❌ Primero debes buscar y seleccionar un cliente");
-    return;
-  }
-
-  const anfitrionSelect = document.getElementById("anfitrionSelect");
-  anfitrionSeleccionado = anfitrionSelect.value;
-
-  if (!AIRTABLE_TOKEN || !BASE_ID) {
-    mostrarAlerta("error", "❌ Error: Configuración no cargada.");
-    return;
-  }
-
-  let totalVenta = 0;
-  let productosVinculados = [];
-  let productosParaResumen = [];
-
-  if (tipoTransaccionActual === 'venta') {
-    const productosItems = document.querySelectorAll(".producto-item");
-    for (let item of productosItems) {
-      const nombre = item.querySelector(".producto-nombre").value || "Producto sin nombre";
-      const precioInput = item.querySelector(".producto-precio").value || "0";
-      const valorLimpio = precioInput.replace(/\./g, '').replace(/\D/g, '');
-      const precio = valorLimpio ? parseInt(valorLimpio) : 0;
-      const productoId = item.dataset.productoId;
-
-      if (precio > 0) {
-        if (productoId) {
-          productosVinculados.push(productoId);
-        }
-        productosParaResumen.push({ nombre: nombre, precio: precio });
-        totalVenta += precio;
-      }
-    }
-
-    if (productosVinculados.length === 0 && productosParaResumen.length === 0) {
-      mostrarAlerta("error", "❌ Debes agregar al menos un producto con precio");
-      return;
-    }
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🚀 Iniciando aplicación...");
+  const configCargada = await fetchConfig();
+  
+  if (configCargada) {
+    console.log("✅ Sistema listo");
+    const rutInput = document.getElementById("rutCliente");
+    if (rutInput) rutInput.focus();
   } else {
-    console.log("📦 Devoluciones:", devolucionesAgregadas);
-    if (devolucionesAgregadas.length === 0) {
-      mostrarAlerta("error", "❌ Debes escanear al menos un producto para devolver");
-      return;
-    }
-
-    for (let devolucion of devolucionesAgregadas) {
-      if (devolucion.id) {
-        productosVinculados.push(devolucion.id);
-      }
-      productosParaResumen.push({ nombre: devolucion.nombre, precio: 0 });
-    }
-
-    console.log("📦 IDs totales:", productosVinculados);
-  }
-
-  // Generar resumen + campos individuales
-  const { resumen, camposIndividuales } = generarResumenYConteoIndividual(productosParaResumen);
-
-  const descuentoPorcentaje = parseFloat(document.getElementById("descuento").value) || 0;
-  const descuentoMonto = Math.round((totalVenta * descuentoPorcentaje) / 100);
-  totalVenta = totalVenta - descuentoMonto;
-  const notas = document.getElementById("notas").value || "";
-
-  mostrarLoading(true);
-  ocultarAlertas();
-
-  try {
-    if (tipoTransaccionActual === 'venta') {
-      const ventaData = {
-        fields: {
-          Cliente: [clienteSeleccionado.id],
-          Anfitrión: [anfitrionSeleccionado],
-          Items: resumen,
-          "Total de venta": Math.round(totalVenta),
-          Descuento: descuentoPorcentaje,
-          ...camposIndividuales
-        },
-      };
-
-      // Eliminar duplicados para Airtable
-      if (productosVinculados.length > 0) {
-        const idsUnicos = [...new Set(productosVinculados)];
-        ventaData.fields["producto"] = idsUnicos;
-        console.log("📦 Total productos escaneados:", productosVinculados.length);
-        console.log("📦 Productos únicos vinculados:", idsUnicos);
-        console.log("📊 Resumen en campo Items:", resumen);
-        console.log("🔢 Campos individuales de cantidad:", camposIndividuales);
-      }
-
-      console.log("💰 Enviando VENTA:", ventaData);
-
-      const response = await fetch(
-        `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(ventaData),
-        }
-      );
-
-      const result = await response.json();
-      mostrarLoading(false);
-
-      if (response.ok) {
-        mostrarAlerta("success", "✅ ¡Venta registrada exitosamente!");
-        setTimeout(() => limpiarFormulario(), 2000);
-      } else {
-        console.error("❌ Error:", result);
-        mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
-      }
-    } else {
-      // DEVOLUCIONES
-      const devolucionData = {
-        fields: {
-          Cliente: [clienteSeleccionado.id],
-          Anfitrión: [anfitrionSeleccionado],
-          Items: resumen,
-          "Total de venta": 0,
-          ...camposIndividuales
-        },
-      };
-
-      // Eliminar duplicados para Airtable
-      if (productosVinculados.length > 0) {
-        const idsUnicos = [...new Set(productosVinculados)];
-        devolucionData.fields["Devolución"] = idsUnicos;
-        console.log("📦 Total devoluciones escaneadas:", productosVinculados.length);
-        console.log("📦 Productos únicos vinculados:", idsUnicos);
-        console.log("📊 Resumen en campo Items:", resumen);
-        console.log("🔢 Campos individuales de cantidad:", camposIndividuales);
-      }
-
-      if (notas.trim()) {
-        devolucionData.fields["Box Observaciones"] = notas;
-      }
-
-      console.log("🔄 Enviando DEVOLUCIÓN:", JSON.stringify(devolucionData, null, 2));
-
-      const response = await fetch(
-        `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(devolucionData),
-        }
-      );
-
-      const result = await response.json();
-      mostrarLoading(false);
-
-      if (response.ok) {
-        console.log("✅ Devolución registrada:", result);
-        mostrarAlerta("success", `✅ ¡Devolución registrada! ${devolucionesAgregadas.length} producto(s)`);
-        setTimeout(() => limpiarFormulario(), 2000);
-      } else {
-        console.error("❌ Error:", result);
-        mostrarAlerta("error", "❌ Error: " + (result.error?.message || "Error desconocido"));
-      }
-    }
-  } catch (error) {
-    mostrarLoading(false);
-    mostrarAlerta("error", "❌ Error: " + error.message);
-    console.error("Error:", error);
-  }
-}
-
-// ============================================
-// LIMPIAR FORMULARIO
-// ============================================
-
-window.limpiarFormulario = function() {
-  document.getElementById("rutCliente").value = "";
-  document.getElementById("descuento").value = "0";
-  document.getElementById("notas").value = "";
-  document.getElementById("clienteInfo").classList.remove("show");
-  document.getElementById("clienteNoEncontrado").classList.remove("show");
-  document.getElementById("productosContainer").style.display = "none";
-  document.getElementById("anfitrionContainer").style.display = "none";
-
-  const campoDescuento = document.getElementById("descuento");
-  campoDescuento.style.backgroundColor = "";
-  campoDescuento.style.border = "";
-  campoDescuento.style.fontWeight = "";
-
-  const container = document.getElementById("productosLista");
-  container.innerHTML = `
-    <div class="producto-item">
-      <div class="form-group" style="margin: 0;">
-        <label>Producto</label>
-        <input type="text" class="producto-nombre" placeholder="Escanea código o ingresa nombre">
-      </div>
-      <div class="form-group" style="margin: 0;">
-        <label>Precio ($)</label>
-        <input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();">
-      </div>
-      <div>
-        <button class="btn btn-danger" onclick="eliminarProducto(this)" style="margin-top: 24px;">🗑️</button>
-      </div>
-    </div>
-  `;
-
-  document.getElementById("devolucionesList").innerHTML = "";
-  devolucionesAgregadas = [];
-  clienteSeleccionado = null;
-  anfitrionSeleccionado = null;
-
-  const anfitrionSelect = document.getElementById("anfitrionSelect");
-  if (anfitrionSelect) {
-    anfitrionSelect.value = "";
-  }
-
-  const ventaRadio = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
-  if (ventaRadio) {
-    ventaRadio.checked = true;
-  }
-
-  calcularTotal();
-  ocultarAlertas();
-  document.getElementById("rutCliente").focus();
-}
-
-// ============================================
-// UI - ALERTAS Y LOADING
-// ============================================
-
-function mostrarAlerta(tipo, mensaje) {
-  ocultarAlertas();
-  const alertId = tipo === "success" ? "alertSuccess" : tipo === "error" ? "alertError" : "alertInfo";
-  const alert = document.getElementById(alertId);
-  alert.textContent = mensaje;
-  alert.classList.add("show");
-
-  if (tipo !== "info") {
-    setTimeout(() => alert.classList.remove("show"), 5000);
-  }
-}
-
-function ocultarAlertas() {
-  document.getElementById("alertSuccess").classList.remove("show");
-  document.getElementById("alertError").classList.remove("show");
-  document.getElementById("alertInfo").classList.remove("show");
-}
-
-function mostrarLoading(show) {
-  const loading = document.getElementById("loading");
-  if (show) {
-    loading.classList.add("show");
-  } else {
-    loading.classList.remove("show");
-  }
-}
-
-// ============================================
-// INICIALIZACIÓN DE LA APLICACIÓN
-// ============================================
-
-fetchConfig().then((success) => {
-  if (success) {
-    calcularTotal();
-    console.log("✅ Aplicación lista para usar");
-  } else {
-    mostrarAlerta("error", "❌ Error al cargar la configuración. Recarga la página.");
+    mostrarAlerta("error", "❌ Error al cargar la configuración. Por favor, recarga la página.");
   }
 });
