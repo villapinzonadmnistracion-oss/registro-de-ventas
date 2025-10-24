@@ -719,6 +719,18 @@ window.registrarVenta = async function() {
     return;
   }
 
+  // Validar autorización de devolución
+  if (tipoTransaccionActual === 'devolucion') {
+    const autorizacionInput = document.getElementById("autorizacionDevolucion");
+    const autorizacion = autorizacionInput ? autorizacionInput.value.trim() : "";
+    
+    if (!autorizacion) {
+      mostrarAlerta("error", "❌ Debe indicar quién autorizó la devolución");
+      if (autorizacionInput) autorizacionInput.focus();
+      return;
+    }
+  }
+
   mostrarLoading(true);
 
   try {
@@ -828,14 +840,21 @@ window.registrarVenta = async function() {
       // ✅ Agregar vinculación de productos ÚNICOS para DEVOLUCIONES
       if (devolucionesIdsUnicos.length > 0) {
         const idsUnicos = [...new Set(devolucionesIdsUnicos)];
-        ventaData.fields["producto"] = idsUnicos;
+        ventaData.fields["Devolucion"] = idsUnicos;
         console.log("✅ Vinculando productos de devolución:", idsUnicos);
       }
-    }
-
-    // Agregar notas si existen
-    if (notas) {
-      ventaData.fields["Notas"] = notas;
+      
+      // ✅ Agregar autorización de devolución
+      const autorizacionInput = document.getElementById("autorizacionDevolucion");
+      const autorizacion = autorizacionInput ? autorizacionInput.value.trim() : "";
+      if (autorizacion) {
+        ventaData.fields["Notas"] = `Autorizado por: ${autorizacion}${notas ? '\n' + notas : ''}`;
+      }
+    } else {
+      // Agregar notas normales si es venta
+      if (notas) {
+        ventaData.fields["Notas"] = notas;
+      }
     }
 
     console.log("📤 Enviando venta:", JSON.stringify(ventaData, null, 2));
@@ -962,6 +981,9 @@ window.limpiarFormulario = function() {
   
   const notasInput = document.getElementById("notas");
   if (notasInput) notasInput.value = "";
+  
+  const autorizacionInput = document.getElementById("autorizacionDevolucion");
+  if (autorizacionInput) autorizacionInput.value = "";
   
   const radioVenta = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
   if (radioVenta) radioVenta.checked = true;
