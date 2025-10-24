@@ -761,7 +761,7 @@ window.registrarVenta = async function() {
     
     const productosIdsUnicos = [...new Set(productosIds)];
 
-    // ✅ CORRECCIÓN: Validar según tipo de transacción
+    // ✅ Validar según tipo de transacción
     if (tipoTransaccionActual === 'venta' && productos.length === 0) {
       mostrarAlerta("error", "❌ Debe agregar al menos un producto con precio para una venta");
       mostrarLoading(false);
@@ -786,74 +786,73 @@ window.registrarVenta = async function() {
     const notasInput = document.getElementById("notas");
     const notas = notasInput ? notasInput.value.trim() : "";
 
-    // Preparar datos para devoluciones si aplica
-    let devolucionesResumen = "";
-    const camposDevolucion = {};
-    const devolucionesIdsUnicos = [];
+    // Construir objeto base con campos obligatorios
+    const ventaData = {
+      fields: {
+        "Cliente": [clienteSeleccionado.id],
+        "Anfitrión": [anfitrionId],
+        "Total de venta": subtotal,
+        "Descuento": descuentoPorcentaje
+      }
+    };
     
+    // ✅ PARA VENTAS
+    if (tipoTransaccionActual === 'venta') {
+      // Agregar Items y campos de cantidad
+      ventaData.fields["Items"] = resumen;
+      Object.assign(ventaData.fields, camposIndividuales);
+      
+      // Vincular productos si existen
+      if (productosIdsUnicos.length > 0) {
+        ventaData.fields["producto"] = productosIdsUnicos;
+        console.log("✅ Vinculando productos de venta:", productosIdsUnicos);
+      }
+      
+      // Agregar notas si existen
+      if (notas) {
+        ventaData.fields["Notas"] = notas;
+      }
+    }
+    
+    // ✅ PARA DEVOLUCIONES
     if (tipoTransaccionActual === 'devolucion' && devolucionesAgregadas.length > 0) {
       const conteoDevolucion = {};
+      const devolucionesIdsUnicos = [];
       
+      // Contar productos devueltos y recolectar IDs únicos
       devolucionesAgregadas.forEach(dev => {
         const categoria = dev.nombre;
         conteoDevolucion[categoria] = (conteoDevolucion[categoria] || 0) + 1;
-        if (dev.id) {
+        if (dev.id && !devolucionesIdsUnicos.includes(dev.id)) {
           devolucionesIdsUnicos.push(dev.id);
         }
       });
       
-      devolucionesResumen = devolucionesAgregadas.map(d => d.nombre).join(", ");
+      // Crear resumen de texto
+      const devolucionesResumen = devolucionesAgregadas.map(d => d.nombre).join(", ");
+      ventaData.fields["Items"] = devolucionesResumen;
       
+      // Agregar campos de cantidad para devolución
+      const camposDevolucion = {};
       Object.entries(conteoDevolucion).forEach(([categoria, cantidad]) => {
         const nombreCampo = MAPEO_PRODUCTOS[categoria];
         if (nombreCampo) {
           camposDevolucion[nombreCampo] = cantidad;
         }
       });
-    }
-
-    // Construir objeto base con campos obligatorios
-    const ventaData = {
-      fields: {
-        "Cliente": [clienteSeleccionado.id],
-        "Anfitrión": [anfitrionId],
-        "Items": resumen || "Devolución",
-        "Total de venta": subtotal,
-        "Descuento": descuentoPorcentaje,
-        ...camposIndividuales
-      }
-    };
-    
-    // ✅ Agregar vinculación de productos ÚNICOS para VENTAS
-    if (tipoTransaccionActual === 'venta' && productosIdsUnicos.length > 0) {
-      ventaData.fields["producto"] = productosIdsUnicos;
-      console.log("✅ Vinculando productos de venta:", productosIdsUnicos);
-    }
-
-    // Agregar devoluciones si existen
-    if (tipoTransaccionActual === 'devolucion') {
-      if (devolucionesResumen) {
-        ventaData.fields["Devolución"] = devolucionesResumen;
-      }
       Object.assign(ventaData.fields, camposDevolucion);
       
-      // ✅ Agregar vinculación de productos ÚNICOS para DEVOLUCIONES
+      // ✅ SOLUCIÓN: Vincular productos en campo "Devolucion" (con IDs únicos)
       if (devolucionesIdsUnicos.length > 0) {
-        const idsUnicos = [...new Set(devolucionesIdsUnicos)];
-        ventaData.fields["Devolucion"] = idsUnicos;
-        console.log("✅ Vinculando productos de devolución:", idsUnicos);
+        ventaData.fields["Devolucion"] = devolucionesIdsUnicos;
+        console.log("✅ Vinculando productos de devolución:", devolucionesIdsUnicos);
       }
       
-      // ✅ Agregar autorización de devolución
+      // Agregar autorización
       const autorizacionInput = document.getElementById("autorizacionDevolucion");
       const autorizacion = autorizacionInput ? autorizacionInput.value.trim() : "";
       if (autorizacion) {
         ventaData.fields["Notas"] = `Autorizado por: ${autorizacion}${notas ? '\n' + notas : ''}`;
-      }
-    } else {
-      // Agregar notas normales si es venta
-      if (notas) {
-        ventaData.fields["Notas"] = notas;
       }
     }
 
@@ -882,7 +881,7 @@ window.registrarVenta = async function() {
       console.error("❌ Error en respuesta:", result);
       console.error("❌ Detalles del error:", JSON.stringify(result, null, 2));
       
-      let mensajeError = "Error al registrar la venta";
+      let mensajeError = "Error al registrar la transacción";
       if (result.error && result.error.message) {
         mensajeError = result.error.message;
       }
