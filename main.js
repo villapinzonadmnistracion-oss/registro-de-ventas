@@ -719,11 +719,13 @@ window.registrarVenta = async function() {
 
   try {
     const productos = [];
+    const productosIds = []; // Array para guardar los IDs de productos vinculados
     const filas = document.querySelectorAll("#productosLista tbody tr");
     
     filas.forEach(fila => {
       const nombre = fila.querySelector(".producto-nombre")?.value.trim();
       const categoria = fila.dataset.categoria || nombre;
+      const productoId = fila.dataset.productoId; // Obtener el ID del producto de inventario
       const precioInput = fila.querySelector(".producto-precio");
       const precioTexto = precioInput?.value.replace(/\./g, '').replace(/\D/g, '') || "0";
       const precio = parseInt(precioTexto);
@@ -734,8 +736,15 @@ window.registrarVenta = async function() {
           categoria: categoria,
           precio 
         });
+        
+        // Si tiene ID de producto del inventario, agregarlo al array de vinculación
+        if (productoId) {
+          productosIds.push(productoId);
+        }
       }
     });
+    
+    console.log("🔗 IDs de productos a vincular:", productosIds);
 
     if (productos.length === 0) {
       mostrarAlerta("error", "❌ Debe agregar al menos un producto con precio");
@@ -789,6 +798,12 @@ window.registrarVenta = async function() {
         ...camposIndividuales
       }
     };
+    
+    // Agregar vinculación de productos si existen IDs
+    if (productosIds.length > 0) {
+      ventaData.fields["producto"] = productosIds;
+      console.log("✅ Vinculando productos:", productosIds);
+    }
 
     // Agregar devoluciones si existen
     if (tipoTransaccionActual === 'devolucion' && devolucionesAgregadas.length > 0) {
