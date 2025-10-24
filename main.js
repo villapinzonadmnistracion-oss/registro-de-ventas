@@ -744,7 +744,10 @@ window.registrarVenta = async function() {
       }
     });
     
-    console.log("🔗 IDs de productos a vincular:", productosIds);
+    // ✅ SOLUCIÓN: Eliminar duplicados del array de IDs usando Set
+    const productosIdsUnicos = [...new Set(productosIds)];
+    console.log("🔗 IDs originales:", productosIds);
+    console.log("🔗 IDs únicos:", productosIdsUnicos);
 
     if (productos.length === 0) {
       mostrarAlerta("error", "❌ Debe agregar al menos un producto con precio");
@@ -787,7 +790,6 @@ window.registrarVenta = async function() {
     }
 
     // Construir objeto base con campos obligatorios
-    // NOTA: "Total neto numerico" es un campo calculado, NO se envía
     const ventaData = {
       fields: {
         "Cliente": [clienteSeleccionado.id],
@@ -799,10 +801,10 @@ window.registrarVenta = async function() {
       }
     };
     
-    // Agregar vinculación de productos si existen IDs
-    if (productosIds.length > 0) {
-      ventaData.fields["producto"] = productosIds;
-      console.log("✅ Vinculando productos:", productosIds);
+    // ✅ Agregar vinculación de productos ÚNICOS si existen IDs
+    if (productosIdsUnicos.length > 0) {
+      ventaData.fields["producto"] = productosIdsUnicos;
+      console.log("✅ Vinculando productos únicos:", productosIdsUnicos);
     }
 
     // Agregar devoluciones si existen
