@@ -744,35 +744,54 @@ window.registrarVenta = async function() {
     const notasInput = document.getElementById("notas");
     const notas = notasInput ? notasInput.value.trim() : "";
 
+    // Preparar datos para devoluciones si aplica
+    let devolucionesResumen = "";
+    const camposDevolucion = {};
+    
+    if (tipoTransaccionActual === 'devolucion' && devolucionesAgregadas.length > 0) {
+      const conteoDevolucion = {};
+      
+      devolucionesAgregadas.forEach(dev => {
+        const categoria = dev.nombre;
+        conteoDevolucion[categoria] = (conteoDevolucion[categoria] || 0) + 1;
+      });
+      
+      devolucionesResumen = devolucionesAgregadas.map(d => d.nombre).join(", ");
+      
+      Object.entries(conteoDevolucion).forEach(([categoria, cantidad]) => {
+        const nombreCampo = MAPEO_PRODUCTOS[categoria];
+        if (nombreCampo) {
+          camposDevolucion[nombreCampo] = cantidad;
+        }
+      });
+    }
+
+    // Construir objeto base con campos obligatorios
     const ventaData = {
       fields: {
         "Cliente": [clienteSeleccionado.id],
         "Anfitrión": [anfitrionId],
-        "Productos": resumen,
+        "Items": resumen,
         "Total": totalFinal,
-        "Descuento (%)": descuentoPorcentaje,
-        "Fecha": new Date().toISOString().split('T')[0]
+        "Subtotal": subtotal,
+        "Descuento %": descuentoPorcentaje,
+        "Descuento Monto": descuentoMonto,
+        ...camposIndividuales
       }
     };
 
-    // Solo agregar campos de cantidad si existen
-    if (Object.keys(camposIndividuales).length > 0) {
-      Object.assign(ventaData.fields, camposIndividuales);
+    // Agregar devoluciones si existen
+    if (tipoTransaccionActual === 'devolucion' && devolucionesAgregadas.length > 0) {
+      ventaData.fields["Devolución"] = devolucionesResumen;
+      Object.assign(ventaData.fields, camposDevolucion);
     }
 
+    // Agregar notas si existen
     if (notas) {
       ventaData.fields["Notas"] = notas;
     }
 
-    if (tipoTransaccionActual === 'devolucion') {
-      ventaData.fields["Tipo"] = "Devolución";
-      if (devolucionesAgregadas.length > 0) {
-        const productosDevueltos = devolucionesAgregadas.map(d => d.nombre).join(", ");
-        ventaData.fields["Productos Devueltos"] = productosDevueltos;
-      }
-    }
-
-    console.log("📤 Enviando venta:", ventaData);
+    console.log("📤 Enviando venta:", JSON.stringify(ventaData, null, 2));
 
     const response = await fetch(
       `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
