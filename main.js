@@ -1,5 +1,5 @@
 // ============================================
-// VARIABLES GLOBALES Y CONFIGURACIÓN
+// CONFIGURACIÓN Y VARIABLES GLOBALES
 // ============================================
 
 let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
@@ -14,6 +14,7 @@ const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
 // ============================================
 // MAPEO DE PRODUCTOS A CAMPOS DE AIRTABLE
 // ============================================
+
 const MAPEO_PRODUCTOS = {
   "Parka": "Parka_Cantidad",
   "Chaqueta": "Chaqueta_Cantidad",
@@ -50,7 +51,7 @@ const MAPEO_PRODUCTOS = {
 };
 
 // ============================================
-// INICIALIZACIÓN
+// INICIALIZACIÓN DEL SISTEMA
 // ============================================
 
 async function fetchConfig() {
@@ -110,6 +111,18 @@ async function cargarInventarioCompleto() {
     mostrarAlerta("error", "⚠️ Error al cargar inventario.");
   }
 }
+
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🚀 Iniciando aplicación...");
+  const configCargada = await fetchConfig();
+  if (configCargada) {
+    console.log("✅ Sistema listo");
+    const rutInput = document.getElementById("rutCliente");
+    if (rutInput) rutInput.focus();
+  } else {
+    mostrarAlerta("error", "❌ Error al cargar la configuración. Por favor, recarga la página.");
+  }
+});
 
 // ============================================
 // UTILIDADES - VALIDACIÓN Y FORMATO DE RUT
@@ -273,7 +286,6 @@ window.buscarCliente = async function() {
 
     if (data.records && data.records.length > 0) {
       clienteSeleccionado = data.records[0];
-      
       mostrarInfoCliente(clienteSeleccionado);
       
       const workArea = document.getElementById("workArea");
@@ -291,7 +303,6 @@ window.buscarCliente = async function() {
       }, 100);
       
       calcularTotal();
-      
     } else {
       mostrarClienteNoEncontrado();
     }
@@ -774,7 +785,6 @@ window.registrarVenta = async function() {
         "Items": resumen,
         "Total de venta": subtotal,
         "Descuento": descuentoPorcentaje,
-        "Total Neto": `${totalFinal.toLocaleString('es-CL')}`,
         "Total neto numerico": totalFinal,
         ...camposIndividuales
       }
@@ -830,57 +840,6 @@ window.registrarVenta = async function() {
 }
 
 // ============================================
-// LIMPIAR FORMULARIO
-// ============================================
-
-window.limpiarFormulario = function() {
-  document.getElementById("rutCliente").value = "";
-  document.getElementById("clienteInfo").classList.remove("show");
-  document.getElementById("clienteNoEncontrado").classList.remove("show");
-  clienteSeleccionado = null;
-
-  const workArea = document.getElementById("workArea");
-  if (workArea) workArea.classList.remove("show");
-
-  const anfitrionSelect = document.getElementById("anfitrionSelect");
-  if (anfitrionSelect) anfitrionSelect.value = "";
-
-  const tbody = document.querySelector("#productosLista tbody");
-  if (tbody) {
-    tbody.innerHTML = `
-      <tr>
-        <td><input type="text" class="producto-nombre" placeholder="Nombre del producto"></td>
-        <td><input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();"></td>
-        <td><button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button></td>
-      </tr>
-    `;
-  }
-
-  devolucionesAgregadas = [];
-  const devList = document.getElementById("devolucionesList");
-  if (devList) devList.innerHTML = "";
-
-  const descuentoInput = document.getElementById("descuento");
-  if (descuentoInput) descuentoInput.value = "0";
-  
-  const notasInput = document.getElementById("notas");
-  if (notasInput) notasInput.value = "";
-
-  const radioVenta = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
-  if (radioVenta) radioVenta.checked = true;
-  tipoTransaccionActual = 'venta';
-  cambiarTipoTransaccion('venta');
-
-  calcularTotal();
-  ocultarAlertas();
-
-  setTimeout(() => {
-    const rutInput = document.getElementById("rutCliente");
-    if (rutInput) rutInput.focus();
-  }, 100);
-}
-
-// ============================================
 // GENERACIÓN DE RESUMEN Y CONTEO
 // ============================================
 
@@ -894,14 +853,14 @@ function generarResumenYConteoIndividual(productosItems) {
       conteo[categoria] = (conteo[categoria] || 0) + 1;
     }
   });
-
+  
   // Crear resumen detallado con precios
   const resumenItems = productosItems
     .map(item => {
       const nombre = item.nombre || "Sin nombre";
       const precio = item.precio || 0;
       const precioFormateado = precio.toLocaleString('es-CL');
-      return `${nombre}(${precioFormateado})`;
+      return `${nombre} (${precioFormateado})`;
     })
     .join(", ");
   
@@ -909,7 +868,6 @@ function generarResumenYConteoIndividual(productosItems) {
   const camposIndividuales = {};
   Object.entries(conteo).forEach(([categoria, cantidad]) => {
     const nombreCampo = MAPEO_PRODUCTOS[categoria];
-
     if (nombreCampo) {
       camposIndividuales[nombreCampo] = cantidad;
       console.log(`✅ ${categoria} → ${nombreCampo}: ${cantidad}`);
@@ -920,7 +878,7 @@ function generarResumenYConteoIndividual(productosItems) {
   
   console.log("📊 Resumen Items:", resumenItems);
   console.log("🔢 Campos individuales:", camposIndividuales);
-
+  
   return {
     resumen: resumenItems,
     camposIndividuales: camposIndividuales
@@ -928,18 +886,52 @@ function generarResumenYConteoIndividual(productosItems) {
 }
 
 // ============================================
-// INICIALIZAR AL CARGAR LA PÁGINA
+// LIMPIAR FORMULARIO
 // ============================================
 
-document.addEventListener("DOMContentLoaded", async () => {
-  console.log("🚀 Iniciando aplicación...");
-  const configCargada = await fetchConfig();
+window.limpiarFormulario = function() {
+  document.getElementById("rutCliente").value = "";
+  document.getElementById("clienteInfo").classList.remove("show");
+  document.getElementById("clienteNoEncontrado").classList.remove("show");
+  clienteSeleccionado = null;
   
-  if (configCargada) {
-    console.log("✅ Sistema listo");
+  const workArea = document.getElementById("workArea");
+  if (workArea) workArea.classList.remove("show");
+  
+  const anfitrionSelect = document.getElementById("anfitrionSelect");
+  if (anfitrionSelect) anfitrionSelect.value = "";
+  
+  const tbody = document.querySelector("#productosLista tbody");
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td><input type="text" class="producto-nombre" placeholder="Nombre del producto"></td>
+        <td><input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();"></td>
+        <td><button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button></td>
+      </tr>
+    `;
+  }
+  
+  devolucionesAgregadas = [];
+  const devList = document.getElementById("devolucionesList");
+  if (devList) devList.innerHTML = "";
+  
+  const descuentoInput = document.getElementById("descuento");
+  if (descuentoInput) descuentoInput.value = "0";
+  
+  const notasInput = document.getElementById("notas");
+  if (notasInput) notasInput.value = "";
+  
+  const radioVenta = document.querySelector('input[name="tipoTransaccion"][value="venta"]');
+  if (radioVenta) radioVenta.checked = true;
+  
+  tipoTransaccionActual = 'venta';
+  cambiarTipoTransaccion('venta');
+  calcularTotal();
+  ocultarAlertas();
+  
+  setTimeout(() => {
     const rutInput = document.getElementById("rutCliente");
     if (rutInput) rutInput.focus();
-  } else {
-    mostrarAlerta("error", "❌ Error al cargar la configuración. Por favor, recarga la página.");
-  }
-});
+  }, 100);
+}
