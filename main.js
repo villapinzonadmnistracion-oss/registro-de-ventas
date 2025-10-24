@@ -778,6 +778,7 @@ window.registrarVenta = async function() {
     }
 
     // Construir objeto base con campos obligatorios
+    // NOTA: "Total neto numerico" es un campo calculado, NO se envía
     const ventaData = {
       fields: {
         "Cliente": [clienteSeleccionado.id],
@@ -785,7 +786,6 @@ window.registrarVenta = async function() {
         "Items": resumen,
         "Total de venta": subtotal,
         "Descuento": descuentoPorcentaje,
-        "Total neto numerico": totalFinal,
         ...camposIndividuales
       }
     };
