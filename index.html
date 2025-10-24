@@ -13,6 +13,34 @@
       <div class="logo-section">
         <h1>🛍️ Punto Secreto</h1>
         <p>Sistema de Registro de Ventas</p>
+        <!-- Descuento y Notas -->
+        <div class="section-card">
+          <h3>💰 Detalles Adicionales</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>💸 Descuento (%)</label>
+              <input
+                type="number"
+                id="descuento"
+                class="form-input"
+                placeholder="0"
+                min="0"
+                max="100"
+                value="0"
+                onchange="calcularTotal()"
+              />
+            </div>
+            <div class="form-field">
+              <label>📝 Notas u Observaciones</label>
+              <textarea
+                id="notas"
+                class="form-textarea"
+                placeholder="Escribir notas sobre la transacción..."
+                rows="2"
+              ></textarea>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="cliente-search">
@@ -58,38 +86,11 @@
 
       <!-- Anfitrión Movido -->
       <div class="section-card sidebar-section" id="anfitrionContainer">
-        <h3>👤 Anfitrión (Vendedor)</h3>
+        <h3>👤 Anfitrión</h3>
         <div class="form-field">
           <select id="anfitrionSelect" class="form-select">
             <option value="">Seleccionar anfitrión...</option>
           </select>
-        </div>
-      </div>
-
-      <!-- Detalles Adicionales Movido -->
-      <div class="section-card sidebar-section">
-        <h3>💰 Detalles Adicionales</h3>
-        <div class="form-field">
-          <label>💸 Descuento (%)</label>
-          <input
-            type="number"
-            id="descuento"
-            class="form-input"
-            placeholder="0"
-            min="0"
-            max="100"
-            value="0"
-            onchange="calcularTotal()"
-          />
-        </div>
-        <div class="form-field" style="margin-top: 12px;">
-          <label>📝 Notas u Observaciones</label>
-          <textarea
-            id="notas"
-            class="form-textarea"
-            placeholder="Escribir notas sobre la transacción..."
-            rows="2"
-          ></textarea>
         </div>
       </div>
 
