@@ -299,9 +299,6 @@ window.buscarCliente = async function() {
       const emptyState = document.getElementById("emptyState");
       if (emptyState) emptyState.style.display = "none";
       
-      const anfitrionContainer = document.getElementById("anfitrionContainer");
-      if (anfitrionContainer) anfitrionContainer.style.display = "block";
-      
       cargarAnfitriones();
       
       setTimeout(() => {
