@@ -119,7 +119,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (configCargada) {
     console.log("✅ Sistema listo");
     
-    // Cargar anfitrión guardado del turno
+    // Cargar anfitriones primero
+    await cargarAnfitriones();
+    
+    // Luego cargar anfitrión guardado del turno
     cargarAnfitrionGuardado();
     
     const rutInput = document.getElementById("rutCliente");
