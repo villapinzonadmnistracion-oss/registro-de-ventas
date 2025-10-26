@@ -5,6 +5,7 @@
 let AIRTABLE_TOKEN, BASE_ID, CLIENTES_TABLE_ID, VENTAS_TABLE_ID, ANFITRIONES_TABLE_ID, INVENTARIO_TABLE_ID;
 let clienteSeleccionado = null;
 let anfitrionSeleccionado = null;
+let anfitrionTurnoActual = null; // Nuevo: anfitrión del turno
 let tipoTransaccionActual = 'venta';
 let devolucionesAgregadas = [];
 let productosInventario = [];
@@ -117,6 +118,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const configCargada = await fetchConfig();
   if (configCargada) {
     console.log("✅ Sistema listo");
+    
+    // Cargar anfitrión guardado del turno
+    cargarAnfitrionGuardado();
+    
     const rutInput = document.getElementById("rutCliente");
     if (rutInput) rutInput.focus();
   } else {
@@ -346,12 +351,13 @@ async function cargarAnfitriones() {
     });
 
     const data = await response.json();
-    const select = document.getElementById("anfitrionSelect");
+    const selectTurno = document.getElementById("anfitrionTurnoSelect");
 
-    if (!select) return;
+    if (!selectTurno) return;
 
-    while (select.options.length > 1) {
-      select.remove(1);
+    // Limpiar opciones excepto la primera
+    while (selectTurno.options.length > 1) {
+      selectTurno.remove(1);
     }
 
     if (data.records) {
@@ -359,11 +365,83 @@ async function cargarAnfitriones() {
         const option = document.createElement("option");
         option.value = record.id;
         option.textContent = record.fields.Nombre || record.fields.name || "Sin nombre";
-        select.appendChild(option);
+        option.dataset.nombre = option.textContent;
+        selectTurno.appendChild(option);
       });
+      
+      // Si hay anfitrión guardado, seleccionarlo
+      if (anfitrionTurnoActual) {
+        selectTurno.value = anfitrionTurnoActual.id;
+        mostrarAnfitrionActual();
+      }
     }
   } catch (error) {
     console.error("Error al cargar anfitriones:", error);
+  }
+}
+
+// Nueva función: Establecer anfitrión del turno
+window.establecerAnfitrionTurno = function() {
+  const selectTurno = document.getElementById("anfitrionTurnoSelect");
+  if (!selectTurno || !selectTurno.value) {
+    anfitrionTurnoActual = null;
+    ocultarAnfitrionActual();
+    // Limpiar localStorage
+    try {
+      localStorage.removeItem('anfitrionTurno');
+    } catch (e) {
+      console.log("No se pudo limpiar localStorage");
+    }
+    return;
+  }
+
+  const selectedOption = selectTurno.options[selectTurno.selectedIndex];
+  anfitrionTurnoActual = {
+    id: selectTurno.value,
+    nombre: selectedOption.dataset.nombre || selectedOption.textContent
+  };
+
+  // Guardar en localStorage para persistencia
+  try {
+    localStorage.setItem('anfitrionTurno', JSON.stringify(anfitrionTurnoActual));
+  } catch (e) {
+    console.log("No se pudo guardar en localStorage");
+  }
+
+  mostrarAnfitrionActual();
+  mostrarAlerta("success", `✅ ${anfitrionTurnoActual.nombre} establecido como anfitrión del turno`);
+}
+
+// Nueva función: Mostrar anfitrión actual
+function mostrarAnfitrionActual() {
+  const container = document.getElementById("anfitrionActual");
+  const nombreEl = document.getElementById("nombreAnfitrionActual");
+  
+  if (container && nombreEl && anfitrionTurnoActual) {
+    nombreEl.textContent = anfitrionTurnoActual.nombre;
+    container.style.display = "block";
+  }
+}
+
+// Nueva función: Ocultar anfitrión actual
+function ocultarAnfitrionActual() {
+  const container = document.getElementById("anfitrionActual");
+  if (container) {
+    container.style.display = "none";
+  }
+}
+
+// Nueva función: Cargar anfitrión guardado
+function cargarAnfitrionGuardado() {
+  try {
+    const guardado = localStorage.getItem('anfitrionTurno');
+    if (guardado) {
+      anfitrionTurnoActual = JSON.parse(guardado);
+      console.log("✅ Anfitrión del turno cargado:", anfitrionTurnoActual.nombre);
+    }
+  } catch (e) {
+    console.log("No se pudo cargar anfitrión guardado");
+    anfitrionTurnoActual = null;
   }
 }
 
@@ -711,11 +789,16 @@ window.registrarVenta = async function() {
     return;
   }
 
-  const anfitrionSelect = document.getElementById("anfitrionSelect");
-  const anfitrionId = anfitrionSelect ? anfitrionSelect.value : null;
+  // Usar anfitrión del turno si está establecido
+  let anfitrionId = null;
+  if (anfitrionTurnoActual) {
+    anfitrionId = anfitrionTurnoActual.id;
+  }
   
   if (!anfitrionId) {
-    mostrarAlerta("error", "❌ Debe seleccionar un anfitrión");
+    mostrarAlerta("error", "❌ Debe seleccionar un anfitrión del turno");
+    const selectTurno = document.getElementById("anfitrionTurnoSelect");
+    if (selectTurno) selectTurno.focus();
     return;
   }
 
@@ -957,8 +1040,7 @@ window.limpiarFormulario = function() {
   const emptyState = document.getElementById("emptyState");
   if (emptyState) emptyState.style.display = "block";
   
-  const anfitrionSelect = document.getElementById("anfitrionSelect");
-  if (anfitrionSelect) anfitrionSelect.value = "";
+  // NO limpiar el anfitrión del turno - se mantiene para la siguiente venta
   
   const tbody = document.querySelector("#productosLista tbody");
   if (tbody) {
