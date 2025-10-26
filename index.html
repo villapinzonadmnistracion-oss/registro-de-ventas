@@ -56,7 +56,7 @@
         <p>Procesando...</p>
       </div>
 
-      <!-- Anfitrión Movido -->
+      <!-- Anfitrión -->
       <div class="section-card sidebar-section" id="anfitrionContainer">
         <h3>Anfitrión</h3>
         <div class="form-field">
@@ -66,7 +66,25 @@
         </div>
       </div>
 
-      <!-- Resumen Movido -->
+      <!-- Campo de Descuento -->
+      <div class="section-card sidebar-section">
+        <h3>💰 Descuento</h3>
+        <div class="form-field">
+          <label>Porcentaje de descuento (%)</label>
+          <input
+            type="number"
+            id="descuento"
+            class="form-input"
+            placeholder="0"
+            min="0"
+            max="100"
+            value="0"
+            oninput="calcularTotal()"
+          />
+        </div>
+      </div>
+
+      <!-- Resumen -->
       <div class="resumen-box sidebar-resumen">
         <h3>Resumen de Transacción</h3>
         <div class="resumen-item">
@@ -83,7 +101,7 @@
         </div>
       </div>
 
-      <!-- Botones de Acción Movidos -->
+      <!-- Botones de Acción -->
       <div class="action-buttons sidebar-actions">
         <button class="btn btn-primary" onclick="registrarVenta()">
           ✅ Registrar Transacción
@@ -187,7 +205,7 @@
           </div>
           <div id="devolucionesList" class="devoluciones-container"></div>
           
-          <!-- ✅ NUEVO: Campo de Autorización -->
+          <!-- Campo de Autorización -->
           <div class="form-field" style="margin-top: 20px;">
             <label for="autorizacionDevolucion">
               👤 ¿Quién autorizó esta devolución? <span style="color: #ef4444;">*</span>
@@ -202,6 +220,18 @@
             <small class="field-hint" style="color: #6b7280; display: block; margin-top: 6px;">
               📝 Campo obligatorio para registrar la devolución
             </small>
+          </div>
+        </div>
+
+        <!-- Notas Adicionales -->
+        <div class="section-card">
+          <h3>📝 Notas Adicionales (Opcional)</h3>
+          <div class="form-field">
+            <textarea
+              id="notas"
+              class="form-textarea"
+              placeholder="Escribe cualquier observación o nota adicional..."
+            ></textarea>
           </div>
         </div>
       </div>

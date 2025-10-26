@@ -842,7 +842,7 @@ window.registrarVenta = async function() {
       });
       Object.assign(ventaData.fields, camposDevolucion);
       
-      // ✅ SOLUCIÓN: Vincular productos en campo "Devolución" (con tilde y con IDs únicos)
+      // ✅ Vincular productos en campo "Devolución"
       if (devolucionesIdsUnicos.length > 0) {
         ventaData.fields["Devolución"] = devolucionesIdsUnicos;
         console.log("✅ Vinculando productos de devolución:", devolucionesIdsUnicos);
