@@ -17,6 +17,7 @@ const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
 // ============================================
 
 const MAPEO_PRODUCTOS = {
+  "Accesorio": "Accesorio_Cantidad",
   "Parka": "Parka_Cantidad",
   "Chaqueta": "Chaqueta_Cantidad",
   "Camisa": "Camisa_Cantidad",
