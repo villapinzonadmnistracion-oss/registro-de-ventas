@@ -1149,7 +1149,7 @@ window.registrarVenta = async function () {
       }
 
       // ✅ Agregar Total Devolución (usa el totalFinal calculado)
-      ventaData.fields["Total Devolución"] = totalFinal;
+      ventaData.fields["Total Devolución "] = totalFinal;
       console.log("✅ Total Devolución:", totalFinal);
 
       // Agregar autorización
