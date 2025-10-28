@@ -39,7 +39,7 @@
       <div class="cliente-no-encontrado" id="clienteNoEncontrado">
         <h3>⚠️ Cliente No Encontrado</h3>
         <p>El RUT ingresado no está registrado.</p>
-        <a
+        
           href="https://admnistracionpsecreto233-spec.github.io/formulario-clientes/"
           target="_blank"
           class="btn-registrar"
@@ -200,17 +200,43 @@
         <!-- Devoluciones -->
         <div class="section-card devolucion-section" id="devolucionesSection" style="display: none;">
           <h3>📥 Productos en Devolución</h3>
-          <div class="form-field">
-            <label>Escanear Código de Producto a Devolver</label>
-            <input
-              type="text"
-              id="codigoDevolucion"
-              class="scan-input devolucion-input"
-              placeholder="Escanear código..."
-              onkeypress="procesarCodigoDevolucion(event)"
-            />
+          
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Código de Barras / Producto a Devolver</label>
+              <input
+                type="text"
+                id="codigoDevolucion"
+                class="scan-input devolucion-input"
+                placeholder="Escanear o escribir código..."
+                onkeypress="procesarCodigoDevolucion(event)"
+              />
+              <small class="field-hint">💡 Presiona Enter después de escanear</small>
+            </div>
           </div>
-          <div id="devolucionesList" class="devoluciones-container"></div>
+
+          <div class="table-container">
+            <table class="productos-table" id="devolucionesLista">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio ($)</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="text" class="devolucion-nombre" placeholder="Nombre del producto"></td>
+                  <td><input type="text" class="devolucion-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();"></td>
+                  <td><button class="btn btn-remove" onclick="eliminarProductoDevolucion(this)">🗑️</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <button class="btn btn-add-devolucion" onclick="agregarProductoDevolucion()">
+            ➕ Agregar Producto a Devolución
+          </button>
           
           <!-- Campo de Autorización -->
           <div class="form-field" style="margin-top: 20px;">
