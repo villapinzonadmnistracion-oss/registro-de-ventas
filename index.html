@@ -36,16 +36,18 @@
         <p><strong>RUT:</strong> <span id="clienteRUT">-</span></p>
       </div>
 
-      <div class="cliente-no-encontrado" id="clienteNoEncontrado">
-        <h3>⚠️ Cliente No Encontrado</h3>
-        <p>El RUT ingresado no está registrado.</p>
-        
-          href="https://formulario-clientes-chi.vercel.app/"
-          target="_blank"
-          class="btn-registrar"
-        >
-          ➕ Registrar Nuevo Cliente
-        </a>
+      const mensaje = document.getElementById('clienteNoEncontrado');
+mensaje.innerHTML = `
+    <h3>⚠️ Cliente No Encontrado</h3>
+    <p>El RUT ingresado no está registrado.</p>
+    <a href="https://formulario-clientes-chi.vercel.app/" 
+       target="_blank" 
+       class="btn-registrar">
+        ➕ Registrar Nuevo Cliente
+    </a>
+    <p style="font-size: 12px; margin-top: 10px; opacity: 0.8;">
+        Después de registrar, busca nuevamente.
+    </p>
         <p style="margin-top: 12px; font-size: 0.85em; opacity: 0.9;">
           Después de registrar, busca nuevamente.
         </p>
