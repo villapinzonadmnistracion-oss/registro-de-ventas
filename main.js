@@ -1082,9 +1082,16 @@ window.registrarVenta = async function () {
       ? parseFloat(descuentoInput.value) || 0
       : 0;
 
+    // Obtener valor de Gift Card
+    const giftCardInput = document.getElementById("giftCard");
+    const giftCardTexto = giftCardInput
+      ? giftCardInput.value.replace(/\./g, "").replace(/\D/g, "")
+      : "0";
+    const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
+
     const subtotal = productos.reduce((sum, p) => sum + p.precio, 0);
     const descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
-    const totalFinal = subtotal - descuentoMonto;
+    const totalFinal = subtotal - descuentoMonto - giftCardMonto;
 
     const notasInput = document.getElementById("notas");
     const notas = notasInput ? notasInput.value.trim() : "";
@@ -1096,6 +1103,7 @@ window.registrarVenta = async function () {
         Anfitrión: [anfitrionId],
         "Total de venta": subtotal,
         Descuento: descuentoPorcentaje,
+        "Descuento gift cards": giftCardMonto,
       },
     };
 
