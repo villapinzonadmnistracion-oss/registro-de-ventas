@@ -904,16 +904,27 @@ window.calcularTotal = function () {
     ? parseFloat(descuentoInput.value) || 0
     : 0;
   const descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
-  const total = subtotal - descuentoMonto;
+
+  // Obtener valor de Gift Card
+  const giftCardInput = document.getElementById("giftCard");
+  const giftCardTexto = giftCardInput
+    ? giftCardInput.value.replace(/\./g, "").replace(/\D/g, "")
+    : "0";
+  const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
+
+  const total = subtotal - descuentoMonto - giftCardMonto;
 
   const subtotalEl = document.getElementById("subtotal");
   const descuentoEl = document.getElementById("descuentoMonto");
+  const giftCardEl = document.getElementById("giftCardMonto");
   const totalEl = document.getElementById("total");
 
   if (subtotalEl)
     subtotalEl.textContent = "$" + subtotal.toLocaleString("es-CL");
   if (descuentoEl)
     descuentoEl.textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
+  if (giftCardEl)
+    giftCardEl.textContent = "-$" + giftCardMonto.toLocaleString("es-CL");
   if (totalEl) totalEl.textContent = "$" + total.toLocaleString("es-CL");
 };
 
@@ -1297,6 +1308,8 @@ window.limpiarFormulario = function () {
 
   const descuentoInput = document.getElementById("descuento");
   if (descuentoInput) descuentoInput.value = "0";
+  const giftCardInput = document.getElementById("giftCard");
+  if (giftCardInput) giftCardInput.value = "0";
 
   const notasInput = document.getElementById("notas");
   if (notasInput) notasInput.value = "";

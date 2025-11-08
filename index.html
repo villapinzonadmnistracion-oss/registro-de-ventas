@@ -1,273 +1,386 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Punto Secreto - Registro de Ventas</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="main-container">
-    <!-- Panel Lateral Izquierdo -->
-    <div class="sidebar">
-      <div class="logo-section">
-        <h1>🛍️ Punto Secreto</h1>
-        <p>Sistema de Registro de Ventas</p>
-      </div>
-
-      <div class="cliente-search">
-        <label for="rutCliente">🔍 RUT del Cliente</label>
-        <input
-          type="text"
-          id="rutCliente"
-          placeholder="12.345.678-9"
-          onkeypress="buscarClienteEnter(event)"
-          oninput="formatearRUT(this)"
-        />
-        <button class="btn-search" onclick="buscarCliente()">
-          Buscar Cliente
-        </button>
-      </div>
-
-      <div class="cliente-info-card" id="clienteInfo">
-        <h3>✅ Cliente Encontrado</h3>
-        <p><strong>Nombre:</strong> <span id="clienteNombre">-</span></p>
-        <p><strong>Teléfono:</strong> <span id="clienteTelefono">-</span></p>
-        <p><strong>RUT:</strong> <span id="clienteRUT">-</span></p>
-      </div>
-
-      <div class="cliente-no-encontrado" id="clienteNoEncontrado">
-  <h3>⚠️ Cliente No Encontrado</h3>
-  <p>El RUT ingresado no está registrado.</p>
-  
-  <a href="https://formulario-clientes-chi.vercel.app/" target="_blank" class="btn-registrar">
-    ➕ Registrar Nuevo Cliente
-  </a>
-  
-  <p style="margin-top: 12px; font-size: 0.85em; opacity: 0.9;">
-    Después de registrar, busca nuevamente.
-  </p>
-</div>
-
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Procesando...</p>
-      </div>
-
-      <!-- Anfitrión del Turno -->
-      <div class="section-card sidebar-section" id="anfitrionTurnoContainer">
-        <h3>👤 Anfitrión del Turno</h3>
-        <div class="form-field">
-          <select id="anfitrionTurnoSelect" class="form-select" onchange="establecerAnfitrionTurno()">
-            <option value="">Seleccionar anfitrión del turno...</option>
-          </select>
-          <small class="field-hint" style="color: rgba(9, 9, 9, 0.9); margin-top: 6px;">
-            💡 Selecciona una vez al inicio del turno
-          </small>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Punto Secreto - Registro de Ventas</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <!-- Panel Lateral Izquierdo -->
+      <div class="sidebar">
+        <div class="logo-section">
+          <h1>🛍️ Punto Secreto</h1>
+          <p>Sistema de Registro de Ventas</p>
         </div>
-        <div id="anfitrionActual" style="display: none; background: rgba(5, 5, 5, 0.25); padding: 10px; border-radius: 8px; margin-top: 8px; text-align: center;">
-          <div style="font-size: 0.85em; opacity: 0.9; margin-bottom: 4px;">Trabajando:</div>
-          <div style="font-weight: 700; font-size: 1em;" id="nombreAnfitrionActual">-</div>
-        </div>
-      </div>
 
-      <!-- Campo de Descuento -->
-      <div class="section-card sidebar-section">
-        <h3>💰 Descuento</h3>
-        <div class="form-field">
-          <label>Porcentaje de descuento (%)</label>
+        <div class="cliente-search">
+          <label for="rutCliente">🔍 RUT del Cliente</label>
           <input
-            type="number"
-            id="descuento"
-            class="form-input"
-            placeholder="0"
-            min="0"
-            max="100"
-            value="0"
-            oninput="calcularTotal()"
+            type="text"
+            id="rutCliente"
+            placeholder="12.345.678-9"
+            onkeypress="buscarClienteEnter(event)"
+            oninput="formatearRUT(this)"
           />
-        </div>
-      </div>
-
-      <!-- Resumen -->
-      <div class="resumen-box sidebar-resumen">
-        <h3>Resumen de Transacción</h3>
-        <div class="resumen-item">
-          <span>Subtotal:</span>
-          <span id="subtotal">$0</span>
-        </div>
-        <div class="resumen-item">
-          <span>Descuento:</span>
-          <span id="descuentoMonto">$0</span>
-        </div>
-        <div class="resumen-item total">
-          <span>TOTAL:</span>
-          <span id="total">$0</span>
-        </div>
-      </div>
-
-      <!-- Botones de Acción -->
-      <div class="action-buttons sidebar-actions">
-        <button class="btn btn-primary" onclick="registrarVenta()">
-          ✅ Registrar Transacción
-        </button>
-        <button class="btn btn-secondary" onclick="limpiarFormulario()">
-          🔄 Nueva Transacción
-        </button>
-      </div>
-    </div>
-
-    <!-- Área Principal -->
-    <div class="main-content">
-      <div class="content-header">
-        <h2>Registro de Transacción</h2>
-        <div class="status-badge" id="statusBadge">
-        </div>
-      </div>
-
-      <div class="alert alert-success" id="alertSuccess"></div>
-      <div class="alert alert-error" id="alertError"></div>
-      <div class="alert alert-info" id="alertInfo"></div>
-
-      <!-- Mensaje inicial -->
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon">🔍</div>
-        <h3>Busca un cliente para comenzar</h3>
-        <p>Ingresa el RUT del cliente en el panel izquierdo</p>
-      </div>
-
-      <!-- Área de trabajo -->
-      <div class="work-area" id="workArea">
-        <!-- Tipo de Transacción -->
-        <div class="section-card">
-          <h3>📋 Tipo de Transacción</h3>
-          <div class="transaction-type">
-            <label class="radio-label">
-              <input type="radio" name="tipoTransaccion" value="venta" checked onchange="cambiarTipoTransaccion('venta')">
-              <span>📤 Venta</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="tipoTransaccion" value="devolucion" onchange="cambiarTipoTransaccion('devolucion')">
-              <span>📥 Devolución</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Productos (Ventas) -->
-        <div class="section-card" id="ventasSection">
-          <h3>🛒 Agregar Productos</h3>
-
-          <div class="form-grid">
-            <div class="form-field">
-              <label>Código de Barras / Producto</label>
-              <input
-                type="text"
-                id="codigoProducto"
-                class="scan-input"
-                placeholder="Escanear o escribir código..."
-                onkeypress="procesarCodigoProducto(event)"
-              />
-              <small class="field-hint">💡 Presiona Enter después de escanear</small>
-            </div>
-          </div>
-
-          <div class="table-container">
-            <table class="productos-table" id="productosLista">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Precio ($)</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><input type="text" class="producto-nombre" placeholder="Nombre del producto"></td>
-                  <td><input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();"></td>
-                  <td><button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button class="btn btn-add" onclick="agregarProducto()">
-            ➕ Agregar Producto
+          <button class="btn-search" onclick="buscarCliente()">
+            Buscar Cliente
           </button>
         </div>
 
-        <!-- Devoluciones -->
-        <div class="section-card devolucion-section" id="devolucionesSection" style="display: none;">
-          <h3>📥 Productos en Devolución</h3>
+        <div class="cliente-info-card" id="clienteInfo">
+          <h3>✅ Cliente Encontrado</h3>
+          <p><strong>Nombre:</strong> <span id="clienteNombre">-</span></p>
+          <p><strong>Teléfono:</strong> <span id="clienteTelefono">-</span></p>
+          <p><strong>RUT:</strong> <span id="clienteRUT">-</span></p>
+        </div>
 
-          <div class="form-grid">
-            <div class="form-field">
-              <label>Código de Barras / Producto a Devolver</label>
-              <input
-                type="text"
-                id="codigoDevolucion"
-                class="scan-input devolucion-input"
-                placeholder="Escanear o escribir código..."
-                onkeypress="procesarCodigoDevolucion(event)"
-              />
-              <small class="field-hint">💡 Presiona Enter después de escanear</small>
+        <div class="cliente-no-encontrado" id="clienteNoEncontrado">
+          <h3>⚠️ Cliente No Encontrado</h3>
+          <p>El RUT ingresado no está registrado.</p>
+
+          <a
+            href="https://formulario-clientes-chi.vercel.app/"
+            target="_blank"
+            class="btn-registrar"
+          >
+            ➕ Registrar Nuevo Cliente
+          </a>
+
+          <p style="margin-top: 12px; font-size: 0.85em; opacity: 0.9;">
+            Después de registrar, busca nuevamente.
+          </p>
+        </div>
+
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Procesando...</p>
+        </div>
+
+        <!-- Anfitrión del Turno -->
+        <div class="section-card sidebar-section" id="anfitrionTurnoContainer">
+          <h3>👤 Anfitrión del Turno</h3>
+          <div class="form-field">
+            <select
+              id="anfitrionTurnoSelect"
+              class="form-select"
+              onchange="establecerAnfitrionTurno()"
+            >
+              <option value="">Seleccionar anfitrión del turno...</option>
+            </select>
+            <small
+              class="field-hint"
+              style="color: rgba(9, 9, 9, 0.9); margin-top: 6px;"
+            >
+              💡 Selecciona una vez al inicio del turno
+            </small>
+          </div>
+          <div
+            id="anfitrionActual"
+            style="display: none; background: rgba(5, 5, 5, 0.25); padding: 10px; border-radius: 8px; margin-top: 8px; text-align: center;"
+          >
+            <div style="font-size: 0.85em; opacity: 0.9; margin-bottom: 4px;">
+              Trabajando:
+            </div>
+            <div
+              style="font-weight: 700; font-size: 1em;"
+              id="nombreAnfitrionActual"
+            >
+              -
             </div>
           </div>
+        </div>
 
-          <div class="table-container">
-            <table class="productos-table" id="devolucionesLista">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Precio ($)</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><input type="text" class="devolucion-nombre" placeholder="Nombre del producto"></td>
-                  <td><input type="text" class="devolucion-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();"></td>
-                  <td><button class="btn btn-remove" onclick="eliminarProductoDevolucion(this)">🗑️</button></td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Campo de Descuento -->
+        <div class="section-card sidebar-section">
+          <h3>💰 Descuento</h3>
+          <div class="form-field">
+            <label>Porcentaje de descuento (%)</label>
+            <input
+              type="number"
+              id="descuento"
+              class="form-input"
+              placeholder="0"
+              min="0"
+              max="100"
+              value="0"
+              oninput="calcularTotal()"
+            />
           </div>
+        </div>
 
-          <button class="btn btn-add-devolucion" onclick="agregarProductoDevolucion()">
-            ➕ Agregar Producto a Devolución
-          </button>
-
-          <!-- Campo de Autorización -->
-          <div class="form-field" style="margin-top: 20px;">
-            <label for="autorizacionDevolucion">
-              👤 ¿Quién autorizó esta devolución? <span style="color: #ef4444;">*</span>
-            </label>
+        <!-- Campo de Gift Cards -->
+        <div class="section-card sidebar-section">
+          <h3>🎁 Valor a Descontar (Gift Cards)</h3>
+          <div class="form-field">
+            <label>Monto a descontar ($)</label>
             <input
               type="text"
-              id="autorizacionDevolucion"
+              id="giftCard"
               class="form-input"
-              placeholder="Nombre de quien autoriza..."
-              style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 14px;"
+              placeholder="0"
+              value="0"
+              oninput="formatearPrecio(this); calcularTotal();"
             />
-            <small class="field-hint" style="color: #6b7280; display: block; margin-top: 6px;">
-              📝 Campo obligatorio para registrar la devolución
+            <small
+              class="field-hint"
+              style="color: rgba(9, 9, 9, 0.9); margin-top: 6px;"
+            >
+              💡 Ingresa el valor de la gift card
             </small>
           </div>
         </div>
 
-        <!-- Notas Adicionales -->
-        <div class="section-card">
-          <h3>📝 Notas Adicionales (Opcional)</h3>
-          <div class="form-field">
-            <textarea
-              id="notas"
-              class="form-textarea"
-              placeholder="Escribe cualquier observación o nota adicional..."
-            ></textarea>
+        <!-- Resumen -->
+        <div class="resumen-box sidebar-resumen">
+          <h3>Resumen de Transacción</h3>
+          <div class="resumen-item">
+            <span>Subtotal:</span>
+            <span id="subtotal">$0</span>
+          </div>
+          <div class="resumen-item">
+            <span>Descuento:</span>
+            <span id="descuentoMonto">$0</span>
+          </div>
+          <div class="resumen-item">
+            <span>Gift Card:</span>
+            <span id="giftCardMonto">-$0</span>
+          </div>
+          <div class="resumen-item total">
+            <span>TOTAL:</span>
+            <span id="total">$0</span>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="action-buttons sidebar-actions">
+          <button class="btn btn-primary" onclick="registrarVenta()">
+            ✅ Registrar Transacción
+          </button>
+          <button class="btn btn-secondary" onclick="limpiarFormulario()">
+            🔄 Nueva Transacción
+          </button>
+        </div>
+      </div>
+
+      <!-- Área Principal -->
+      <div class="main-content">
+        <div class="content-header">
+          <h2>Registro de Transacción</h2>
+          <div class="status-badge" id="statusBadge"></div>
+        </div>
+
+        <div class="alert alert-success" id="alertSuccess"></div>
+        <div class="alert alert-error" id="alertError"></div>
+        <div class="alert alert-info" id="alertInfo"></div>
+
+        <!-- Mensaje inicial -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🔍</div>
+          <h3>Busca un cliente para comenzar</h3>
+          <p>Ingresa el RUT del cliente en el panel izquierdo</p>
+        </div>
+
+        <!-- Área de trabajo -->
+        <div class="work-area" id="workArea">
+          <!-- Tipo de Transacción -->
+          <div class="section-card">
+            <h3>📋 Tipo de Transacción</h3>
+            <div class="transaction-type">
+              <label class="radio-label">
+                <input
+                  type="radio"
+                  name="tipoTransaccion"
+                  value="venta"
+                  checked
+                  onchange="cambiarTipoTransaccion('venta')"
+                />
+                <span>📤 Venta</span>
+              </label>
+              <label class="radio-label">
+                <input
+                  type="radio"
+                  name="tipoTransaccion"
+                  value="devolucion"
+                  onchange="cambiarTipoTransaccion('devolucion')"
+                />
+                <span>📥 Devolución</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Productos (Ventas) -->
+          <div class="section-card" id="ventasSection">
+            <h3>🛒 Agregar Productos</h3>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label>Código de Barras / Producto</label>
+                <input
+                  type="text"
+                  id="codigoProducto"
+                  class="scan-input"
+                  placeholder="Escanear o escribir código..."
+                  onkeypress="procesarCodigoProducto(event)"
+                />
+                <small class="field-hint"
+                  >💡 Presiona Enter después de escanear</small
+                >
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="productos-table" id="productosLista">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Precio ($)</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <input
+                        type="text"
+                        class="producto-nombre"
+                        placeholder="Nombre del producto"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        class="producto-precio"
+                        placeholder="0"
+                        oninput="formatearPrecio(this); calcularTotal();"
+                      />
+                    </td>
+                    <td>
+                      <button
+                        class="btn btn-remove"
+                        onclick="eliminarProducto(this)"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button class="btn btn-add" onclick="agregarProducto()">
+              ➕ Agregar Producto
+            </button>
+          </div>
+
+          <!-- Devoluciones -->
+          <div
+            class="section-card devolucion-section"
+            id="devolucionesSection"
+            style="display: none;"
+          >
+            <h3>📥 Productos en Devolución</h3>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label>Código de Barras / Producto a Devolver</label>
+                <input
+                  type="text"
+                  id="codigoDevolucion"
+                  class="scan-input devolucion-input"
+                  placeholder="Escanear o escribir código..."
+                  onkeypress="procesarCodigoDevolucion(event)"
+                />
+                <small class="field-hint"
+                  >💡 Presiona Enter después de escanear</small
+                >
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="productos-table" id="devolucionesLista">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Precio ($)</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <input
+                        type="text"
+                        class="devolucion-nombre"
+                        placeholder="Nombre del producto"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        class="devolucion-precio"
+                        placeholder="0"
+                        oninput="formatearPrecio(this); calcularTotal();"
+                      />
+                    </td>
+                    <td>
+                      <button
+                        class="btn btn-remove"
+                        onclick="eliminarProductoDevolucion(this)"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              class="btn btn-add-devolucion"
+              onclick="agregarProductoDevolucion()"
+            >
+              ➕ Agregar Producto a Devolución
+            </button>
+
+            <!-- Campo de Autorización -->
+            <div class="form-field" style="margin-top: 20px;">
+              <label for="autorizacionDevolucion">
+                👤 ¿Quién autorizó esta devolución?
+                <span style="color: #ef4444;">*</span>
+              </label>
+              <input
+                type="text"
+                id="autorizacionDevolucion"
+                class="form-input"
+                placeholder="Nombre de quien autoriza..."
+                style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 14px;"
+              />
+              <small
+                class="field-hint"
+                style="color: #6b7280; display: block; margin-top: 6px;"
+              >
+                📝 Campo obligatorio para registrar la devolución
+              </small>
+            </div>
+          </div>
+
+          <!-- Notas Adicionales -->
+          <div class="section-card">
+            <h3>📝 Notas Adicionales (Opcional)</h3>
+            <div class="form-field">
+              <textarea
+                id="notas"
+                class="form-textarea"
+                placeholder="Escribe cualquier observación o nota adicional..."
+              ></textarea>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <script src="main.js"></script>
-</body>
+    <script src="main.js"></script>
+  </body>
+</html>
