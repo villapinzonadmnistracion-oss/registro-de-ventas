@@ -1317,7 +1317,7 @@ window.limpiarFormulario = function () {
   const descuentoInput = document.getElementById("descuento");
   if (descuentoInput) descuentoInput.value = "0";
   const giftCardInput = document.getElementById("giftCard");
-  if (giftCardInput) giftCardInput.value = " ";
+  if (giftCardInput) giftCardInput.value = "0";
 
   const notasInput = document.getElementById("notas");
   if (notasInput) notasInput.value = "";
