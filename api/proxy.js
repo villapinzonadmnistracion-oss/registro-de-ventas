@@ -1,6 +1,5 @@
 export default async function handler(req, res) {
   try {
-    // Lee tus variables de entorno desde Vercel
     const tokenAirtable = process.env.AIRTABLE_TOKEN;
     const clientesTable = process.env.CLIENTES_TABLE_ID;
     const baseId = process.env.BASE_ID;
@@ -8,9 +7,11 @@ export default async function handler(req, res) {
     const anfitrionesTable = process.env.ANFITRIONES_TABLE_ID;
     const inventarioTable = process.env.INVENTARIO_TABLE_ID;
     const productosTable = process.env.PRODUCTOS_TABLE_ID;
+    const promocionesTable = process.env.PROMOCIONES_TABLE_ID; // ← NUEVA LÍNEA
 
-    // Valida que todas existan
-    if (!tokenAirtable || !clientesTable || !baseId || !ventasTable || !anfitrionesTable || !inventarioTable || !productosTable) {
+    // Validación actualizada
+    if (!tokenAirtable || !clientesTable || !baseId || !ventasTable || 
+        !anfitrionesTable || !inventarioTable || !productosTable || !promocionesTable) {
       return res.status(500).json({
         error: "Una o más variables de entorno no están definidas",
         variables: {
@@ -20,12 +21,13 @@ export default async function handler(req, res) {
           ventasTable_: !!ventasTable,
           anfitrionesTable_: !!anfitrionesTable,
           inventarioTable_: !!inventarioTable,
-          productosTable_: !!productosTable
+          productosTable_: !!productosTable,
+          promocionesTable_: !!promocionesTable // ← NUEVA LÍNEA
         }
       });
     }
 
-    // Devuelve un objeto JSON con todas las variables
+    // Respuesta actualizada
     res.status(200).json({
       airtableToken: tokenAirtable,
       clientesTable_: clientesTable,
@@ -33,7 +35,8 @@ export default async function handler(req, res) {
       ventasTable_: ventasTable,
       anfitrionesTable_: anfitrionesTable,
       inventarioTable_: inventarioTable,
-      productosTable_: productosTable
+      productosTable_: productosTable,
+      promocionesTable_: promocionesTable // ← NUEVA LÍNEA
     });
     
   } catch (err) {

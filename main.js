@@ -8,11 +8,14 @@ let AIRTABLE_TOKEN,
   VENTAS_TABLE_ID,
   ANFITRIONES_TABLE_ID,
   INVENTARIO_TABLE_ID;
+  PROMOCIONES_TABLE_ID;
 let clienteSeleccionado = null;
 let anfitrionSeleccionado = null;
 let anfitrionTurnoActual = null; // Nuevo: anfitrión del turno
 let tipoTransaccionActual = "venta";
 let productosInventario = [];
+let promocionesActivas = []; // ← NUEVA: Almacena promociones vigentes
+let promocionAplicada = null; // ← NUEVA: Promoción seleccionada actual
 
 const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
 
@@ -73,9 +76,13 @@ async function fetchConfig() {
     VENTAS_TABLE_ID = data.ventasTable_;
     ANFITRIONES_TABLE_ID = data.anfitrionesTable_;
     INVENTARIO_TABLE_ID = data.inventarioTable_;
+    // ↓ AGREGAR ESTA LÍNEA
+    PROMOCIONES_TABLE_ID = data.promocionesTable_;
 
     console.log("✅ Configuración cargada correctamente");
     await cargarInventarioCompleto();
+    // ↓ AGREGAR ESTA LÍNEA
+    await cargarPromocionesActivas();
     return true;
   } catch (error) {
     console.error("❌ Error al cargar configuración:", error);
@@ -123,6 +130,82 @@ async function cargarInventarioCompleto() {
     console.error("❌ Error al cargar inventario:", error);
     mostrarAlerta("error", "⚠️ Error al cargar inventario.");
   }
+}
+
+// ============================================
+// GESTIÓN DE PROMOCIONES
+// ============================================
+
+async function cargarPromocionesActivas() {
+  try {
+    const hoy = new Date().toISOString().split('T')[0]; // Formato: YYYY-MM-DD
+    
+    // Filtra promociones activas y dentro del rango de fechas
+    const formula = encodeURIComponent(
+      `AND({Activa}=1, IS_BEFORE({Fecha Inicio}, DATEADD('${hoy}', 1, 'days')), IS_AFTER({Fecha Fin}, DATEADD('${hoy}', -1, 'days')))`
+    );
+    
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?filterByFormula=${formula}&sort[0][field]=Prioridad&sort[0][direction]=asc`;
+    
+    console.log("🔍 Cargando promociones activas desde:", url);
+
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
+    });
+
+    const data = await response.json();
+
+    if (data.records) {
+      promocionesActivas = data.records.map((record) => ({
+        id: record.id,
+        nombre: record.fields.Nombre || "Sin nombre",
+        tipo: record.fields["Tipo de Promoción"] || "",
+        categorias: record.fields["Categorías Aplicables"] || [],
+        cantidadMinima: record.fields["Cantidad Mínima"] || 2,
+        valor: record.fields.Valor || 0,
+        prioridad: record.fields.Prioridad || 999,
+        descripcion: record.fields.Descripción || "",
+        recordCompleto: record,
+      }));
+      
+      console.log(`✅ ${promocionesActivas.length} promociones activas cargadas`);
+      mostrarPromocionesDisponibles();
+    }
+  } catch (error) {
+    console.error("❌ Error al cargar promociones:", error);
+    mostrarAlerta("error", "⚠️ Error al cargar promociones.");
+  }
+}
+
+function mostrarPromocionesDisponibles() {
+  const container = document.getElementById("promocionesDisponibles");
+  if (!container) return;
+
+  if (promocionesActivas.length === 0) {
+    container.innerHTML = '<p style="text-align: center; opacity: 0.7; font-size: 0.9em;">No hay promociones activas hoy</p>';
+    return;
+  }
+
+  let html = '<div class="promociones-lista">';
+  
+  promocionesActivas.forEach((promo) => {
+    const icono = promo.tipo === "Precio Fijo" ? "💰" : 
+                  promo.tipo === "Descuento Porcentual" ? "🏷️" : 
+                  promo.tipo === "N x M" ? "🎁" : "✨";
+    
+    html += `
+      <div class="promo-card">
+        <div class="promo-icon">${icono}</div>
+        <div class="promo-info">
+          <strong>${promo.nombre}</strong>
+          <p>${promo.descripcion || 'Promoción especial'}</p>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -596,6 +679,87 @@ async function buscarYAgregarProductoPorCodigo(codigoEscaneado) {
   }
 }
 
+function detectarPromocionesAplicables() {
+  if (promocionesActivas.length === 0) return;
+
+  // Contar productos por categoría en la tabla
+  const productosEnTabla = {};
+  const filas = document.querySelectorAll("#productosLista tbody tr");
+  
+  filas.forEach((fila) => {
+    const categoria = fila.dataset.categoria;
+    const precio = fila.querySelector(".producto-precio")?.value;
+    
+    if (categoria && precio) {
+      productosEnTabla[categoria] = (productosEnTabla[categoria] || 0) + 1;
+    }
+  });
+
+  // Buscar promociones aplicables
+  let promoSugerida = null;
+  
+  for (const promo of promocionesActivas) {
+    for (const categoria of promo.categorias) {
+      const cantidad = productosEnTabla[categoria] || 0;
+      
+      if (cantidad >= promo.cantidadMinima) {
+        promoSugerida = { ...promo, categoria, cantidad };
+        break;
+      }
+    }
+    if (promoSugerida) break;
+  }
+
+  // Mostrar sugerencia
+  const sugerenciaContainer = document.getElementById("sugerenciaPromocion");
+  if (!sugerenciaContainer) return;
+
+  if (promoSugerida) {
+    sugerenciaContainer.innerHTML = `
+      <div class="promo-sugerencia">
+        <div class="promo-badge">🎉 ¡PROMOCIÓN DISPONIBLE!</div>
+        <p><strong>${promoSugerida.nombre}</strong></p>
+        <p style="font-size: 0.9em; margin: 8px 0;">${promoSugerida.descripcion}</p>
+        <button class="btn btn-aplicar-promo" onclick="aplicarPromocion('${promoSugerida.id}', '${promoSugerida.categoria}', ${promoSugerida.cantidad})">
+          ✅ Aplicar Promoción
+        </button>
+        ${promocionAplicada ? '<button class="btn btn-cancelar-promo" onclick="cancelarPromocion()">❌ Cancelar Promoción</button>' : ''}
+      </div>
+    `;
+    sugerenciaContainer.style.display = "block";
+  } else {
+    sugerenciaContainer.style.display = "none";
+  }
+}
+
+window.aplicarPromocion = function(promoId, categoria, cantidad) {
+  const promo = promocionesActivas.find(p => p.id === promoId);
+  if (!promo) return;
+
+  // Guardar promoción aplicada
+  promocionAplicada = {
+    ...promo,
+    categoriaAplicada: categoria,
+    cantidadAplicada: cantidad
+  };
+
+  mostrarAlerta("success", `✅ Promoción "${promo.nombre}" aplicada`);
+  calcularTotal();
+  
+  // Ocultar sugerencia
+  const sugerenciaContainer = document.getElementById("sugerenciaPromocion");
+  if (sugerenciaContainer) {
+    sugerenciaContainer.style.display = "none";
+  }
+};
+
+window.cancelarPromocion = function() {
+  promocionAplicada = null;
+  mostrarAlerta("info", "ℹ️ Promoción cancelada");
+  calcularTotal();
+  detectarPromocionesAplicables();
+};
+
 function agregarProductoDesdeInventario(producto) {
   const tbody = document.querySelector("#productosLista tbody");
   if (!tbody) return;
@@ -912,7 +1076,122 @@ window.calcularTotal = function () {
     : "0";
   const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
 
-  const total = subtotal - descuentoMonto - giftCardMonto;
+  window.calcularTotal = function () {
+  let subtotal = 0;
+
+  // Calcular según el tipo de transacción
+  if (tipoTransaccionActual === "venta") {
+    const precios = document.querySelectorAll(".producto-precio");
+    precios.forEach((input) => {
+      const valorLimpio = input.value.replace(/\./g, "").replace(/\D/g, "");
+      const precio = valorLimpio ? parseInt(valorLimpio) : 0;
+      subtotal += precio;
+    });
+  } else if (tipoTransaccionActual === "devolucion") {
+    const preciosDevolucion = document.querySelectorAll(".devolucion-precio");
+    preciosDevolucion.forEach((input) => {
+      const valorLimpio = input.value.replace(/\./g, "").replace(/\D/g, "");
+      const precio = valorLimpio ? parseInt(valorLimpio) : 0;
+      subtotal += precio;
+    });
+  }
+
+  const descuentoInput = document.getElementById("descuento");
+  const descuentoPorcentaje = descuentoInput
+    ? parseFloat(descuentoInput.value) || 0
+    : 0;
+  let descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
+
+  // ========== NUEVO: CALCULAR DESCUENTO POR PROMOCIÓN ==========
+  let descuentoPromocion = 0;
+  
+  if (promocionAplicada && tipoTransaccionActual === "venta") {
+    const tipo = promocionAplicada.tipo;
+    const valor = promocionAplicada.valor;
+    const cantidad = promocionAplicada.cantidadAplicada;
+
+    if (tipo === "Precio Fijo") {
+      // Ej: 2 poleras x $9.900 total
+      descuentoPromocion = subtotal - valor;
+      
+    } else if (tipo === "Descuento Porcentual") {
+      // Ej: 50% en la segunda prenda
+      // Asumimos que se aplica al producto más barato
+      const precios = [];
+      document.querySelectorAll("#productosLista tbody tr").forEach(fila => {
+        const categoria = fila.dataset.categoria;
+        const precioInput = fila.querySelector(".producto-precio");
+        const precioTexto = precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
+        const precio = parseInt(precioTexto);
+        
+        if (categoria === promocionAplicada.categoriaAplicada && precio > 0) {
+          precios.push(precio);
+        }
+      });
+      
+      precios.sort((a, b) => a - b); // Ordenar de menor a mayor
+      
+      if (precios.length >= 2) {
+        descuentoPromocion = Math.round((precios[0] * valor) / 100);
+      }
+      
+    } else if (tipo === "N x M") {
+      // Ej: Lleva 2, paga 1
+      const productosPromo = [];
+      document.querySelectorAll("#productosLista tbody tr").forEach(fila => {
+        const categoria = fila.dataset.categoria;
+        const precioInput = fila.querySelector(".producto-precio");
+        const precioTexto = precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
+        const precio = parseInt(precioTexto);
+        
+        if (categoria === promocionAplicada.categoriaAplicada && precio > 0) {
+          productosPromo.push(precio);
+        }
+      });
+      
+      productosPromo.sort((a, b) => a - b);
+      
+      const cantidadPagar = valor; // En 2x1, valor = 1
+      const cantidadGratis = cantidad - cantidadPagar;
+      
+      for (let i = 0; i < cantidadGratis && i < productosPromo.length; i++) {
+        descuentoPromocion += productosPromo[i];
+      }
+    }
+  }
+  // ========== FIN NUEVO ==========
+
+  const giftCardInput = document.getElementById("giftCard");
+  const giftCardTexto = giftCardInput
+    ? giftCardInput.value.replace(/\./g, "").replace(/\D/g, "")
+    : "0";
+  const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
+
+  const total = subtotal - descuentoMonto - descuentoPromocion - giftCardMonto;
+
+  const subtotalEl = document.getElementById("subtotal");
+  const descuentoEl = document.getElementById("descuentoMonto");
+  const promoEl = document.getElementById("promocionMonto");
+  const giftCardEl = document.getElementById("giftCardMonto");
+  const totalEl = document.getElementById("total");
+
+  if (subtotalEl) subtotalEl.textContent = "$" + subtotal.toLocaleString("es-CL");
+  if (descuentoEl) descuentoEl.textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
+  
+  // ========== NUEVO: MOSTRAR DESCUENTO DE PROMOCIÓN ==========
+  if (promoEl) {
+    if (descuentoPromocion > 0 && promocionAplicada) {
+      promoEl.parentElement.style.display = "flex";
+      promoEl.textContent = "-$" + descuentoPromocion.toLocaleString("es-CL");
+    } else {
+      promoEl.parentElement.style.display = "none";
+    }
+  }
+  // ========== FIN NUEVO ==========
+  
+  if (giftCardEl) giftCardEl.textContent = "-$" + giftCardMonto.toLocaleString("es-CL");
+  if (totalEl) totalEl.textContent = "$" + total.toLocaleString("es-CL");
+};
 
   const subtotalEl = document.getElementById("subtotal");
   const descuentoEl = document.getElementById("descuentoMonto");
@@ -1104,6 +1383,7 @@ window.registrarVenta = async function () {
         "Total de venta": subtotal,
         Descuento: descuentoPorcentaje,
         "Descuento gift cards": giftCardMonto,
+        ...(promocionAplicada ? { "Promoción Aplicada": [promocionAplicada.id] } : {}),
       },
     };
 
@@ -1317,7 +1597,7 @@ window.limpiarFormulario = function () {
   const descuentoInput = document.getElementById("descuento");
   if (descuentoInput) descuentoInput.value = "0";
   const giftCardInput = document.getElementById("giftCard");
-  if (giftCardInput) giftCardInput.value = " ";
+  if (giftCardInput) giftCardInput.value = "0";
 
   const notasInput = document.getElementById("notas");
   if (notasInput) notasInput.value = "";
@@ -1334,6 +1614,12 @@ window.limpiarFormulario = function () {
   cambiarTipoTransaccion("venta");
   calcularTotal();
   ocultarAlertas();
+
+  promocionAplicada = null;
+  const sugerenciaContainer = document.getElementById("sugerenciaPromocion");
+  if (sugerenciaContainer) {
+    sugerenciaContainer.style.display = "none";
+  }
 
   setTimeout(() => {
     const rutInput = document.getElementById("rutCliente");

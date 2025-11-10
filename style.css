@@ -790,3 +790,133 @@ body {
     font-size: 1.3em;
   }
 }
+/* ==================== PROMOCIONES ==================== */
+.promociones-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promo-card {
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s;
+  animation: slideIn 0.3s ease;
+}
+
+.promo-card:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateX(5px);
+}
+
+.promo-icon {
+  font-size: 1.8em;
+  flex-shrink: 0;
+}
+
+.promo-info {
+  flex: 1;
+}
+
+.promo-info strong {
+  display: block;
+  font-size: 0.9em;
+  margin-bottom: 2px;
+  color: #1f2937;
+}
+
+.promo-info p {
+  font-size: 0.8em;
+  opacity: 0.85;
+  margin: 0;
+  color: #374151;
+}
+
+/* Sugerencia de Promoción */
+.promo-sugerencia-container {
+  border: 3px solid #fbbf24 !important;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+  }
+}
+
+.promo-sugerencia {
+  text-align: center;
+  padding: 10px;
+}
+
+.promo-badge {
+  display: inline-block;
+  background: #f59e0b;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.promo-sugerencia p {
+  color: #78350f;
+  margin: 5px 0;
+}
+
+.btn-aplicar-promo {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 10px 5px 0;
+  transition: all 0.3s;
+  font-size: 1em;
+}
+
+.btn-aplicar-promo:hover {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-cancelar-promo {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 10px 5px 0;
+  transition: all 0.3s;
+  font-size: 0.95em;
+}
+
+.btn-cancelar-promo:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}

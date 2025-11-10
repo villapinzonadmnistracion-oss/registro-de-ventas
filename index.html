@@ -11,9 +11,17 @@
       <!-- Panel Lateral Izquierdo -->
       <div class="sidebar">
         <div class="logo-section">
+          <div class="section-card sidebar-section">
+  <h3>🎉 Promociones Activas Hoy</h3>
+  <div id="promocionesDisponibles">
+    <p style="text-align: center; opacity: 0.7; font-size: 0.9em;">Cargando...</p>
+  </div>
+</div>
           <h1>🛍️ Punto Secreto</h1>
           <p>Sistema de Registro de Ventas</p>
         </div>
+
+
 
         <div class="cliente-search">
           <label for="rutCliente">🔍 RUT del Cliente</label>
@@ -139,6 +147,10 @@
             <span>Subtotal:</span>
             <span id="subtotal">$0</span>
           </div>
+          <div class="resumen-item" style="display: none;">
+  <span>Promoción:</span>
+  <span id="promocionMonto">$0</span>
+</div>
           <div class="resumen-item">
             <span>Descuento:</span>
             <span id="descuentoMonto">$0</span>
@@ -229,6 +241,9 @@
                 >
               </div>
             </div>
+            <div id="sugerenciaPromocion" class="section-card promo-sugerencia-container" style="display: none;">
+  <!-- Se llenará dinámicamente con JavaScript -->
+</div>
 
             <div class="table-container">
               <table class="productos-table" id="productosLista">
