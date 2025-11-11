@@ -153,61 +153,88 @@ async function cargarInventarioCompleto() {
 
 async function cargarPromocionesActivas() {
   try {
-    // Usar el nombre correcto del campo checkbox: "Promocion Activa"
-    const formula = encodeURIComponent(`{Promocion Activa}=TRUE()`);
+    // SIN FILTRO - Traer todas las promociones para ver qué llega
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?sort[0][field]=Prioridad&sort[0][direction]=asc`;
     
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?filterByFormula=${formula}&sort[0][field]=Prioridad&sort[0][direction]=asc`;
-    
-    console.log("🔍 Cargando promociones activas...");
+    console.log("🔍 Cargando TODAS las promociones (modo debug)...");
+    console.log("📍 URL:", url);
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ Respuesta del servidor:", errorText);
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
+    
+    // 🔍 DEBUG: Ver TODOS los registros que llegan
+    console.log("📦 Datos recibidos de Airtable:", data);
+    console.log("📊 Total de registros:", data.records?.length || 0);
+    
+    if (data.records && data.records.length > 0) {
+      // 🔍 DEBUG: Ver los campos del primer registro
+      console.log("🔬 Campos del primer registro:", data.records[0].fields);
+      console.log("🔬 Nombres de campos disponibles:", Object.keys(data.records[0].fields));
+    }
 
     if (data.records) {
       const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0); // Resetear a medianoche
+      hoy.setHours(0, 0, 0, 0);
       
-      // Filtrar por fechas en JavaScript
+      // Filtrar manualmente las promociones activas
       promocionesActivas = data.records
         .filter((record) => {
-          const fechaInicio = record.fields["Fecha Inicio"] 
-            ? new Date(record.fields["Fecha Inicio"]) 
-            : null;
-          const fechaFin = record.fields["Fecha Fin"] 
-            ? new Date(record.fields["Fecha Fin"]) 
-            : null;
+          const fields = record.fields;
           
-          // Si no hay fechas, la promoción está activa
+          // 🔍 DEBUG: Ver cada registro
+          console.log("🔍 Analizando registro:", fields.Name || fields.Nombre);
+          console.log("  - Promocion Activa:", fields["Promocion Activa"]);
+          console.log("  - Todos los campos:", Object.keys(fields));
+          
+          // Buscar el campo checkbox por diferentes nombres posibles
+          const activa = fields["Promocion Activa"] || 
+                        fields["Promoción Activa"] ||
+                        fields["promocion activa"] ||
+                        fields["Activa"] ||
+                        fields["activa"];
+          
+          if (!activa) {
+            console.log("  ⚠️ Este registro NO está activo");
+            return false;
+          }
+          
+          const fechaInicio = fields["Fecha Inicio"] ? new Date(fields["Fecha Inicio"]) : null;
+          const fechaFin = fields["Fecha Fin"] ? new Date(fields["Fecha Fin"]) : null;
+          
           if (!fechaInicio && !fechaFin) return true;
           
-          // Verificar que hoy esté dentro del rango
           const dentroDelRango = 
             (!fechaInicio || fechaInicio <= hoy) && 
             (!fechaFin || fechaFin >= hoy);
+          
+          console.log(`  ✅ Activa: ${activa}, Dentro del rango: ${dentroDelRango}`);
           
           return dentroDelRango;
         })
         .map((record) => ({
           id: record.id,
           nombre: record.fields.Name || record.fields.Nombre || "Sin nombre",
-          tipo: record.fields["Tipo de Promoción"] || "",
-          categorias: record.fields["Categorías Aplicables"] || [],
-          cantidadMinima: record.fields["Cantidad Mínima"] || 2,
+          tipo: record.fields["Tipo de Promoción"] || record.fields["Tipo de Promocion"] || "",
+          categorias: record.fields["Categorías Aplicables"] || record.fields["Categorias Aplicables"] || [],
+          cantidadMinima: record.fields["Cantidad Mínima"] || record.fields["Cantidad Minima"] || 2,
           valor: record.fields.Valor || 0,
           prioridad: record.fields.Prioridad || 999,
-          descripcion: record.fields.Descripción || "",
+          descripcion: record.fields.Descripción || record.fields.Descripcion || "",
           recordCompleto: record,
         }));
       
-      console.log(`✅ ${promocionesActivas.length} promociones activas cargadas`);
-      console.log("📋 Promociones:", promocionesActivas);
+      console.log(`✅ ${promocionesActivas.length} promociones activas filtradas`);
+      console.log("📋 Promociones finales:", promocionesActivas);
+      
       mostrarPromocionesDisponibles();
     } else {
       console.log("⚠️ No se encontraron registros");
@@ -215,11 +242,11 @@ async function cargarPromocionesActivas() {
       mostrarPromocionesDisponibles();
     }
   } catch (error) {
-    console.error("❌ Error al cargar promociones:", error);
+    console.error("❌ Error completo:", error);
+    console.error("❌ Stack:", error.stack);
     mostrarAlerta("error", "⚠️ Error al cargar promociones: " + error.message);
   }
 }
-
 function mostrarPromocionesDisponibles() {
   const container = document.getElementById("promocionesDisponibles");
   if (!container) return;
