@@ -153,12 +153,8 @@ async function cargarInventarioCompleto() {
 
 async function cargarPromocionesActivas() {
   try {
-    const hoy = new Date().toISOString().split('T')[0]; // Formato: YYYY-MM-DD
-    
-    // Fórmula corregida para Airtable
-    const formula = encodeURIComponent(
-      `AND({Activa}=TRUE(), IS_BEFORE(OR(IS_SAME({Fecha Inicio},'${hoy}','day'),IS_BEFORE({Fecha Inicio},'${hoy}','day')),TRUE()), IS_AFTER(OR(IS_SAME({Fecha Fin},'${hoy}','day'),IS_AFTER({Fecha Fin},'${hoy}','day')),TRUE()))`
-    );
+    // Traer TODAS las promociones activas (sin filtro de fecha en la fórmula)
+    const formula = encodeURIComponent(`{Activa}=TRUE()`);
     
     const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?filterByFormula=${formula}&sort[0][field]=Prioridad&sort[0][direction]=asc`;
     
@@ -175,17 +171,40 @@ async function cargarPromocionesActivas() {
     const data = await response.json();
 
     if (data.records) {
-      promocionesActivas = data.records.map((record) => ({
-        id: record.id,
-        nombre: record.fields.Nombre || "Sin nombre",
-        tipo: record.fields["Tipo de Promoción"] || "",
-        categorias: record.fields["Categorías Aplicables"] || [],
-        cantidadMinima: record.fields["Cantidad Mínima"] || 2,
-        valor: record.fields.Valor || 0,
-        prioridad: record.fields.Prioridad || 999,
-        descripcion: record.fields.Descripción || "",
-        recordCompleto: record,
-      }));
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0); // Resetear a medianoche
+      
+      // Filtrar por fechas en JavaScript
+      promocionesActivas = data.records
+        .filter((record) => {
+          const fechaInicio = record.fields["Fecha Inicio"] 
+            ? new Date(record.fields["Fecha Inicio"]) 
+            : null;
+          const fechaFin = record.fields["Fecha Fin"] 
+            ? new Date(record.fields["Fecha Fin"]) 
+            : null;
+          
+          // Si no hay fechas, la promoción está activa
+          if (!fechaInicio && !fechaFin) return true;
+          
+          // Verificar que hoy esté dentro del rango
+          const dentroDelRango = 
+            (!fechaInicio || fechaInicio <= hoy) && 
+            (!fechaFin || fechaFin >= hoy);
+          
+          return dentroDelRango;
+        })
+        .map((record) => ({
+          id: record.id,
+          nombre: record.fields.Nombre || "Sin nombre",
+          tipo: record.fields["Tipo de Promoción"] || "",
+          categorias: record.fields["Categorías Aplicables"] || [],
+          cantidadMinima: record.fields["Cantidad Mínima"] || 2,
+          valor: record.fields.Valor || 0,
+          prioridad: record.fields.Prioridad || 999,
+          descripcion: record.fields.Descripción || "",
+          recordCompleto: record,
+        }));
       
       console.log(`✅ ${promocionesActivas.length} promociones activas cargadas`);
       console.log("📋 Promociones:", promocionesActivas);
