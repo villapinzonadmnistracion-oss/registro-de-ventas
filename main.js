@@ -153,11 +153,9 @@ async function cargarInventarioCompleto() {
 
 async function cargarPromocionesActivas() {
   try {
-    // SIN FILTRO - Traer todas las promociones para ver qué llega
     const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?sort[0][field]=Prioridad&sort[0][direction]=asc`;
     
-    console.log("🔍 Cargando TODAS las promociones (modo debug)...");
-    console.log("📍 URL:", url);
+    console.log("🔍 Cargando promociones desde Airtable...");
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
@@ -171,29 +169,16 @@ async function cargarPromocionesActivas() {
 
     const data = await response.json();
     
-    // 🔍 DEBUG: Ver TODOS los registros que llegan
-    console.log("📦 Datos recibidos de Airtable:", data);
-    console.log("📊 Total de registros:", data.records?.length || 0);
-    
-    if (data.records && data.records.length > 0) {
-      // 🔍 DEBUG: Ver los campos del primer registro
-      console.log("🔬 Campos del primer registro:", data.records[0].fields);
-      console.log("🔬 Nombres de campos disponibles:", Object.keys(data.records[0].fields));
-    }
+    console.log("📦 Total de registros recibidos:", data.records?.length || 0);
 
     if (data.records) {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       
-      // Filtrar manualmente las promociones activas
+      // Filtrar promociones activas
       promocionesActivas = data.records
         .filter((record) => {
           const fields = record.fields;
-          
-          // 🔍 DEBUG: Ver cada registro
-          console.log("🔍 Analizando registro:", fields.Name || fields.Nombre);
-          console.log("  - Promocion Activa:", fields["Promocion Activa"]);
-          console.log("  - Todos los campos:", Object.keys(fields));
           
           // Buscar el campo checkbox por diferentes nombres posibles
           const activa = fields["Promocion Activa"] || 
@@ -203,20 +188,36 @@ async function cargarPromocionesActivas() {
                         fields["activa"];
           
           if (!activa) {
-            console.log("  ⚠️ Este registro NO está activo");
+            console.log(`  ⏭️ Saltando "${fields.Name || fields.Nombre}" - no está activa`);
             return false;
           }
           
+          // ✅ CORRECCIÓN: Comparar solo fechas sin hora
           const fechaInicio = fields["Fecha Inicio"] ? new Date(fields["Fecha Inicio"]) : null;
           const fechaFin = fields["Fecha Fin"] ? new Date(fields["Fecha Fin"]) : null;
           
-          if (!fechaInicio && !fechaFin) return true;
+          // Si no hay fechas, la promoción es válida
+          if (!fechaInicio && !fechaFin) {
+            console.log(`  ✅ "${fields.Name || fields.Nombre}" - sin restricción de fechas`);
+            return true;
+          }
+          
+          // Normalizar fechas a medianoche para comparación correcta
+          if (fechaInicio) {
+            fechaInicio.setHours(0, 0, 0, 0);
+          }
+          if (fechaFin) {
+            fechaFin.setHours(23, 59, 59, 999); // Incluir todo el día final
+          }
           
           const dentroDelRango = 
-            (!fechaInicio || fechaInicio <= hoy) && 
-            (!fechaFin || fechaFin >= hoy);
+            (!fechaInicio || hoy >= fechaInicio) && 
+            (!fechaFin || hoy <= fechaFin);
           
-          console.log(`  ✅ Activa: ${activa}, Dentro del rango: ${dentroDelRango}`);
+          console.log(`  ${dentroDelRango ? '✅' : '❌'} "${fields.Name || fields.Nombre}"`);
+          console.log(`     Fecha Inicio: ${fechaInicio?.toLocaleDateString() || 'N/A'}`);
+          console.log(`     Fecha Fin: ${fechaFin?.toLocaleDateString() || 'N/A'}`);
+          console.log(`     Hoy: ${hoy.toLocaleDateString()}`);
           
           return dentroDelRango;
         })
@@ -232,8 +233,7 @@ async function cargarPromocionesActivas() {
           recordCompleto: record,
         }));
       
-      console.log(`✅ ${promocionesActivas.length} promociones activas filtradas`);
-      console.log("📋 Promociones finales:", promocionesActivas);
+      console.log(`✅ ${promocionesActivas.length} promociones activas disponibles`);
       
       mostrarPromocionesDisponibles();
     } else {
@@ -242,40 +242,9 @@ async function cargarPromocionesActivas() {
       mostrarPromocionesDisponibles();
     }
   } catch (error) {
-    console.error("❌ Error completo:", error);
-    console.error("❌ Stack:", error.stack);
+    console.error("❌ Error al cargar promociones:", error);
     mostrarAlerta("error", "⚠️ Error al cargar promociones: " + error.message);
   }
-}
-function mostrarPromocionesDisponibles() {
-  const container = document.getElementById("promocionesDisponibles");
-  if (!container) return;
-
-  if (promocionesActivas.length === 0) {
-    container.innerHTML = '<p style="text-align: center; opacity: 0.7; font-size: 0.9em;">No hay promociones activas hoy</p>';
-    return;
-  }
-
-  let html = '<div class="promociones-lista">';
-  
-  promocionesActivas.forEach((promo) => {
-    const icono = promo.tipo === "Precio Fijo" ? "💰" : 
-                  promo.tipo === "Descuento Porcentual" ? "🏷️" : 
-                  promo.tipo === "N x M" ? "🎁" : "✨";
-    
-    html += `
-      <div class="promo-card">
-        <div class="promo-icon">${icono}</div>
-        <div class="promo-info">
-          <strong>${promo.nombre}</strong>
-          <p>${promo.descripcion || 'Promoción especial'}</p>
-        </div>
-      </div>
-    `;
-  });
-  
-  html += '</div>';
-  container.innerHTML = html;
 }
 
 function mostrarPromocionesDisponibles() {
