@@ -153,8 +153,8 @@ async function cargarInventarioCompleto() {
 
 async function cargarPromocionesActivas() {
   try {
-    // Traer TODAS las promociones activas (sin filtro de fecha en la fórmula)
-    const formula = encodeURIComponent(`{Activa}=TRUE()`);
+    // Usar el nombre correcto del campo checkbox: "Promocion Activa"
+    const formula = encodeURIComponent(`{Promocion Activa}=TRUE()`);
     
     const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?filterByFormula=${formula}&sort[0][field]=Prioridad&sort[0][direction]=asc`;
     
@@ -196,7 +196,7 @@ async function cargarPromocionesActivas() {
         })
         .map((record) => ({
           id: record.id,
-          nombre: record.fields.Nombre || "Sin nombre",
+          nombre: record.fields.Name || record.fields.Nombre || "Sin nombre",
           tipo: record.fields["Tipo de Promoción"] || "",
           categorias: record.fields["Categorías Aplicables"] || [],
           cantidadMinima: record.fields["Cantidad Mínima"] || 2,
@@ -208,6 +208,10 @@ async function cargarPromocionesActivas() {
       
       console.log(`✅ ${promocionesActivas.length} promociones activas cargadas`);
       console.log("📋 Promociones:", promocionesActivas);
+      mostrarPromocionesDisponibles();
+    } else {
+      console.log("⚠️ No se encontraron registros");
+      promocionesActivas = [];
       mostrarPromocionesDisponibles();
     }
   } catch (error) {
