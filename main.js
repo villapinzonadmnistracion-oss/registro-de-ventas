@@ -147,22 +147,30 @@ async function cargarInventarioCompleto() {
 // GESTIÓN DE PROMOCIONES
 // ============================================
 
+// ============================================
+// GESTIÓN DE PROMOCIONES
+// ============================================
+
 async function cargarPromocionesActivas() {
   try {
     const hoy = new Date().toISOString().split('T')[0]; // Formato: YYYY-MM-DD
     
-    // Filtra promociones activas y dentro del rango de fechas
+    // Fórmula corregida para Airtable
     const formula = encodeURIComponent(
-      `AND({Activa}=1, IS_BEFORE({Fecha Inicio}, DATEADD('${hoy}', 1, 'days')), IS_AFTER({Fecha Fin}, DATEADD('${hoy}', -1, 'days')))`
+      `AND({Activa}=TRUE(), IS_BEFORE(OR(IS_SAME({Fecha Inicio},'${hoy}','day'),IS_BEFORE({Fecha Inicio},'${hoy}','day')),TRUE()), IS_AFTER(OR(IS_SAME({Fecha Fin},'${hoy}','day'),IS_AFTER({Fecha Fin},'${hoy}','day')),TRUE()))`
     );
     
     const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?filterByFormula=${formula}&sort[0][field]=Prioridad&sort[0][direction]=asc`;
     
-    console.log("🔍 Cargando promociones activas desde:", url);
+    console.log("🔍 Cargando promociones activas...");
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
     });
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
 
     const data = await response.json();
 
@@ -180,11 +188,12 @@ async function cargarPromocionesActivas() {
       }));
       
       console.log(`✅ ${promocionesActivas.length} promociones activas cargadas`);
+      console.log("📋 Promociones:", promocionesActivas);
       mostrarPromocionesDisponibles();
     }
   } catch (error) {
     console.error("❌ Error al cargar promociones:", error);
-    mostrarAlerta("error", "⚠️ Error al cargar promociones.");
+    mostrarAlerta("error", "⚠️ Error al cargar promociones: " + error.message);
   }
 }
 
