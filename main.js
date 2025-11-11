@@ -143,101 +143,80 @@ async function cargarInventarioCompleto() {
 // GESTIÓN DE PROMOCIONES
 // ============================================
 
+// ============================================
+// GESTIÓN DE PROMOCIONES
+// ============================================
+
 async function cargarPromocionesActivas() {
   try {
-    // SIN FILTRO - Traer todas las promociones para ver qué llega
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?sort[0][field]=Prioridad&sort[0][direction]=asc`;
+    const hoy = new Date().toISOString().split('T')[0]; // Formato: YYYY-MM-DD
     
-    console.log("🔍 Cargando TODAS las promociones (modo debug)...");
-    console.log("📍 URL:", url);
+    // Filtra promociones activas y dentro del rango de fechas
+    const formula = encodeURIComponent(
+      `AND({Activa}=1, IS_BEFORE({Fecha Inicio}, DATEADD('${hoy}', 1, 'days')), IS_AFTER({Fecha Fin}, DATEADD('${hoy}', -1, 'days')))`
+    );
+    
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?filterByFormula=${formula}&sort[0][field]=Prioridad&sort[0][direction]=asc`;
+    
+    console.log("🔍 Cargando promociones activas desde:", url);
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Respuesta del servidor:", errorText);
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
-    }
-
     const data = await response.json();
-    
-    // 🔍 DEBUG: Ver TODOS los registros que llegan
-    console.log("📦 Datos recibidos de Airtable:", data);
-    console.log("📊 Total de registros:", data.records?.length || 0);
-    
-    if (data.records && data.records.length > 0) {
-      // 🔍 DEBUG: Ver los campos del primer registro
-      console.log("🔬 Campos del primer registro:", data.records[0].fields);
-      console.log("🔬 Nombres de campos disponibles:", Object.keys(data.records[0].fields));
-    }
 
     if (data.records) {
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
+      promocionesActivas = data.records.map((record) => ({
+        id: record.id,
+        nombre: record.fields.Nombre || "Sin nombre",
+        tipo: record.fields["Tipo de Promoción"] || "",
+        categorias: record.fields["Categorías Aplicables"] || [],
+        cantidadMinima: record.fields["Cantidad Mínima"] || 2,
+        valor: record.fields.Valor || 0,
+        prioridad: record.fields.Prioridad || 999,
+        descripcion: record.fields.Descripción || "",
+        recordCompleto: record,
+      }));
       
-      // Filtrar manualmente las promociones activas
-      promocionesActivas = data.records
-        .filter((record) => {
-          const fields = record.fields;
-          
-          // 🔍 DEBUG: Ver cada registro
-          console.log("🔍 Analizando registro:", fields.Name || fields.Nombre);
-          console.log("  - Promocion Activa:", fields["Promocion Activa"]);
-          console.log("  - Todos los campos:", Object.keys(fields));
-          
-          // Buscar el campo checkbox por diferentes nombres posibles
-          const activa = fields["Promocion Activa"] || 
-                        fields["Promoción Activa"] ||
-                        fields["promocion activa"] ||
-                        fields["Activa"] ||
-                        fields["activa"];
-          
-          if (!activa) {
-            console.log("  ⚠️ Este registro NO está activo");
-            return false;
-          }
-          
-          const fechaInicio = fields["Fecha Inicio"] ? new Date(fields["Fecha Inicio"]) : null;
-          const fechaFin = fields["Fecha Fin"] ? new Date(fields["Fecha Fin"]) : null;
-          
-          if (!fechaInicio && !fechaFin) return true;
-          
-          const dentroDelRango = 
-            (!fechaInicio || fechaInicio <= hoy) && 
-            (!fechaFin || fechaFin >= hoy);
-          
-          console.log(`  ✅ Activa: ${activa}, Dentro del rango: ${dentroDelRango}`);
-          
-          return dentroDelRango;
-        })
-        .map((record) => ({
-          id: record.id,
-          nombre: record.fields.Name || record.fields.Nombre || "Sin nombre",
-          tipo: record.fields["Tipo de Promoción"] || record.fields["Tipo de Promocion"] || "",
-          categorias: record.fields["Categorías Aplicables"] || record.fields["Categorias Aplicables"] || [],
-          cantidadMinima: record.fields["Cantidad Mínima"] || record.fields["Cantidad Minima"] || 2,
-          valor: record.fields.Valor || 0,
-          prioridad: record.fields.Prioridad || 999,
-          descripcion: record.fields.Descripción || record.fields.Descripcion || "",
-          recordCompleto: record,
-        }));
-      
-      console.log(`✅ ${promocionesActivas.length} promociones activas filtradas`);
-      console.log("📋 Promociones finales:", promocionesActivas);
-      
-      mostrarPromocionesDisponibles();
-    } else {
-      console.log("⚠️ No se encontraron registros");
-      promocionesActivas = [];
+      console.log(`✅ ${promocionesActivas.length} promociones activas cargadas`);
       mostrarPromocionesDisponibles();
     }
   } catch (error) {
-    console.error("❌ Error completo:", error);
-    console.error("❌ Stack:", error.stack);
-    mostrarAlerta("error", "⚠️ Error al cargar promociones: " + error.message);
+    console.error("❌ Error al cargar promociones:", error);
+    mostrarAlerta("error", "⚠️ Error al cargar promociones.");
   }
+}
+
+function mostrarPromocionesDisponibles() {
+  const container = document.getElementById("promocionesDisponibles");
+  if (!container) return;
+
+  if (promocionesActivas.length === 0) {
+    container.innerHTML = '<p style="text-align: center; opacity: 0.7; font-size: 0.9em;">No hay promociones activas hoy</p>';
+    return;
+  }
+
+  let html = '<div class="promociones-lista">';
+  
+  promocionesActivas.forEach((promo) => {
+    const icono = promo.tipo === "Precio Fijo" ? "💰" : 
+                  promo.tipo === "Descuento Porcentual" ? "🏷️" : 
+                  promo.tipo === "N x M" ? "🎁" : "✨";
+    
+    html += `
+      <div class="promo-card">
+        <div class="promo-icon">${icono}</div>
+        <div class="promo-info">
+          <strong>${promo.nombre}</strong>
+          <p>${promo.descripcion || 'Promoción especial'}</p>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 function mostrarPromocionesDisponibles() {
