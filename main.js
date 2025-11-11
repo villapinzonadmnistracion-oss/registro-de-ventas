@@ -2,20 +2,25 @@
 // CONFIGURACIÓN Y VARIABLES GLOBALES
 // ============================================
 
+// ============================================
+// CONFIGURACIÓN Y VARIABLES GLOBALES
+// ============================================
+
 let AIRTABLE_TOKEN,
   BASE_ID,
   CLIENTES_TABLE_ID,
   VENTAS_TABLE_ID,
   ANFITRIONES_TABLE_ID,
-  INVENTARIO_TABLE_ID;
-PROMOCIONES_TABLE_ID;
+  INVENTARIO_TABLE_ID,
+  PROMOCIONES_TABLE_ID; // ← DEBE ESTAR AQUÍ
+
 let clienteSeleccionado = null;
 let anfitrionSeleccionado = null;
-let anfitrionTurnoActual = null; // Nuevo: anfitrión del turno
+let anfitrionTurnoActual = null;
 let tipoTransaccionActual = "venta";
 let productosInventario = [];
-let promocionesActivas = []; // ← NUEVA: Almacena promociones vigentes
-let promocionAplicada = null;
+let promocionesActivas = []; // ← NUEVA
+let promocionAplicada = null; // ← NUEVA
 
 const INVENTARIO_PRINCIPAL_ID = "tblxyk6vtahtFlLVo";
 
