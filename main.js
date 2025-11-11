@@ -172,8 +172,11 @@ async function cargarPromocionesActivas() {
     console.log("📦 Total de registros recibidos:", data.records?.length || 0);
 
     if (data.records) {
+      // Obtener la fecha actual solo con día/mes/año (sin hora)
       const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
+      const hoySoloFecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+      
+      console.log("📅 Fecha actual:", hoySoloFecha.toLocaleDateString());
       
       // Filtrar promociones activas
       promocionesActivas = data.records
@@ -192,9 +195,19 @@ async function cargarPromocionesActivas() {
             return false;
           }
           
-          // ✅ CORRECCIÓN: Comparar solo fechas sin hora
-          const fechaInicio = fields["Fecha Inicio"] ? new Date(fields["Fecha Inicio"]) : null;
-          const fechaFin = fields["Fecha Fin"] ? new Date(fields["Fecha Fin"]) : null;
+          // Obtener fechas de Airtable y convertir solo a fecha (sin hora)
+          let fechaInicio = null;
+          let fechaFin = null;
+          
+          if (fields["Fecha Inicio"]) {
+            const tempInicio = new Date(fields["Fecha Inicio"]);
+            fechaInicio = new Date(tempInicio.getFullYear(), tempInicio.getMonth(), tempInicio.getDate());
+          }
+          
+          if (fields["Fecha Fin"]) {
+            const tempFin = new Date(fields["Fecha Fin"]);
+            fechaFin = new Date(tempFin.getFullYear(), tempFin.getMonth(), tempFin.getDate());
+          }
           
           // Si no hay fechas, la promoción es válida
           if (!fechaInicio && !fechaFin) {
@@ -202,22 +215,17 @@ async function cargarPromocionesActivas() {
             return true;
           }
           
-          // Normalizar fechas a medianoche para comparación correcta
-          if (fechaInicio) {
-            fechaInicio.setHours(0, 0, 0, 0);
-          }
-          if (fechaFin) {
-            fechaFin.setHours(23, 59, 59, 999); // Incluir todo el día final
-          }
+          // Comparar usando getTime() para comparación numérica precisa
+          const hoyTime = hoySoloFecha.getTime();
+          const inicioTime = fechaInicio ? fechaInicio.getTime() : -Infinity;
+          const finTime = fechaFin ? fechaFin.getTime() : Infinity;
           
-          const dentroDelRango = 
-            (!fechaInicio || hoy >= fechaInicio) && 
-            (!fechaFin || hoy <= fechaFin);
+          const dentroDelRango = hoyTime >= inicioTime && hoyTime <= finTime;
           
           console.log(`  ${dentroDelRango ? '✅' : '❌'} "${fields.Name || fields.Nombre}"`);
-          console.log(`     Fecha Inicio: ${fechaInicio?.toLocaleDateString() || 'N/A'}`);
-          console.log(`     Fecha Fin: ${fechaFin?.toLocaleDateString() || 'N/A'}`);
-          console.log(`     Hoy: ${hoy.toLocaleDateString()}`);
+          if (fechaInicio) console.log(`     Fecha Inicio: ${fechaInicio.toLocaleDateString()}`);
+          if (fechaFin) console.log(`     Fecha Fin: ${fechaFin.toLocaleDateString()}`);
+          console.log(`     Hoy: ${hoySoloFecha.toLocaleDateString()}`);
           
           return dentroDelRango;
         })
