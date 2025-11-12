@@ -1248,81 +1248,102 @@ window.calcularTotal = function () {
   let descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
 
   // ========== CALCULAR DESCUENTO POR PROMOCIÓN ==========
-  let descuentoPromocion = 0;
+  // ========== CALCULAR DESCUENTO POR PROMOCIÓN ==========
+let descuentoPromocion = 0;
 
-  if (promocionAplicada && tipoTransaccionActual === "venta") {
-    console.log("💰 Calculando descuento de promoción:", promocionAplicada.nombre);
-    
-    const tipo = promocionAplicada.tipo;
-    const valor = promocionAplicada.valor;
-    const cantidad = promocionAplicada.cantidadAplicada;
-
-    console.log("   Tipo:", tipo);
-    console.log("   Valor:", valor);
-    console.log("   Cantidad aplicada:", cantidad);
-
-    if (tipo === "Precio Fijo") {
-      // Ej: 2 poleras x $9.900 total
-      descuentoPromocion = subtotal - valor;
-      console.log(`   📉 Precio Fijo: Subtotal ${subtotal} → ${valor} = Descuento ${descuentoPromocion}`);
-    } else if (tipo === "Descuento Porcentual") {
-  // Ej: 50% en la segunda prenda
-  const precios = [];
+if (promocionAplicada && tipoTransaccionActual === "venta") {
+  console.log("💰 Calculando descuento de promoción:", promocionAplicada.nombre);
+  
+  const tipo = promocionAplicada.tipo;
+  const valor = promocionAplicada.valor;
+  const cantidadMinima = promocionAplicada.cantidadMinima || 2;
+  
+  // Obtener las categorías aplicables
   const categoriasPromo = Array.isArray(promocionAplicada.categoriaAplicada) 
     ? promocionAplicada.categoriaAplicada 
     : [promocionAplicada.categoriaAplicada];
+
+  console.log("   Tipo:", tipo);
+  console.log("   Valor:", valor);
+  console.log("   Cantidad mínima:", cantidadMinima);
+  console.log("   Categorías aplicables:", categoriasPromo);
+
+  // ✅ RECOLECTAR TODOS LOS PRECIOS DE LAS CATEGORÍAS APLICABLES
+  const preciosPromo = [];
   
   document.querySelectorAll("#productosLista tbody tr").forEach((fila) => {
     const categoria = fila.dataset.categoria;
     const precioInput = fila.querySelector(".producto-precio");
-    const precioTexto =
-      precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
+    const precioTexto = precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
     const precio = parseInt(precioTexto);
 
-    // ✅ Verificar si la categoría está en la lista de aplicables
     if (categoriasPromo.includes(categoria) && precio > 0) {
-      precios.push(precio);
+      preciosPromo.push({ categoria, precio });
     }
   });
 
-      precios.sort((a, b) => a - b); // Ordenar de menor a mayor
+  console.log(`   📦 ${preciosPromo.length} prendas elegibles encontradas`);
 
-      if (precios.length >= 2) {
-        descuentoPromocion = Math.round((precios[0] * valor) / 100);
-        console.log(`   📉 Descuento Porcentual: ${valor}% de ${precios[0]} = ${descuentoPromocion}`);
-      }
-    } else if (tipo === "N x M") {
-      // Ej: Lleva 2, paga 1
-      const productosPromo = [];
-      document.querySelectorAll("#productosLista tbody tr").forEach((fila) => {
-        const categoria = fila.dataset.categoria;
-        const precioInput = fila.querySelector(".producto-precio");
-        const precioTexto =
-          precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
-        const precio = parseInt(precioTexto);
+  if (preciosPromo.length >= cantidadMinima) {
+    // Ordenar de menor a mayor precio
+    preciosPromo.sort((a, b) => a.precio - b.precio);
+    
+    // ✅ CALCULAR CUÁNTAS VECES APLICA LA PROMOCIÓN
+    const vecesAplica = Math.floor(preciosPromo.length / cantidadMinima);
+    console.log(`   🔁 La promoción aplica ${vecesAplica} vez/veces`);
 
-        if (
-          categoria === promocionAplicada.categoriaAplicada &&
-          precio > 0
-        ) {
-          productosPromo.push(precio);
-        }
-      });
-
-      productosPromo.sort((a, b) => a - b);
-
-      const cantidadPagar = valor; // En 2x1, valor = 1
-      const cantidadGratis = cantidad - cantidadPagar;
-
-      for (let i = 0; i < cantidadGratis && i < productosPromo.length; i++) {
-        descuentoPromocion += productosPromo[i];
+    if (tipo === "Precio Fijo") {
+      // Ej: 2 prendas x $9.900 total
+      // Si hay 4 prendas: 2 grupos × ($precio_grupo - $9.900)
+      for (let i = 0; i < vecesAplica; i++) {
+        const inicio = i * cantidadMinima;
+        const fin = inicio + cantidadMinima;
+        const grupoPrecios = preciosPromo.slice(inicio, fin);
+        const subtotalGrupo = grupoPrecios.reduce((sum, p) => sum + p.precio, 0);
+        const descuentoGrupo = subtotalGrupo - valor;
+        descuentoPromocion += descuentoGrupo;
+        console.log(`   📉 Grupo ${i + 1}: Subtotal ${subtotalGrupo} → ${valor} = Descuento ${descuentoGrupo}`);
       }
       
-      console.log(`   📉 ${cantidad} x ${cantidadPagar}: ${cantidadGratis} gratis = Descuento ${descuentoPromocion}`);
+    } else if (tipo === "Descuento Porcentual") {
+      // Ej: 50% en la segunda prenda más barata de cada grupo
+      // Si hay 4 prendas: aplicar descuento en la 1ra y 3ra prenda (las más baratas de cada grupo)
+      for (let i = 0; i < vecesAplica; i++) {
+        const inicio = i * cantidadMinima;
+        const grupoPrecios = preciosPromo.slice(inicio, inicio + cantidadMinima);
+        // Aplicar descuento a la prenda más barata del grupo
+        const preciaMasBarata = grupoPrecios[0].precio;
+        const descuentoGrupo = Math.round((preciaMasBarata * valor) / 100);
+        descuentoPromocion += descuentoGrupo;
+        console.log(`   📉 Grupo ${i + 1}: ${valor}% de ${preciaMasBarata} = Descuento ${descuentoGrupo}`);
+      }
+      
+    } else if (tipo === "N x M") {
+      // Ej: Lleva 2, paga 1 (cantidadMinima=2, valor=1)
+      // Si hay 4 prendas: 2 grupos, en cada grupo regala la más barata
+      const cantidadPagar = valor;
+      const cantidadGratis = cantidadMinima - cantidadPagar;
+      
+      for (let i = 0; i < vecesAplica; i++) {
+        const inicio = i * cantidadMinima;
+        const grupoPrecios = preciosPromo.slice(inicio, inicio + cantidadMinima);
+        
+        // Regalar las N prendas más baratas del grupo
+        for (let j = 0; j < cantidadGratis && j < grupoPrecios.length; j++) {
+          descuentoPromocion += grupoPrecios[j].precio;
+        }
+        console.log(`   📉 Grupo ${i + 1}: ${cantidadMinima} x ${cantidadPagar} = ${cantidadGratis} gratis`);
+      }
     }
     
-    console.log("✅ Descuento promoción calculado:", descuentoPromocion);
+    console.log("✅ Descuento total de promoción:", descuentoPromocion);
+    
+    // ✅ MOSTRAR CUÁNTAS VECES APLICÓ
+    if (vecesAplica > 1) {
+      mostrarAlerta("info", `🎉 Promoción aplicada ${vecesAplica} veces`);
+    }
   }
+}
   // ========== FIN CALCULAR PROMOCIÓN ==========
 
   const giftCardInput = document.getElementById("giftCard");
