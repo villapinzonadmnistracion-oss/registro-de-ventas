@@ -840,17 +840,33 @@ function detectarPromocionesAplicables() {
     console.log(`   Categorías aplicables:`, promo.categorias);
     console.log(`   Cantidad mínima: ${promo.cantidadMinima}`);
     
+    // ✅ CAMBIO CLAVE: Sumar todas las categorías aplicables
+    let cantidadTotal = 0;
+    const categoriasEncontradas = [];
+    
     for (const categoria of promo.categorias) {
       const cantidad = productosEnTabla[categoria] || 0;
       console.log(`   ${categoria}: ${cantidad} productos`);
-
-      if (cantidad >= promo.cantidadMinima) {
-        promoSugerida = { ...promo, categoria, cantidad };
-        console.log(`✅ Promoción aplicable encontrada: ${promo.nombre}`);
-        break;
+      
+      if (cantidad > 0) {
+        cantidadTotal += cantidad;
+        categoriasEncontradas.push(categoria);
       }
     }
-    if (promoSugerida) break;
+    
+    console.log(`   📊 Total combinado: ${cantidadTotal} productos`);
+
+    // Verificar si cumple la cantidad mínima
+    if (cantidadTotal >= promo.cantidadMinima) {
+      promoSugerida = { 
+        ...promo, 
+        categoria: categoriasEncontradas.join(" + "), // Mostrar todas las categorías
+        cantidad: cantidadTotal,
+        categoriasAplicadas: categoriasEncontradas // Guardar array de categorías
+      };
+      console.log(`✅ Promoción aplicable encontrada: ${promo.nombre}`);
+      break;
+    }
   }
 
   // Mostrar sugerencia
@@ -894,10 +910,10 @@ function detectarPromocionesAplicables() {
   }
 }
 
-window.aplicarPromocion = function (promoId, categoria, cantidad) {
+window.aplicarPromocion = function (promoId, categoriaDisplay, cantidad) {
   console.log("🎯 BOTÓN CLICKEADO - Aplicar Promoción");
   console.log("   promoId:", promoId);
-  console.log("   categoria:", categoria);
+  console.log("   categoriaDisplay:", categoriaDisplay);
   console.log("   cantidad:", cantidad);
   
   const promo = promocionesActivas.find((p) => p.id === promoId);
@@ -912,10 +928,10 @@ window.aplicarPromocion = function (promoId, categoria, cantidad) {
   console.log("   Tipo:", promo.tipo);
   console.log("   Valor:", promo.valor);
 
-  // Guardar promoción aplicada
+  // Guardar promoción aplicada con las categorías que aplican
   promocionAplicada = {
     ...promo,
-    categoriaAplicada: categoria,
+    categoriaAplicada: promo.categorias, // Guardar TODAS las categorías aplicables
     cantidadAplicada: cantidad,
   };
 
@@ -923,10 +939,8 @@ window.aplicarPromocion = function (promoId, categoria, cantidad) {
 
   mostrarAlerta("success", `✅ Promoción "${promo.nombre}" aplicada correctamente`);
   
-  // Recalcular total
-  calcularTotal();
 
-  // Actualizar UI de sugerencia
+  calcularTotal();
   detectarPromocionesAplicables();
 };
 window.cancelarPromocion = function () {
@@ -1252,22 +1266,24 @@ window.calcularTotal = function () {
       descuentoPromocion = subtotal - valor;
       console.log(`   📉 Precio Fijo: Subtotal ${subtotal} → ${valor} = Descuento ${descuentoPromocion}`);
     } else if (tipo === "Descuento Porcentual") {
-      // Ej: 50% en la segunda prenda
-      const precios = [];
-      document.querySelectorAll("#productosLista tbody tr").forEach((fila) => {
-        const categoria = fila.dataset.categoria;
-        const precioInput = fila.querySelector(".producto-precio");
-        const precioTexto =
-          precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
-        const precio = parseInt(precioTexto);
+  // Ej: 50% en la segunda prenda
+  const precios = [];
+  const categoriasPromo = Array.isArray(promocionAplicada.categoriaAplicada) 
+    ? promocionAplicada.categoriaAplicada 
+    : [promocionAplicada.categoriaAplicada];
+  
+  document.querySelectorAll("#productosLista tbody tr").forEach((fila) => {
+    const categoria = fila.dataset.categoria;
+    const precioInput = fila.querySelector(".producto-precio");
+    const precioTexto =
+      precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
+    const precio = parseInt(precioTexto);
 
-        if (
-          categoria === promocionAplicada.categoriaAplicada &&
-          precio > 0
-        ) {
-          precios.push(precio);
-        }
-      });
+    // ✅ Verificar si la categoría está en la lista de aplicables
+    if (categoriasPromo.includes(categoria) && precio > 0) {
+      precios.push(precio);
+    }
+  });
 
       precios.sort((a, b) => a - b); // Ordenar de menor a mayor
 
