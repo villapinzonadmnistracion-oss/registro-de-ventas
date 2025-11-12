@@ -154,7 +154,7 @@ async function cargarInventarioCompleto() {
 async function cargarPromocionesActivas() {
   try {
     const url = `https://api.airtable.com/v0/${BASE_ID}/${PROMOCIONES_TABLE_ID}?sort[0][field]=Prioridad&sort[0][direction]=asc`;
-    
+
     console.log("🔍 Cargando promociones desde Airtable...");
 
     const response = await fetch(url, {
@@ -168,81 +168,120 @@ async function cargarPromocionesActivas() {
     }
 
     const data = await response.json();
-    
+
     console.log("📦 Total de registros recibidos:", data.records?.length || 0);
 
     if (data.records) {
       // Obtener la fecha actual solo con día/mes/año (sin hora)
       const hoy = new Date();
-      const hoySoloFecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-      
+      const hoySoloFecha = new Date(
+        hoy.getFullYear(),
+        hoy.getMonth(),
+        hoy.getDate()
+      );
+
       console.log("📅 Fecha actual:", hoySoloFecha.toLocaleDateString());
-      
+
       // Filtrar promociones activas
       promocionesActivas = data.records
         .filter((record) => {
           const fields = record.fields;
-          
+
           // Buscar el campo checkbox por diferentes nombres posibles
-          const activa = fields["Promocion Activa"] || 
-                        fields["Promoción Activa"] ||
-                        fields["promocion activa"] ||
-                        fields["Activa"] ||
-                        fields["activa"];
-          
+          const activa =
+            fields["Promocion Activa"] ||
+            fields["Promoción Activa"] ||
+            fields["promocion activa"] ||
+            fields["Activa"] ||
+            fields["activa"];
+
           if (!activa) {
-            console.log(`  ⏭️ Saltando "${fields.Name || fields.Nombre}" - no está activa`);
+            console.log(
+              `  ⏭️ Saltando "${fields.Name || fields.Nombre}" - no está activa`
+            );
             return false;
           }
-          
+
           // Obtener fechas de Airtable y convertir solo a fecha (sin hora)
           let fechaInicio = null;
           let fechaFin = null;
-          
+
           if (fields["Fecha Inicio"]) {
             const tempInicio = new Date(fields["Fecha Inicio"]);
-            fechaInicio = new Date(tempInicio.getFullYear(), tempInicio.getMonth(), tempInicio.getDate());
+            fechaInicio = new Date(
+              tempInicio.getFullYear(),
+              tempInicio.getMonth(),
+              tempInicio.getDate()
+            );
           }
-          
+
           if (fields["Fecha Fin"]) {
             const tempFin = new Date(fields["Fecha Fin"]);
-            fechaFin = new Date(tempFin.getFullYear(), tempFin.getMonth(), tempFin.getDate());
+            fechaFin = new Date(
+              tempFin.getFullYear(),
+              tempFin.getMonth(),
+              tempFin.getDate()
+            );
           }
-          
+
           // Si no hay fechas, la promoción es válida
           if (!fechaInicio && !fechaFin) {
-            console.log(`  ✅ "${fields.Name || fields.Nombre}" - sin restricción de fechas`);
+            console.log(
+              `  ✅ "${
+                fields.Name || fields.Nombre
+              }" - sin restricción de fechas`
+            );
             return true;
           }
-          
+
           // Comparar usando getTime() para comparación numérica precisa
           const hoyTime = hoySoloFecha.getTime();
           const inicioTime = fechaInicio ? fechaInicio.getTime() : -Infinity;
           const finTime = fechaFin ? fechaFin.getTime() : Infinity;
-          
+
           const dentroDelRango = hoyTime >= inicioTime && hoyTime <= finTime;
-          
-          console.log(`  ${dentroDelRango ? '✅' : '❌'} "${fields.Name || fields.Nombre}"`);
-          if (fechaInicio) console.log(`     Fecha Inicio: ${fechaInicio.toLocaleDateString()}`);
-          if (fechaFin) console.log(`     Fecha Fin: ${fechaFin.toLocaleDateString()}`);
+
+          console.log(
+            `  ${dentroDelRango ? "✅" : "❌"} "${
+              fields.Name || fields.Nombre
+            }"`
+          );
+          if (fechaInicio)
+            console.log(
+              `     Fecha Inicio: ${fechaInicio.toLocaleDateString()}`
+            );
+          if (fechaFin)
+            console.log(`     Fecha Fin: ${fechaFin.toLocaleDateString()}`);
           console.log(`     Hoy: ${hoySoloFecha.toLocaleDateString()}`);
-          
+
           return dentroDelRango;
         })
         .map((record) => ({
           id: record.id,
           nombre: record.fields.Name || record.fields.Nombre || "Sin nombre",
-          tipo: record.fields["Tipo de Promoción"] || record.fields["Tipo de Promocion"] || "",
-          categorias: record.fields["Categorías Aplicables"] || record.fields["Categorias Aplicables"] || [],
-          cantidadMinima: record.fields["Cantidad Mínima"] || record.fields["Cantidad Minima"] || 2,
+          tipo:
+            record.fields["Tipo de Promoción"] ||
+            record.fields["Tipo de Promocion"] ||
+            "",
+          categorias:
+            record.fields["Categorías Aplicables"] ||
+            record.fields["Categorias Aplicables"] ||
+            [],
+          cantidadMinima:
+            record.fields["Cantidad Mínima"] ||
+            record.fields["Cantidad Minima"] ||
+            2,
           valor: record.fields.Valor || 0,
           prioridad: record.fields.Prioridad || 999,
-          descripcion: record.fields.Descripción || record.fields.Descripcion || "",
+          descripcion:
+            record.fields.Descripción || record.fields.Descripcion || "",
           recordCompleto: record,
         }));
-      
-      console.log(`✅ ${promocionesActivas.length} promociones activas disponibles`);
-      
+
+      console.log(
+        `✅ ${promocionesActivas.length} promociones activas disponibles`
+      );
+
       mostrarPromocionesDisponibles();
     } else {
       console.log("⚠️ No se encontraron registros");
@@ -254,7 +293,6 @@ async function cargarPromocionesActivas() {
     mostrarAlerta("error", "⚠️ Error al cargar promociones: " + error.message);
   }
 }
-
 
 function mostrarPromocionesDisponibles() {
   const container = document.getElementById("promocionesDisponibles");
@@ -839,30 +877,30 @@ function detectarPromocionesAplicables() {
     console.log(`🔍 Evaluando promoción: ${promo.nombre}`);
     console.log(`   Categorías aplicables:`, promo.categorias);
     console.log(`   Cantidad mínima: ${promo.cantidadMinima}`);
-    
+
     // ✅ CAMBIO CLAVE: Sumar todas las categorías aplicables
     let cantidadTotal = 0;
     const categoriasEncontradas = [];
-    
+
     for (const categoria of promo.categorias) {
       const cantidad = productosEnTabla[categoria] || 0;
       console.log(`   ${categoria}: ${cantidad} productos`);
-      
+
       if (cantidad > 0) {
         cantidadTotal += cantidad;
         categoriasEncontradas.push(categoria);
       }
     }
-    
+
     console.log(`   📊 Total combinado: ${cantidadTotal} productos`);
 
     // Verificar si cumple la cantidad mínima
     if (cantidadTotal >= promo.cantidadMinima) {
-      promoSugerida = { 
-        ...promo, 
+      promoSugerida = {
+        ...promo,
         categoria: categoriasEncontradas.join(" + "), // Mostrar todas las categorías
         cantidad: cantidadTotal,
-        categoriasAplicadas: categoriasEncontradas // Guardar array de categorías
+        categoriasAplicadas: categoriasEncontradas, // Guardar array de categorías
       };
       console.log(`✅ Promoción aplicable encontrada: ${promo.nombre}`);
       break;
@@ -877,22 +915,32 @@ function detectarPromocionesAplicables() {
   }
 
   if (promoSugerida) {
-    const yaAplicada = promocionAplicada && promocionAplicada.id === promoSugerida.id;
-    
+    const yaAplicada =
+      promocionAplicada && promocionAplicada.id === promoSugerida.id;
+
     sugerenciaContainer.innerHTML = `
       <div class="promo-sugerencia" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin: 15px 0; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
         <div class="promo-badge" style="background: rgba(255,255,255,0.2); display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin-bottom: 10px;">
           🎉 ¡PROMOCIÓN DISPONIBLE!
         </div>
-        <p style="font-size: 1.2em; font-weight: bold; margin: 10px 0;">${promoSugerida.nombre}</p>
-        <p style="font-size: 0.95em; margin: 8px 0; opacity: 0.95;">${promoSugerida.descripcion || 'Promoción especial'}</p>
-        <p style="font-size: 0.9em; margin: 8px 0; opacity: 0.9;">📦 Tienes ${promoSugerida.cantidad} ${promoSugerida.categoria}(s)</p>
-        ${!yaAplicada ? `
+        <p style="font-size: 1.2em; font-weight: bold; margin: 10px 0;">${
+          promoSugerida.nombre
+        }</p>
+        <p style="font-size: 0.95em; margin: 8px 0; opacity: 0.95;">${
+          promoSugerida.descripcion || "Promoción especial"
+        }</p>
+        <p style="font-size: 0.9em; margin: 8px 0; opacity: 0.9;">📦 Tienes ${
+          promoSugerida.cantidad
+        } ${promoSugerida.categoria}(s)</p>
+        ${
+          !yaAplicada
+            ? `
           <button class="btn btn-aplicar-promo" onclick="aplicarPromocion('${promoSugerida.id}', '${promoSugerida.categoria}', ${promoSugerida.cantidad})" 
                   style="background: white; color: #667eea; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1em;">
             ✅ Aplicar Promoción
           </button>
-        ` : `
+        `
+            : `
           <div style="background: rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 8px; margin-top: 10px;">
             ✅ Promoción aplicada
           </div>
@@ -900,7 +948,8 @@ function detectarPromocionesAplicables() {
                   style="background: rgba(239, 68, 68, 0.3); color: white; padding: 10px 20px; border: 2px solid white; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;">
             ❌ Cancelar Promoción
           </button>
-        `}
+        `
+        }
       </div>
     `;
     sugerenciaContainer.style.display = "block";
@@ -915,7 +964,7 @@ window.aplicarPromocion = function (promoId, categoriaDisplay, cantidad) {
   console.log("   promoId:", promoId);
   console.log("   categoriaDisplay:", categoriaDisplay);
   console.log("   cantidad:", cantidad);
-  
+
   const promo = promocionesActivas.find((p) => p.id === promoId);
   if (!promo) {
     console.error("❌ Promoción no encontrada:", promoId);
@@ -937,8 +986,10 @@ window.aplicarPromocion = function (promoId, categoriaDisplay, cantidad) {
 
   console.log("✅ Promoción aplicada guardada:", promocionAplicada);
 
-  mostrarAlerta("success", `✅ Promoción "${promo.nombre}" aplicada correctamente`);
-  
+  mostrarAlerta(
+    "success",
+    `✅ Promoción "${promo.nombre}" aplicada correctamente`
+  );
 
   calcularTotal();
   detectarPromocionesAplicables();
@@ -1222,581 +1273,776 @@ window.calcularTotal = function () {
   const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
 
   window.calcularTotal = function () {
-  let subtotal = 0;
+    let subtotal = 0;
 
-  // Calcular según el tipo de transacción
-  if (tipoTransaccionActual === "venta") {
-    const precios = document.querySelectorAll(".producto-precio");
-    precios.forEach((input) => {
-      const valorLimpio = input.value.replace(/\./g, "").replace(/\D/g, "");
-      const precio = valorLimpio ? parseInt(valorLimpio) : 0;
-      subtotal += precio;
-    });
-  } else if (tipoTransaccionActual === "devolucion") {
-    const preciosDevolucion = document.querySelectorAll(".devolucion-precio");
-    preciosDevolucion.forEach((input) => {
-      const valorLimpio = input.value.replace(/\./g, "").replace(/\D/g, "");
-      const precio = valorLimpio ? parseInt(valorLimpio) : 0;
-      subtotal += precio;
-    });
-  }
-
-  const descuentoInput = document.getElementById("descuento");
-  const descuentoPorcentaje = descuentoInput
-    ? parseFloat(descuentoInput.value) || 0
-    : 0;
-  let descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
-
-  // ========== CALCULAR DESCUENTO POR PROMOCIÓN ==========
-  // ========== CALCULAR DESCUENTO POR PROMOCIÓN ==========
-let descuentoPromocion = 0;
-
-if (promocionAplicada && tipoTransaccionActual === "venta") {
-  console.log("💰 Calculando descuento de promoción:", promocionAplicada.nombre);
-  
-  const tipo = promocionAplicada.tipo;
-  const valor = promocionAplicada.valor;
-  const cantidadMinima = promocionAplicada.cantidadMinima || 2;
-  
-  // Obtener las categorías aplicables
-  const categoriasPromo = Array.isArray(promocionAplicada.categoriaAplicada) 
-    ? promocionAplicada.categoriaAplicada 
-    : [promocionAplicada.categoriaAplicada];
-
-  console.log("   Tipo:", tipo);
-  console.log("   Valor:", valor);
-  console.log("   Cantidad mínima:", cantidadMinima);
-  console.log("   Categorías aplicables:", categoriasPromo);
-
-  // ✅ RECOLECTAR TODOS LOS PRECIOS DE LAS CATEGORÍAS APLICABLES
-  const preciosPromo = [];
-  
-  document.querySelectorAll("#productosLista tbody tr").forEach((fila) => {
-    const categoria = fila.dataset.categoria;
-    const precioInput = fila.querySelector(".producto-precio");
-    const precioTexto = precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
-    const precio = parseInt(precioTexto);
-
-    if (categoriasPromo.includes(categoria) && precio > 0) {
-      preciosPromo.push({ categoria, precio });
-    }
-  });
-
-  console.log(`   📦 ${preciosPromo.length} prendas elegibles encontradas`);
-
-  if (preciosPromo.length >= cantidadMinima) {
-    // Ordenar de menor a mayor precio
-    preciosPromo.sort((a, b) => a.precio - b.precio);
-    
-    // ✅ CALCULAR CUÁNTAS VECES APLICA LA PROMOCIÓN
-    const vecesAplica = Math.floor(preciosPromo.length / cantidadMinima);
-    console.log(`   🔁 La promoción aplica ${vecesAplica} vez/veces`);
-
-    if (tipo === "Precio Fijo") {
-      // Ej: 2 prendas x $9.900 total
-      // Si hay 4 prendas: 2 grupos × ($precio_grupo - $9.900)
-      for (let i = 0; i < vecesAplica; i++) {
-        const inicio = i * cantidadMinima;
-        const fin = inicio + cantidadMinima;
-        const grupoPrecios = preciosPromo.slice(inicio, fin);
-        const subtotalGrupo = grupoPrecios.reduce((sum, p) => sum + p.precio, 0);
-        const descuentoGrupo = subtotalGrupo - valor;
-        descuentoPromocion += descuentoGrupo;
-        console.log(`   📉 Grupo ${i + 1}: Subtotal ${subtotalGrupo} → ${valor} = Descuento ${descuentoGrupo}`);
-      }
-      
-    } else if (tipo === "Descuento Porcentual") {
-      // Ej: 50% en la segunda prenda más barata de cada grupo
-      // Si hay 4 prendas: aplicar descuento en la 1ra y 3ra prenda (las más baratas de cada grupo)
-      for (let i = 0; i < vecesAplica; i++) {
-        const inicio = i * cantidadMinima;
-        const grupoPrecios = preciosPromo.slice(inicio, inicio + cantidadMinima);
-        // Aplicar descuento a la prenda más barata del grupo
-        const preciaMasBarata = grupoPrecios[0].precio;
-        const descuentoGrupo = Math.round((preciaMasBarata * valor) / 100);
-        descuentoPromocion += descuentoGrupo;
-        console.log(`   📉 Grupo ${i + 1}: ${valor}% de ${preciaMasBarata} = Descuento ${descuentoGrupo}`);
-      }
-      
-    } else if (tipo === "N x M") {
-      // Ej: Lleva 2, paga 1 (cantidadMinima=2, valor=1)
-      // Si hay 4 prendas: 2 grupos, en cada grupo regala la más barata
-      const cantidadPagar = valor;
-      const cantidadGratis = cantidadMinima - cantidadPagar;
-      
-      for (let i = 0; i < vecesAplica; i++) {
-        const inicio = i * cantidadMinima;
-        const grupoPrecios = preciosPromo.slice(inicio, inicio + cantidadMinima);
-        
-        // Regalar las N prendas más baratas del grupo
-        for (let j = 0; j < cantidadGratis && j < grupoPrecios.length; j++) {
-          descuentoPromocion += grupoPrecios[j].precio;
-        }
-        console.log(`   📉 Grupo ${i + 1}: ${cantidadMinima} x ${cantidadPagar} = ${cantidadGratis} gratis`);
-      }
-    }
-    
-    console.log("✅ Descuento total de promoción:", descuentoPromocion);
-    
-    // ✅ MOSTRAR CUÁNTAS VECES APLICÓ
-    if (vecesAplica > 1) {
-      mostrarAlerta("info", `🎉 Promoción aplicada ${vecesAplica} veces`);
-    }
-  }
-}
-  // ========== FIN CALCULAR PROMOCIÓN ==========
-
-  const giftCardInput = document.getElementById("giftCard");
-  const giftCardTexto = giftCardInput
-    ? giftCardInput.value.replace(/\./g, "").replace(/\D/g, "")
-    : "0";
-  const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
-
-  const total = subtotal - descuentoMonto - descuentoPromocion - giftCardMonto;
-
-  const subtotalEl = document.getElementById("subtotal");
-  const descuentoEl = document.getElementById("descuentoMonto");
-  const promoEl = document.getElementById("promocionMonto");
-  const giftCardEl = document.getElementById("giftCardMonto");
-  const totalEl = document.getElementById("total");
-
-  if (subtotalEl)
-    subtotalEl.textContent = "$" + subtotal.toLocaleString("es-CL");
-  if (descuentoEl)
-    descuentoEl.textContent = "-$" + descuentoMonto.toLocaleString("es-CL");
-
-  // ========== MOSTRAR DESCUENTO DE PROMOCIÓN ==========
-  if (promoEl) {
-    if (descuentoPromocion > 0 && promocionAplicada) {
-      promoEl.parentElement.style.display = "flex";
-      promoEl.textContent = "-$" + descuentoPromocion.toLocaleString("es-CL");
-      console.log("💚 Mostrando descuento promoción en UI:", descuentoPromocion);
-    } else {
-      promoEl.parentElement.style.display = "none";
-    }
-  }
-  // ========== FIN MOSTRAR PROMOCIÓN ==========
-
-  if (giftCardEl)
-    giftCardEl.textContent = "-$" + giftCardMonto.toLocaleString("es-CL");
-  if (totalEl) totalEl.textContent = "$" + total.toLocaleString("es-CL");
-  
-  console.log("📊 Totales - Subtotal:", subtotal, "Descuento promo:", descuentoPromocion, "Total:", total);
-};
-
-// ============================================
-// REGISTRO DE VENTA
-// ============================================
-
-window.registrarVenta = async function () {
-  if (!clienteSeleccionado) {
-    mostrarAlerta("error", "❌ Debe buscar y seleccionar un cliente primero");
-    return;
-  }
-
-  // Usar anfitrión del turno si está establecido
-  let anfitrionId = null;
-  if (anfitrionTurnoActual) {
-    anfitrionId = anfitrionTurnoActual.id;
-  }
-
-  if (!anfitrionId) {
-    mostrarAlerta("error", "❌ Debe seleccionar un anfitrión del turno");
-    const selectTurno = document.getElementById("anfitrionTurnoSelect");
-    if (selectTurno) selectTurno.focus();
-    return;
-  }
-
-  // Validar autorización de devolución
-  if (tipoTransaccionActual === "devolucion") {
-    const autorizacionInput = document.getElementById("autorizacionDevolucion");
-    const autorizacion = autorizacionInput
-      ? autorizacionInput.value.trim()
-      : "";
-
-    if (!autorizacion) {
-      mostrarAlerta("error", "❌ Debe indicar quién autorizó la devolución");
-      if (autorizacionInput) autorizacionInput.focus();
-      return;
-    }
-
-    // Validar que haya al menos un producto de devolución con precio
-    const filasDevolucion = document.querySelectorAll(
-      "#devolucionesLista tbody tr"
-    );
-    let tieneProductosValidos = false;
-
-    filasDevolucion.forEach((fila) => {
-      const nombre = fila.querySelector(".devolucion-nombre")?.value.trim();
-      const precioInput = fila.querySelector(".devolucion-precio");
-      const precioTexto =
-        precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
-      const precio = parseInt(precioTexto);
-
-      if (nombre && precio > 0) {
-        tieneProductosValidos = true;
-      }
-    });
-
-    if (!tieneProductosValidos) {
-      mostrarAlerta(
-        "error",
-        "❌ Debe agregar al menos un producto con precio para la devolución"
-      );
-      mostrarLoading(false);
-      return;
-    }
-  }
-
-  mostrarLoading(true);
-
-  try {
-    const productos = [];
-    const productosIds = [];
-    const filas = document.querySelectorAll("#productosLista tbody tr");
-
-    filas.forEach((fila) => {
-      const nombre = fila.querySelector(".producto-nombre")?.value.trim();
-      const categoria = fila.dataset.categoria || nombre;
-      const productoId = fila.dataset.productoId;
-      const precioInput = fila.querySelector(".producto-precio");
-      const precioTexto =
-        precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
-      const precio = parseInt(precioTexto);
-
-      if (nombre && precio > 0) {
-        productos.push({
-          nombre,
-          categoria: categoria,
-          precio,
-        });
-
-        if (productoId) {
-          productosIds.push(productoId);
-        }
-      }
-    });
-
-    const productosIdsUnicos = [...new Set(productosIds)];
-
-    // ✅ Validar según tipo de transacción
-    if (tipoTransaccionActual === "venta" && productos.length === 0) {
-      mostrarAlerta(
-        "error",
-        "❌ Debe agregar al menos un producto con precio para una venta"
-      );
-      mostrarLoading(false);
-      return;
-    }
-
-    if (tipoTransaccionActual === "devolucion") {
-      // Para devoluciones, recolectar productos de la tabla de devoluciones
-      productos.length = 0; // Limpiar array
-      productosIds.length = 0;
-
-      const filasDevolucion = document.querySelectorAll(
-        "#devolucionesLista tbody tr"
-      );
-
-      filasDevolucion.forEach((fila) => {
-        const nombre = fila.querySelector(".devolucion-nombre")?.value.trim();
-        const categoria = fila.dataset.categoria || nombre;
-        const productoId = fila.dataset.productoId;
-        const precioInput = fila.querySelector(".devolucion-precio");
-        const precioTexto =
-          precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
-        const precio = parseInt(precioTexto);
-
-        if (nombre && precio > 0) {
-          productos.push({
-            nombre,
-            categoria: categoria,
-            precio,
-          });
-
-          if (productoId) {
-            productosIds.push(productoId);
-          }
-        }
+    // Calcular según el tipo de transacción
+    if (tipoTransaccionActual === "venta") {
+      const precios = document.querySelectorAll(".producto-precio");
+      precios.forEach((input) => {
+        const valorLimpio = input.value.replace(/\./g, "").replace(/\D/g, "");
+        const precio = valorLimpio ? parseInt(valorLimpio) : 0;
+        subtotal += precio;
       });
-
-      if (productos.length === 0) {
-        mostrarAlerta(
-          "error",
-          "❌ Debe agregar al menos un producto con precio para la devolución"
-        );
-        mostrarLoading(false);
-        return;
-      }
+    } else if (tipoTransaccionActual === "devolucion") {
+      const preciosDevolucion = document.querySelectorAll(".devolucion-precio");
+      preciosDevolucion.forEach((input) => {
+        const valorLimpio = input.value.replace(/\./g, "").replace(/\D/g, "");
+        const precio = valorLimpio ? parseInt(valorLimpio) : 0;
+        subtotal += precio;
+      });
     }
-
-    const { resumen, camposIndividuales } =
-      generarResumenYConteoIndividual(productos);
 
     const descuentoInput = document.getElementById("descuento");
     const descuentoPorcentaje = descuentoInput
       ? parseFloat(descuentoInput.value) || 0
       : 0;
+    let descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
 
-    // Obtener valor de Gift Card
-    const giftCardInput = document.getElementById("giftCard");
-    const giftCardTexto = giftCardInput
-      ? giftCardInput.value.replace(/\./g, "").replace(/\D/g, "")
-      : "0";
-    const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
+    // ========== CALCULAR DESCUENTO POR PROMOCIÓN ==========
+    // ========== CALCULAR DESCUENTO POR PROMOCIÓN ==========
+    let descuentoPromocion = 0;
 
-    const subtotal = productos.reduce((sum, p) => sum + p.precio, 0);
-    const descuentoMonto = Math.round((subtotal * descuentoPorcentaje) / 100);
-    const totalFinal = subtotal - descuentoMonto - giftCardMonto;
+    if (promocionAplicada && tipoTransaccionActual === "venta") {
+      console.log(
+        "💰 Calculando descuento de promoción:",
+        promocionAplicada.nombre
+      );
 
-    const notasInput = document.getElementById("notas");
-    const notas = notasInput ? notasInput.value.trim() : "";
+      const tipo = promocionAplicada.tipo;
+      const valor = promocionAplicada.valor;
+      const cantidadMinima = promocionAplicada.cantidadMinima || 2;
 
-    // Construir objeto base con campos obligatorios
-    const ventaData = {
-      fields: {
-        Cliente: [clienteSeleccionado.id],
-        Anfitrión: [anfitrionId],
-        "Total de venta": subtotal,
-        Descuento: descuentoPorcentaje,
-        "Descuento gift cards": giftCardMonto,
-        ...(promocionAplicada
-          ? { "Promoción Aplicada": [promocionAplicada.id] }
-          : {}),
-      },
-    };
+      // Obtener las categorías aplicables
+      const categoriasPromo = Array.isArray(promocionAplicada.categoriaAplicada)
+        ? promocionAplicada.categoriaAplicada
+        : [promocionAplicada.categoriaAplicada];
 
-    // ✅ PARA VENTAS
-    if (tipoTransaccionActual === "venta") {
-      // Agregar Items y campos de cantidad
-      ventaData.fields["Items"] = resumen;
-      Object.assign(ventaData.fields, camposIndividuales);
+      console.log("   Tipo:", tipo);
+      console.log("   Valor:", valor);
+      console.log("   Cantidad mínima:", cantidadMinima);
+      console.log("   Categorías aplicables:", categoriasPromo);
 
-      // Vincular productos si existen
-      if (productosIdsUnicos.length > 0) {
-        ventaData.fields["producto"] = productosIdsUnicos;
-        console.log("✅ Vinculando productos de venta:", productosIdsUnicos);
-      }
+      // ✅ RECOLECTAR TODOS LOS PRECIOS DE LAS CATEGORÍAS APLICABLES
+      const preciosPromo = [];
 
-      // Agregar notas si existen
-      if (notas) {
-        ventaData.fields["Box Observaciones"] = notas;
-      }
-    }
+      document.querySelectorAll("#productosLista tbody tr").forEach((fila) => {
+        const categoria = fila.dataset.categoria;
+        const precioInput = fila.querySelector(".producto-precio");
+        const precioTexto =
+          precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
+        const precio = parseInt(precioTexto);
 
-    // ✅ PARA DEVOLUCIONES
-    if (tipoTransaccionActual === "devolucion" && productos.length > 0) {
-      const conteoDevolucion = {};
-      const devolucionesIdsUnicos = [...new Set(productosIds)];
-
-      // Contar productos devueltos
-      productos.forEach((prod) => {
-        const categoria = prod.categoria;
-        conteoDevolucion[categoria] = (conteoDevolucion[categoria] || 0) + 1;
-      });
-
-      // Crear resumen de texto con precios
-      const devolucionesResumen = productos
-        .map((item) => {
-          const nombre = item.nombre || "Sin nombre";
-          const precio = item.precio || 0;
-          const precioFormateado = precio.toLocaleString("es-CL");
-          return `${nombre} (${precioFormateado})`;
-        })
-        .join(", ");
-
-      ventaData.fields["Items"] = devolucionesResumen;
-
-      // Agregar campos de cantidad para devolución
-      const camposDevolucion = {};
-      Object.entries(conteoDevolucion).forEach(([categoria, cantidad]) => {
-        const nombreCampo = MAPEO_PRODUCTOS[categoria];
-        if (nombreCampo) {
-          camposDevolucion[nombreCampo] = cantidad;
+        if (categoriasPromo.includes(categoria) && precio > 0) {
+          preciosPromo.push({ categoria, precio });
         }
       });
-      Object.assign(ventaData.fields, camposDevolucion);
 
-      // ✅ Vincular productos en campo "Devolución"
-      if (devolucionesIdsUnicos.length > 0) {
-        ventaData.fields["Devolución"] = devolucionesIdsUnicos;
-        console.log(
-          "✅ Vinculando productos de devolución:",
-          devolucionesIdsUnicos
-        );
-      }
+      console.log(`   📦 ${preciosPromo.length} prendas elegibles encontradas`);
 
-      // ✅ Agregar Total Devolución (usa el totalFinal calculado)
-      ventaData.fields["Total Devolución "] = totalFinal;
-      console.log("✅ Total Devolución:", totalFinal);
+      if (preciosPromo.length >= cantidadMinima) {
+        // Ordenar de menor a mayor precio
+        preciosPromo.sort((a, b) => a.precio - b.precio);
 
-      // Agregar autorización
-      const autorizacionInput = document.getElementById(
-        "autorizacionDevolucion"
-      );
-      const autorizacion = autorizacionInput
-        ? autorizacionInput.value.trim()
-        : "";
-      if (autorizacion) {
-        ventaData.fields[
-          "Box Observaciones"
-        ] = `Autorizado por: ${autorizacion}${notas ? "\n" + notas : ""}`;
-      }
-    }
+        // ✅ CALCULAR CUÁNTAS VECES APLICA LA PROMOCIÓN
+        const vecesAplica = Math.floor(preciosPromo.length / cantidadMinima);
+        console.log(`   🔁 La promoción aplica ${vecesAplica} vez/veces`);
 
-    console.log("📤 Enviando venta:", JSON.stringify(ventaData, null, 2));
+        if (tipo === "Precio Fijo") {
+          // Ej: 2 prendas x $9.900 total
+          // Si hay 4 prendas: 2 grupos × ($precio_grupo - $9.900)
+          for (let i = 0; i < vecesAplica; i++) {
+            const inicio = i * cantidadMinima;
+            const fin = inicio + cantidadMinima;
+            const grupoPrecios = preciosPromo.slice(inicio, fin);
+            const subtotalGrupo = grupoPrecios.reduce(
+              (sum, p) => sum + p.precio,
+              0
+            );
+            const descuentoGrupo = subtotalGrupo - valor;
+            descuentoPromocion += descuentoGrupo;
+            console.log(
+              `   📉 Grupo ${
+                i + 1
+              }: Subtotal ${subtotalGrupo} → ${valor} = Descuento ${descuentoGrupo}`
+            );
+          }
 
-    const response = await fetch(
-      `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${AIRTABLE_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(ventaData),
-      }
-    );
+          // ========== CALCULAR DESCUENTO POR PROMOCIÓN ==========
+          let descuentoPromocion = 0;
 
-    const result = await response.json();
-    mostrarLoading(false);
+          if (promocionAplicada && tipoTransaccionActual === "venta") {
+            console.log(
+              "💰 Calculando descuento de promoción:",
+              promocionAplicada.nombre
+            );
 
-    if (response.ok) {
-      const tipoMensaje =
-        tipoTransaccionActual === "venta" ? "Venta" : "Devolución";
-      mostrarAlerta("success", `✅ ¡${tipoMensaje} registrada exitosamente!`);
-      setTimeout(() => limpiarFormulario(), 2000);
-    } else {
-      console.error("❌ Error en respuesta:", result);
-      console.error("❌ Detalles del error:", JSON.stringify(result, null, 2));
+            const tipo = promocionAplicada.tipo;
+            const valor = promocionAplicada.valor;
+            const cantidadMinima =
+              parseInt(promocionAplicada.cantidadMinima) || 2;
 
-      let mensajeError = "Error al registrar la transacción";
-      if (result.error && result.error.message) {
-        mensajeError = result.error.message;
-      }
+            // Obtener las categorías aplicables
+            const categoriasPromo = Array.isArray(
+              promocionAplicada.categoriaAplicada
+            )
+              ? promocionAplicada.categoriaAplicada
+              : [promocionAplicada.categoriaAplicada];
 
-      mostrarAlerta("error", `❌ ${mensajeError}`);
-    }
-  } catch (error) {
-    mostrarLoading(false);
-    console.error("❌ Error al registrar venta:", error);
-    mostrarAlerta("error", "❌ Error al registrar la venta: " + error.message);
-  }
-};
+            console.log("   Tipo:", tipo);
+            console.log("   Valor:", valor);
+            console.log(
+              "   Cantidad mínima:",
+              cantidadMinima,
+              typeof cantidadMinima
+            );
+            console.log("   Categorías aplicables:", categoriasPromo);
 
-// ============================================
-// GENERACIÓN DE RESUMEN Y CONTEO
-// ============================================
+            // ✅ RECOLECTAR TODOS LOS PRECIOS DE LAS CATEGORÍAS APLICABLES
+            const preciosPromo = [];
 
-function generarResumenYConteoIndividual(productosItems) {
-  const conteo = {};
+            document
+              .querySelectorAll("#productosLista tbody tr")
+              .forEach((fila) => {
+                const categoria = fila.dataset.categoria;
+                const precioInput = fila.querySelector(".producto-precio");
+                const precioTexto =
+                  precioInput?.value.replace(/\./g, "").replace(/\D/g, "") ||
+                  "0";
+                const precio = parseInt(precioTexto);
 
-  // Contar cuántos productos de cada categoría
-  productosItems.forEach((item) => {
-    const categoria = item.categoria || item.nombre;
-    if (categoria) {
-      conteo[categoria] = (conteo[categoria] || 0) + 1;
-    }
-  });
+                if (categoriasPromo.includes(categoria) && precio > 0) {
+                  preciosPromo.push({ categoria, precio });
+                }
+              });
 
-  // Crear resumen detallado con precios
-  const resumenItems = productosItems
-    .map((item) => {
-      const nombre = item.nombre || "Sin nombre";
-      const precio = item.precio || 0;
-      const precioFormateado = precio.toLocaleString("es-CL");
-      return `${nombre} (${precioFormateado})`;
-    })
-    .join(", ");
+            console.log(
+              `   📦 ${preciosPromo.length} prendas elegibles encontradas:`,
+              preciosPromo
+            );
 
-  // Crear objeto con campos individuales para Airtable
-  const camposIndividuales = {};
-  Object.entries(conteo).forEach(([categoria, cantidad]) => {
-    const nombreCampo = MAPEO_PRODUCTOS[categoria];
-    if (nombreCampo) {
-      camposIndividuales[nombreCampo] = cantidad;
-      console.log(`✅ ${categoria} → ${nombreCampo}: ${cantidad}`);
-    } else {
-      console.warn(
-        `⚠️ "${categoria}" no tiene campo mapeado en MAPEO_PRODUCTOS.`
-      );
-    }
-  });
+            if (preciosPromo.length >= cantidadMinima) {
+              // Ordenar de menor a mayor precio
+              preciosPromo.sort((a, b) => a.precio - b.precio);
+              console.log(
+                `   📊 Prendas ordenadas:`,
+                preciosPromo.map((p) => `$${p.precio}`)
+              );
 
-  console.log("📊 Resumen Items:", resumenItems);
-  console.log("🔢 Campos individuales:", camposIndividuales);
+              // ✅ CALCULAR CUÁNTAS VECES APLICA LA PROMOCIÓN
+              const vecesAplica = Math.floor(
+                preciosPromo.length / cantidadMinima
+              );
+              console.log(
+                `   🔁 La promoción aplica ${vecesAplica} vez/veces (${preciosPromo.length} prendas ÷ ${cantidadMinima} = ${vecesAplica})`
+              );
 
-  return {
-    resumen: resumenItems,
-    camposIndividuales: camposIndividuales,
-  };
-}
+              if (tipo === "Precio Fijo") {
+                // Ej: 2 prendas x $9.900 total
+                for (let i = 0; i < vecesAplica; i++) {
+                  const inicio = i * cantidadMinima;
+                  const fin = inicio + cantidadMinima;
+                  const grupoPrecios = preciosPromo.slice(inicio, fin);
+                  const subtotalGrupo = grupoPrecios.reduce(
+                    (sum, p) => sum + p.precio,
+                    0
+                  );
+                  const descuentoGrupo = Math.max(0, subtotalGrupo - valor);
+                  descuentoPromocion += descuentoGrupo;
+                  console.log(
+                    `   📉 Grupo ${i + 1}: ${grupoPrecios
+                      .map((p) => `$${p.precio}`)
+                      .join(
+                        " + "
+                      )} = $${subtotalGrupo} → Pagas $${valor} = Descuento $${descuentoGrupo}`
+                  );
+                }
+              } else if (tipo === "Descuento Porcentual") {
+                // Ej: 50% en la prenda más barata de cada grupo
+                for (let i = 0; i < vecesAplica; i++) {
+                  const inicio = i * cantidadMinima;
+                  const fin = inicio + cantidadMinima;
+                  const grupoPrecios = preciosPromo.slice(inicio, fin);
 
-// ============================================
-// LIMPIAR FORMULARIO
-// ============================================
+                  console.log(
+                    `   📦 Grupo ${i + 1}: ${grupoPrecios
+                      .map((p) => `${p.categoria} $${p.precio}`)
+                      .join(", ")}`
+                  );
 
-window.limpiarFormulario = function () {
-  document.getElementById("rutCliente").value = "";
-  document.getElementById("clienteInfo").classList.remove("show");
-  document.getElementById("clienteNoEncontrado").classList.remove("show");
-  clienteSeleccionado = null;
+                  // Aplicar descuento a la prenda más barata del grupo
+                  const prendaMasBarata = grupoPrecios[0];
+                  const descuentoGrupo = Math.round(
+                    (prendaMasBarata.precio * valor) / 100
+                  );
+                  descuentoPromocion += descuentoGrupo;
+                  console.log(
+                    `   📉 Descuento ${valor}% en ${prendaMasBarata.categoria} ($${prendaMasBarata.precio}) = $${descuentoGrupo}`
+                  );
+                }
+              } else if (tipo === "N x M") {
+                // Ej: Lleva 2, paga 1 (cantidadMinima=2, valor=1)
+                const cantidadPagar = parseInt(valor);
+                const cantidadGratis = cantidadMinima - cantidadPagar;
 
-  const workArea = document.getElementById("workArea");
-  if (workArea) workArea.classList.remove("show");
+                console.log(
+                  `   🎁 Promoción ${cantidadMinima} x ${cantidadPagar}: Regala ${cantidadGratis} prenda(s) por grupo`
+                );
 
-  const emptyState = document.getElementById("emptyState");
-  if (emptyState) emptyState.style.display = "block";
+                for (let i = 0; i < vecesAplica; i++) {
+                  const inicio = i * cantidadMinima;
+                  const fin = inicio + cantidadMinima;
+                  const grupoPrecios = preciosPromo.slice(inicio, fin);
 
-  // NO limpiar el anfitrión del turno - se mantiene para la siguiente venta
+                  console.log(
+                    `   📦 Grupo ${i + 1}: ${grupoPrecios
+                      .map((p) => `${p.categoria} $${p.precio}`)
+                      .join(", ")}`
+                  );
 
-  const tbody = document.querySelector("#productosLista tbody");
-  if (tbody) {
-    tbody.innerHTML = `
+                  // Regalar las N prendas más baratas del grupo
+                  let descuentoGrupo = 0;
+                  for (
+                    let j = 0;
+                    j < cantidadGratis && j < grupoPrecios.length;
+                    j++
+                  ) {
+                    descuentoGrupo += grupoPrecios[j].precio;
+                    console.log(
+                      `   🎁 GRATIS: ${grupoPrecios[j].categoria} $${grupoPrecios[j].precio}`
+                    );
+                  }
+                  descuentoPromocion += descuentoGrupo;
+                  console.log(`   📉 Descuento del grupo: $${descuentoGrupo}`);
+                }
+              }
+
+              console.log(
+                "✅ Descuento total de promoción:",
+                descuentoPromocion
+              );
+            }
+          }
+          // ========== FIN CALCULAR PROMOCIÓN ==========
+          // ========== FIN CALCULAR PROMOCIÓN ==========
+
+          const giftCardInput = document.getElementById("giftCard");
+          const giftCardTexto = giftCardInput
+            ? giftCardInput.value.replace(/\./g, "").replace(/\D/g, "")
+            : "0";
+          const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
+
+          const total =
+            subtotal - descuentoMonto - descuentoPromocion - giftCardMonto;
+
+          const subtotalEl = document.getElementById("subtotal");
+          const descuentoEl = document.getElementById("descuentoMonto");
+          const promoEl = document.getElementById("promocionMonto");
+          const giftCardEl = document.getElementById("giftCardMonto");
+          const totalEl = document.getElementById("total");
+
+          if (subtotalEl)
+            subtotalEl.textContent = "$" + subtotal.toLocaleString("es-CL");
+          if (descuentoEl)
+            descuentoEl.textContent =
+              "-$" + descuentoMonto.toLocaleString("es-CL");
+
+          // ========== MOSTRAR DESCUENTO DE PROMOCIÓN ==========
+          if (promoEl) {
+            if (descuentoPromocion > 0 && promocionAplicada) {
+              promoEl.parentElement.style.display = "flex";
+              promoEl.textContent =
+                "-$" + descuentoPromocion.toLocaleString("es-CL");
+              console.log(
+                "💚 Mostrando descuento promoción en UI:",
+                descuentoPromocion
+              );
+            } else {
+              promoEl.parentElement.style.display = "none";
+            }
+          }
+          // ========== FIN MOSTRAR PROMOCIÓN ==========
+
+          if (giftCardEl)
+            giftCardEl.textContent =
+              "-$" + giftCardMonto.toLocaleString("es-CL");
+          if (totalEl)
+            totalEl.textContent = "$" + total.toLocaleString("es-CL");
+
+          console.log(
+            "📊 Totales - Subtotal:",
+            subtotal,
+            "Descuento promo:",
+            descuentoPromocion,
+            "Total:",
+            total
+          );
+        }
+
+        // ============================================
+        // REGISTRO DE VENTA
+        // ============================================
+
+        window.registrarVenta = async function () {
+          if (!clienteSeleccionado) {
+            mostrarAlerta(
+              "error",
+              "❌ Debe buscar y seleccionar un cliente primero"
+            );
+            return;
+          }
+
+          // Usar anfitrión del turno si está establecido
+          let anfitrionId = null;
+          if (anfitrionTurnoActual) {
+            anfitrionId = anfitrionTurnoActual.id;
+          }
+
+          if (!anfitrionId) {
+            mostrarAlerta(
+              "error",
+              "❌ Debe seleccionar un anfitrión del turno"
+            );
+            const selectTurno = document.getElementById("anfitrionTurnoSelect");
+            if (selectTurno) selectTurno.focus();
+            return;
+          }
+
+          // Validar autorización de devolución
+          if (tipoTransaccionActual === "devolucion") {
+            const autorizacionInput = document.getElementById(
+              "autorizacionDevolucion"
+            );
+            const autorizacion = autorizacionInput
+              ? autorizacionInput.value.trim()
+              : "";
+
+            if (!autorizacion) {
+              mostrarAlerta(
+                "error",
+                "❌ Debe indicar quién autorizó la devolución"
+              );
+              if (autorizacionInput) autorizacionInput.focus();
+              return;
+            }
+
+            // Validar que haya al menos un producto de devolución con precio
+            const filasDevolucion = document.querySelectorAll(
+              "#devolucionesLista tbody tr"
+            );
+            let tieneProductosValidos = false;
+
+            filasDevolucion.forEach((fila) => {
+              const nombre = fila
+                .querySelector(".devolucion-nombre")
+                ?.value.trim();
+              const precioInput = fila.querySelector(".devolucion-precio");
+              const precioTexto =
+                precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
+              const precio = parseInt(precioTexto);
+
+              if (nombre && precio > 0) {
+                tieneProductosValidos = true;
+              }
+            });
+
+            if (!tieneProductosValidos) {
+              mostrarAlerta(
+                "error",
+                "❌ Debe agregar al menos un producto con precio para la devolución"
+              );
+              mostrarLoading(false);
+              return;
+            }
+          }
+
+          mostrarLoading(true);
+
+          try {
+            const productos = [];
+            const productosIds = [];
+            const filas = document.querySelectorAll("#productosLista tbody tr");
+
+            filas.forEach((fila) => {
+              const nombre = fila
+                .querySelector(".producto-nombre")
+                ?.value.trim();
+              const categoria = fila.dataset.categoria || nombre;
+              const productoId = fila.dataset.productoId;
+              const precioInput = fila.querySelector(".producto-precio");
+              const precioTexto =
+                precioInput?.value.replace(/\./g, "").replace(/\D/g, "") || "0";
+              const precio = parseInt(precioTexto);
+
+              if (nombre && precio > 0) {
+                productos.push({
+                  nombre,
+                  categoria: categoria,
+                  precio,
+                });
+
+                if (productoId) {
+                  productosIds.push(productoId);
+                }
+              }
+            });
+
+            const productosIdsUnicos = [...new Set(productosIds)];
+
+            // ✅ Validar según tipo de transacción
+            if (tipoTransaccionActual === "venta" && productos.length === 0) {
+              mostrarAlerta(
+                "error",
+                "❌ Debe agregar al menos un producto con precio para una venta"
+              );
+              mostrarLoading(false);
+              return;
+            }
+
+            if (tipoTransaccionActual === "devolucion") {
+              // Para devoluciones, recolectar productos de la tabla de devoluciones
+              productos.length = 0; // Limpiar array
+              productosIds.length = 0;
+
+              const filasDevolucion = document.querySelectorAll(
+                "#devolucionesLista tbody tr"
+              );
+
+              filasDevolucion.forEach((fila) => {
+                const nombre = fila
+                  .querySelector(".devolucion-nombre")
+                  ?.value.trim();
+                const categoria = fila.dataset.categoria || nombre;
+                const productoId = fila.dataset.productoId;
+                const precioInput = fila.querySelector(".devolucion-precio");
+                const precioTexto =
+                  precioInput?.value.replace(/\./g, "").replace(/\D/g, "") ||
+                  "0";
+                const precio = parseInt(precioTexto);
+
+                if (nombre && precio > 0) {
+                  productos.push({
+                    nombre,
+                    categoria: categoria,
+                    precio,
+                  });
+
+                  if (productoId) {
+                    productosIds.push(productoId);
+                  }
+                }
+              });
+
+              if (productos.length === 0) {
+                mostrarAlerta(
+                  "error",
+                  "❌ Debe agregar al menos un producto con precio para la devolución"
+                );
+                mostrarLoading(false);
+                return;
+              }
+            }
+
+            const { resumen, camposIndividuales } =
+              generarResumenYConteoIndividual(productos);
+
+            const descuentoInput = document.getElementById("descuento");
+            const descuentoPorcentaje = descuentoInput
+              ? parseFloat(descuentoInput.value) || 0
+              : 0;
+
+            // Obtener valor de Gift Card
+            const giftCardInput = document.getElementById("giftCard");
+            const giftCardTexto = giftCardInput
+              ? giftCardInput.value.replace(/\./g, "").replace(/\D/g, "")
+              : "0";
+            const giftCardMonto = giftCardTexto ? parseInt(giftCardTexto) : 0;
+
+            const subtotal = productos.reduce((sum, p) => sum + p.precio, 0);
+            const descuentoMonto = Math.round(
+              (subtotal * descuentoPorcentaje) / 100
+            );
+            const totalFinal = subtotal - descuentoMonto - giftCardMonto;
+
+            const notasInput = document.getElementById("notas");
+            const notas = notasInput ? notasInput.value.trim() : "";
+
+            // Construir objeto base con campos obligatorios
+            const ventaData = {
+              fields: {
+                Cliente: [clienteSeleccionado.id],
+                Anfitrión: [anfitrionId],
+                "Total de venta": subtotal,
+                Descuento: descuentoPorcentaje,
+                "Descuento gift cards": giftCardMonto,
+                ...(promocionAplicada
+                  ? { "Promoción Aplicada": [promocionAplicada.id] }
+                  : {}),
+              },
+            };
+
+            // ✅ PARA VENTAS
+            if (tipoTransaccionActual === "venta") {
+              // Agregar Items y campos de cantidad
+              ventaData.fields["Items"] = resumen;
+              Object.assign(ventaData.fields, camposIndividuales);
+
+              // Vincular productos si existen
+              if (productosIdsUnicos.length > 0) {
+                ventaData.fields["producto"] = productosIdsUnicos;
+                console.log(
+                  "✅ Vinculando productos de venta:",
+                  productosIdsUnicos
+                );
+              }
+
+              // Agregar notas si existen
+              if (notas) {
+                ventaData.fields["Box Observaciones"] = notas;
+              }
+            }
+
+            // ✅ PARA DEVOLUCIONES
+            if (
+              tipoTransaccionActual === "devolucion" &&
+              productos.length > 0
+            ) {
+              const conteoDevolucion = {};
+              const devolucionesIdsUnicos = [...new Set(productosIds)];
+
+              // Contar productos devueltos
+              productos.forEach((prod) => {
+                const categoria = prod.categoria;
+                conteoDevolucion[categoria] =
+                  (conteoDevolucion[categoria] || 0) + 1;
+              });
+
+              // Crear resumen de texto con precios
+              const devolucionesResumen = productos
+                .map((item) => {
+                  const nombre = item.nombre || "Sin nombre";
+                  const precio = item.precio || 0;
+                  const precioFormateado = precio.toLocaleString("es-CL");
+                  return `${nombre} (${precioFormateado})`;
+                })
+                .join(", ");
+
+              ventaData.fields["Items"] = devolucionesResumen;
+
+              // Agregar campos de cantidad para devolución
+              const camposDevolucion = {};
+              Object.entries(conteoDevolucion).forEach(
+                ([categoria, cantidad]) => {
+                  const nombreCampo = MAPEO_PRODUCTOS[categoria];
+                  if (nombreCampo) {
+                    camposDevolucion[nombreCampo] = cantidad;
+                  }
+                }
+              );
+              Object.assign(ventaData.fields, camposDevolucion);
+
+              // ✅ Vincular productos en campo "Devolución"
+              if (devolucionesIdsUnicos.length > 0) {
+                ventaData.fields["Devolución"] = devolucionesIdsUnicos;
+                console.log(
+                  "✅ Vinculando productos de devolución:",
+                  devolucionesIdsUnicos
+                );
+              }
+
+              // ✅ Agregar Total Devolución (usa el totalFinal calculado)
+              ventaData.fields["Total Devolución "] = totalFinal;
+              console.log("✅ Total Devolución:", totalFinal);
+
+              // Agregar autorización
+              const autorizacionInput = document.getElementById(
+                "autorizacionDevolucion"
+              );
+              const autorizacion = autorizacionInput
+                ? autorizacionInput.value.trim()
+                : "";
+              if (autorizacion) {
+                ventaData.fields[
+                  "Box Observaciones"
+                ] = `Autorizado por: ${autorizacion}${
+                  notas ? "\n" + notas : ""
+                }`;
+              }
+            }
+
+            console.log(
+              "📤 Enviando venta:",
+              JSON.stringify(ventaData, null, 2)
+            );
+
+            const response = await fetch(
+              `https://api.airtable.com/v0/${BASE_ID}/${VENTAS_TABLE_ID}`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(ventaData),
+              }
+            );
+
+            const result = await response.json();
+            mostrarLoading(false);
+
+            if (response.ok) {
+              const tipoMensaje =
+                tipoTransaccionActual === "venta" ? "Venta" : "Devolución";
+              mostrarAlerta(
+                "success",
+                `✅ ¡${tipoMensaje} registrada exitosamente!`
+              );
+              setTimeout(() => limpiarFormulario(), 2000);
+            } else {
+              console.error("❌ Error en respuesta:", result);
+              console.error(
+                "❌ Detalles del error:",
+                JSON.stringify(result, null, 2)
+              );
+
+              let mensajeError = "Error al registrar la transacción";
+              if (result.error && result.error.message) {
+                mensajeError = result.error.message;
+              }
+
+              mostrarAlerta("error", `❌ ${mensajeError}`);
+            }
+          } catch (error) {
+            mostrarLoading(false);
+            console.error("❌ Error al registrar venta:", error);
+            mostrarAlerta(
+              "error",
+              "❌ Error al registrar la venta: " + error.message
+            );
+          }
+        };
+
+        // ============================================
+        // GENERACIÓN DE RESUMEN Y CONTEO
+        // ============================================
+
+        function generarResumenYConteoIndividual(productosItems) {
+          const conteo = {};
+
+          // Contar cuántos productos de cada categoría
+          productosItems.forEach((item) => {
+            const categoria = item.categoria || item.nombre;
+            if (categoria) {
+              conteo[categoria] = (conteo[categoria] || 0) + 1;
+            }
+          });
+
+          // Crear resumen detallado con precios
+          const resumenItems = productosItems
+            .map((item) => {
+              const nombre = item.nombre || "Sin nombre";
+              const precio = item.precio || 0;
+              const precioFormateado = precio.toLocaleString("es-CL");
+              return `${nombre} (${precioFormateado})`;
+            })
+            .join(", ");
+
+          // Crear objeto con campos individuales para Airtable
+          const camposIndividuales = {};
+          Object.entries(conteo).forEach(([categoria, cantidad]) => {
+            const nombreCampo = MAPEO_PRODUCTOS[categoria];
+            if (nombreCampo) {
+              camposIndividuales[nombreCampo] = cantidad;
+              console.log(`✅ ${categoria} → ${nombreCampo}: ${cantidad}`);
+            } else {
+              console.warn(
+                `⚠️ "${categoria}" no tiene campo mapeado en MAPEO_PRODUCTOS.`
+              );
+            }
+          });
+
+          console.log("📊 Resumen Items:", resumenItems);
+          console.log("🔢 Campos individuales:", camposIndividuales);
+
+          return {
+            resumen: resumenItems,
+            camposIndividuales: camposIndividuales,
+          };
+        }
+
+        // ============================================
+        // LIMPIAR FORMULARIO
+        // ============================================
+
+        window.limpiarFormulario = function () {
+          document.getElementById("rutCliente").value = "";
+          document.getElementById("clienteInfo").classList.remove("show");
+          document
+            .getElementById("clienteNoEncontrado")
+            .classList.remove("show");
+          clienteSeleccionado = null;
+
+          const workArea = document.getElementById("workArea");
+          if (workArea) workArea.classList.remove("show");
+
+          const emptyState = document.getElementById("emptyState");
+          if (emptyState) emptyState.style.display = "block";
+
+          // NO limpiar el anfitrión del turno - se mantiene para la siguiente venta
+
+          const tbody = document.querySelector("#productosLista tbody");
+          if (tbody) {
+            tbody.innerHTML = `
       <tr>
         <td><input type="text" class="producto-nombre" placeholder="Nombre del producto"></td>
         <td><input type="text" class="producto-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();"></td>
         <td><button class="btn btn-remove" onclick="eliminarProducto(this)">🗑️</button></td>
       </tr>
     `;
-  }
+          }
 
-  // Limpiar tabla de devoluciones
-  const tbodyDevolucion = document.querySelector("#devolucionesLista tbody");
-  if (tbodyDevolucion) {
-    tbodyDevolucion.innerHTML = `
+          // Limpiar tabla de devoluciones
+          const tbodyDevolucion = document.querySelector(
+            "#devolucionesLista tbody"
+          );
+          if (tbodyDevolucion) {
+            tbodyDevolucion.innerHTML = `
       <tr>
         <td><input type="text" class="devolucion-nombre" placeholder="Nombre del producto"></td>
         <td><input type="text" class="devolucion-precio" placeholder="0" oninput="formatearPrecio(this); calcularTotal();"></td>
         <td><button class="btn btn-remove" onclick="eliminarProductoDevolucion(this)">🗑️</button></td>
       </tr>
     `;
-  }
+          }
 
-  const descuentoInput = document.getElementById("descuento");
-  if (descuentoInput) descuentoInput.value = "0";
-  const giftCardInput = document.getElementById("giftCard");
-  if (giftCardInput) giftCardInput.value = "0";
+          const descuentoInput = document.getElementById("descuento");
+          if (descuentoInput) descuentoInput.value = "0";
+          const giftCardInput = document.getElementById("giftCard");
+          if (giftCardInput) giftCardInput.value = "0";
 
-  const notasInput = document.getElementById("notas");
-  if (notasInput) notasInput.value = "";
+          const notasInput = document.getElementById("notas");
+          if (notasInput) notasInput.value = "";
 
-  const autorizacionInput = document.getElementById("autorizacionDevolucion");
-  if (autorizacionInput) autorizacionInput.value = "";
+          const autorizacionInput = document.getElementById(
+            "autorizacionDevolucion"
+          );
+          if (autorizacionInput) autorizacionInput.value = "";
 
-  const radioVenta = document.querySelector(
-    'input[name="tipoTransaccion"][value="venta"]'
-  );
-  if (radioVenta) radioVenta.checked = true;
+          const radioVenta = document.querySelector(
+            'input[name="tipoTransaccion"][value="venta"]'
+          );
+          if (radioVenta) radioVenta.checked = true;
 
-  tipoTransaccionActual = "venta";
-  cambiarTipoTransaccion("venta");
-  calcularTotal();
-  ocultarAlertas();
+          tipoTransaccionActual = "venta";
+          cambiarTipoTransaccion("venta");
+          calcularTotal();
+          ocultarAlertas();
 
-  setTimeout(() => {
-    const rutInput = document.getElementById("rutCliente");
-    if (rutInput) rutInput.focus();
-  }, 100);
+          setTimeout(() => {
+            const rutInput = document.getElementById("rutCliente");
+            if (rutInput) rutInput.focus();
+          }, 100);
+        };
+      }
+    }
+  };
 };
-}
