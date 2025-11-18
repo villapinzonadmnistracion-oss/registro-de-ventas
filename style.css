@@ -810,7 +810,7 @@ body {
 }
 
 .promo-card:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgb(0, 0, 0);
   transform: translateX(5px);
 }
 
