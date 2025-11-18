@@ -810,7 +810,7 @@ body {
 }
 
 .promo-card:hover {
-  background: rgb(0, 0, 0);
+  background: rgb(248, 248, 248);
   transform: translateX(5px);
 }
 
@@ -861,7 +861,7 @@ body {
 .promo-badge {
   display: inline-block;
   background: #f59e0b;
-  color: white;
+  color: rgb(0, 0, 0);
   padding: 8px 16px;
   border-radius: 20px;
   font-weight: 700;
