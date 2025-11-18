@@ -861,7 +861,7 @@ body {
 .promo-badge {
   display: inline-block;
   background: #f59e0b;
-  color: rgb(0, 0, 0);
+  color: rgb(255, 254, 254);
   padding: 8px 16px;
   border-radius: 20px;
   font-weight: 700;
